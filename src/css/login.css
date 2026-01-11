@@ -1,0 +1,71 @@
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  background: url('/imgs/barbearia-bg-dark.jpg') center/cover no-repeat;
+  background-color: #0a0a0a;
+}
+
+/* Camada de escurecimento adicional */
+.background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(5px);
+}
+
+/* Card estilo vidro preto */
+.login-card {
+  width: 360px;
+  background: rgba(20, 20, 20, 0.65);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,200,50,0.17);
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 25px rgba(0,0,0,0.6);
+}
+
+.login-logo {
+  width: 140px;
+  filter: drop-shadow(0px 0px 4px rgba(255, 200, 50, 0.4));
+}
+
+/* Texto principal */
+.app-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f0b940;
+  text-shadow: 0px 0px 4px rgba(255,200,50,0.4);
+  letter-spacing: 1px;
+}
+
+/* Subtitulo */
+.app-subtitle {
+  font-size: 0.9rem;
+  color: #c9c9c9;
+  margin-top: 4px;
+}
+
+/* Inputs escuros */
+.input-dark input {
+  color: #fff !important;
+}
+
+.login-btn {
+  background: linear-gradient(90deg, #cc9a22, #f0c352);
+  color: #000;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+
+/* Rodapé */
+.footer-text {
+  color: #777;
+  font-size: 0.75rem;
+}
