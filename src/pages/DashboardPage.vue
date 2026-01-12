@@ -97,23 +97,20 @@
 
 </div>
 
-    <!-- Conteúdo -->
-    <h4 :class="$q.dark.isActive ? 'text-white' : 'text-dark'">
-      Bem-vindo ao painel da barbearia
-    </h4>
+<AgendamentosPage
+  :data-selecionada="dataSelecionada"
+  :dias-da-semana="diasDaSemana"
+  :dia-selecionado="diaSelecionado"
+/>
 
-    <q-btn
-      label="Agendamentos"
-      to="/agendamentos"
-      color="primary"
-      class="q-mt-md"
-    />
 
   </q-page>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import AgendamentosPage from 'pages/AgendamentosPage.vue'
+
 import { useAuthStore } from 'stores/auth'   // <-- aqui você IMPORTA o auth store
 
 import { useQuasar } from 'quasar'
