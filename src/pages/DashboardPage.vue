@@ -1,107 +1,91 @@
 <template>
   <q-page padding>
 
-    <!-- FILTRO DE SEMANA -->
-    <div class="row items-center q-mb-lg" v-if="inicioDaSemana && fimDeSemana">
+    <div class="dashboard-header row items-center q-mb-md justify-between">
+      <div class="row items-center">
+        <q-avatar size="56" class="q-mr-md"
+          style="background: linear-gradient(144deg, #777777, #494949); color: white;">
 
-      <!-- Botão voltar -->
-      <q-btn
-        flat
-        round
-        icon="chevron_left"
-        @click="voltarUmaSemana"
-        class="q-mr-sm"
-      />
+          {{ (auth.user && auth.user.name) ? auth.user.name.charAt(0) : 'U' }}
+        </q-avatar>
 
-      <!-- Intervalo -->
-      <div class="row items-center"
-           :class="$q.dark.isActive ? 'text-grey-3' : 'text-grey-8'">
-
-        <q-icon name="event" class="q-mr-sm" />
-
-        <div class="text-h6">
-          {{ formatDate(inicioDaSemana) }} à {{ formatDate(fimDeSemana) }}
+        <div>
+          <div class="text-h6 user-name">Olá, <span class="user-name-bold">{{ auth.user ? auth.user.name : 'Usuário'
+          }}</span></div>
+          <div class="text-subtitle2 text-grey-6">Bem-vindo de volta — confira seus agendamentos</div>
         </div>
       </div>
 
-      <!-- Botão avançar -->
-      <q-btn
-        flat
-        round
-        icon="chevron_right"
-        @click="avancarUmaSemana"
-        class="q-ml-sm"
-      />
+      <div v-if="inicioDaSemana && fimDeSemana" class="week-filter row items-center q-pa-sm">
+        <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
+
+        <div class="week-range q-px-md text-center">
+          <div class="text-caption">Semana</div>
+          <div class="text-h6">{{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}</div>
+        </div>
+
+        <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
+      </div>
     </div>
 
     <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
-    <div class="row no-wrap q-gutter-sm q-mb-lg">
-      <q-card
-        v-for="(day, index) in diasDaSemana"
-        :key="index"
-        clickable
-        @click="selecionarDia(index)"
-        class="q-pa-sm text-center cursor-pointer"
-        :class="diaSelecionado === index
-          ? ($q.dark.isActive ? 'bg-blue-8 text-white' : 'bg-blue-4 text-dark')
-          : ($q.dark.isActive ? 'bg-grey-10 text-grey-3' : 'bg-grey-2 text-dark')
-        "
-        style="width: 70px; border-radius: 12px;"
-      >
+    <div class="row q-gutter-sm q-mb-lg">
+      <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
+        class="q-pa-sm text-center cursor-pointer card-dia"
+        :class="{ 'card-dia-selecionado': diaSelecionado === index }"
+        style="flex: 1 1 0; min-width: 0; border-radius: 12px;">
         <div class="text-caption">{{ day.label }}</div>
         <div class="text-h6 q-mt-xs">{{ day.number }}</div>
       </q-card>
     </div>
 
+
     <!-- 📊 CARDS DE RENDA -->
     <!-- 📊 CARDS DE RENDA -->
-<div class="row q-mb-lg cards-renda-container">
+    <div class="row q-mb-lg cards-renda-container">
 
-  <!-- Renda do dia selecionado -->
-  <q-card class="q-pa-md q-mr-md card-renda-dia" style="min-width:200px; flex: 1;">
-    <div class="row items-center justify-between">
-      <div>
-        <div class="text-caption">Renda do dia</div>
-        <div class="text-h6 q-mt-xs">
-          <q-skeleton v-if="loadingDay" type="text" width="120px" />
-          <span v-else>{{ formatoMoeda(diaDaReceita) }}</span>
+      <!-- Renda do dia selecionado -->
+      <q-card class="q-pa-md q-mr-md card-renda-dia" style="min-width:200px; flex: 1;">
+        <div class="row items-center justify-between">
+          <div>
+            <div class="text-caption">Renda do dia</div>
+            <div class="text-h6 q-mt-xs">
+              <q-skeleton v-if="loadingDay" type="text" width="120px" />
+              <span v-else>{{ formatoMoeda(diaDaReceita) }}</span>
+            </div>
+          </div>
+
+          <q-icon name="today" class="text-h5" />
         </div>
-      </div>
 
-      <q-icon name="today" class="text-h5" />
-    </div>
-
-    <div class="text-caption q-mt-sm">
-      Data: {{ formatDate(dataSelecionada) }}
-    </div>
-  </q-card>
-
-  <!-- Renda da semana -->
-  <q-card class="q-pa-md card-renda-semana" style="min-width:200px; flex: 1;">
-    <div class="row items-center justify-between">
-      <div>
-        <div class="text-caption">Renda (semana)</div>
-        <div class="text-h6 q-mt-xs">
-          <q-skeleton v-if="loadingWeek" type="text" width="120px" />
-          <span v-else>{{ formatoMoeda(receitaDaSemana) }}</span>
+        <div class="text-caption q-mt-sm">
+          Data: {{ formatDate(dataSelecionada) }}
         </div>
-      </div>
+      </q-card>
 
-      <q-icon name="attach_money" class="text-h5" />
+      <!-- Renda da semana -->
+      <q-card class="q-pa-md card-renda-semana" style="min-width:200px; flex: 1;">
+        <div class="row items-center justify-between">
+          <div>
+            <div class="text-caption">Renda (semana)</div>
+            <div class="text-h6 q-mt-xs">
+              <q-skeleton v-if="loadingWeek" type="text" width="120px" />
+              <span v-else>{{ formatoMoeda(receitaDaSemana) }}</span>
+            </div>
+          </div>
+
+          <q-icon name="attach_money" class="text-h5" />
+        </div>
+
+        <div class="text-caption q-mt-sm">
+          Período: {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
+        </div>
+      </q-card>
+
     </div>
 
-    <div class="text-caption q-mt-sm">
-      Período: {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
-    </div>
-  </q-card>
-
-</div>
-
-<AgendamentosPage
-  :data-selecionada="dataSelecionada"
-  :dias-da-semana="diasDaSemana"
-  :dia-selecionado="diaSelecionado"
-/>
+    <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
+      :dia-selecionado="diaSelecionado" />
 
 
   </q-page>
@@ -113,10 +97,9 @@ import AgendamentosPage from 'pages/AgendamentosPage.vue'
 
 import { useAuthStore } from 'stores/auth'   // <-- aqui você IMPORTA o auth store
 
-import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
-const $q = useQuasar()
+const auth = useAuthStore()
 
 const meses = [
   'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
@@ -294,6 +277,7 @@ onMounted(() => {
 .cursor-pointer {
   cursor: pointer;
 }
+
 .cards-renda-container {
   margin-top: 25px;
 }
@@ -301,15 +285,39 @@ onMounted(() => {
 /* Card do dia */
 .card-renda-dia {
   border-radius: 16px !important;
-  background: linear-gradient(135deg, #42a5f5, #90caf9); /* azul claro */
+  background: linear-gradient(144deg, #777777, #494949);
+  /* laranja */
   color: white;
 }
+
+.card-dia {
+  background: #2b2b2b;
+  /* dark base */
+  color: #fff;
+  /* texto claro para dark */
+  transition: background 0.3s, color 0.3s;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+  min-height: 92px;
+}
+
+.card-dia-selecionado {
+  background: linear-gradient(144deg, #777777, #494949);
+  color: white;
+}
+
 
 /* Card da semana */
 .card-renda-semana {
   border-radius: 16px !important;
-  background: linear-gradient(135deg, #66bb6a, #a5d6a7); /* verde claro */
-  color: white;
+  background: linear-gradient(135deg, #ffffff, #def5de);
+  /* verde claro */
+  color: #3a3a3a;
 }
 
 /* Ícones brancos */
@@ -318,4 +326,21 @@ onMounted(() => {
   color: white !important;
 }
 
+.dashboard-header .user-name-bold {
+  font-weight: 700;
+}
+
+.week-filter {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  align-items: center;
+}
+
+.week-range .text-h6 {
+  letter-spacing: 0.2px;
+}
+
+.chev-btn {
+  color: #ffffff;
+}
 </style>

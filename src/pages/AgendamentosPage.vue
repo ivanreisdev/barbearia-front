@@ -8,12 +8,8 @@
     <!-- Lista de Agendamentos por hora -->
     <div class="q-gutter-md">
       <q-card v-for="slot in horariosDoDia" :key="slot.hora" clickable :class="[
-        slot.agendamento
-          ? statusClass(slot.agendamento.status)
-          : $q.dark.isActive
-            ? 'bg-grey-10'
-            : 'bg-grey-2',
-        $q.dark.isActive ? 'text-white' : 'text-dark',
+        $q.dark.isActive ? 'bg-grey-10' : 'bg-grey-2',
+        $q.dark.isActive ? 'text-white' : 'text-dark'
       ]" class="q-pa-md q-mb-md card-agendamento" style="position: relative">
         <!-- Botão + para criar novo agendamento -->
         <q-btn v-if="!slot.agendamento" icon="add" round dense color="primary" size="sm" flat
@@ -29,7 +25,7 @@
             </div>
 
             <div class="text-caption q-mt-xs">
-              Cliente: {{ slot.agendamento.usuario ? slot.agendamento.usuario.name : 'Cliente não informado' }}<br />
+              Cliente: {{ slot.agendamento.cliente ? slot.agendamento.cliente.nome : 'Cliente não informado' }}<br />
               Barbeiro: {{ slot.agendamento.barbeiro ? slot.agendamento.barbeiro.nome : '—' }}
             </div>
           </template>
@@ -40,12 +36,6 @@
         </q-card-section>
 
         <q-separator v-if="slot.agendamento" />
-
-        <q-card-actions align="right" v-if="slot.agendamento">
-          <q-chip :color="statusColor(slot.agendamento.status)" text-color="white" dense>
-            {{ slot.agendamento.status }}
-          </q-chip>
-        </q-card-actions>
       </q-card>
     </div>
 
@@ -117,7 +107,5 @@ const {
   modalAberto,
   servicos,
   formatoMoeda,
-  statusColor,
-  statusClass,
 } = useAgendamentos(dataSelecionada)
 </script>

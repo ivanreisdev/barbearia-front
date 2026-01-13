@@ -73,6 +73,7 @@ export function useAgendamentos(dataSelecionada) {
     try {
       const { data } = await api.get('/agendamentos/buscarAgendamentos')
       agendamentos.value = data
+      console.log('Agendamentos carregados:', data)
     } catch (err) {
       console.error(err)
     }
