@@ -1,11 +1,13 @@
 <template>
   <q-page padding>
     <q-toolbar class="dashboard-toolbar q-mb-md">
-
       <!-- LADO ESQUERDO: Avatar + texto -->
       <div class="row items-center header-left">
-        <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white;">
-          {{ (auth.user && auth.user.name) ? auth.user.name.charAt(0) : 'U' }}
+        <q-avatar
+          size="56"
+          style="background: linear-gradient(144deg, #777777, #494949); color: white"
+        >
+          {{ auth.user && auth.user.name ? auth.user.name.charAt(0) : 'U' }}
         </q-avatar>
 
         <div class="user-info">
@@ -27,19 +29,25 @@
       <!-- LADO DIREITO: Ações -->
       <div class="row items-center q-gutter-sm">
         <q-btn flat dense round icon="menu" @click="abrirMenu" />
-        <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
-          disabled />
+        <q-btn
+          flat
+          dense
+          round
+          :icon="isDark ? 'dark_mode' : 'light_mode'"
+          @click="toggleTheme"
+          v-show="false"
+          disabled
+        />
       </div>
-
     </q-toolbar>
 
-
     <div class="dashboard-header row items-center q-mb-md justify-between">
-
       <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
         <div class="week-range q-px-md row items-center no-wrap">
           <q-icon name="calendar_today" class="q-mr-sm text-h6 week-icon" aria-hidden="true" />
-          <div class="text-h6">{{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}</div>
+          <div class="text-h6">
+            {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
+          </div>
         </div>
       </div>
 
@@ -47,25 +55,27 @@
         <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
         <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
       </div>
-
     </div>
 
     <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
     <div class="row q-gutter-sm q-mb-lg">
-      <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
+      <q-card
+        v-for="(day, index) in diasDaSemana"
+        :key="index"
+        clickable
+        @click="selecionarDia(index)"
         class="q-pa-sm text-center cursor-pointer card-dia"
         :class="{ 'card-dia-selecionado': diaSelecionado === index }"
-        style="flex: 1 1 0; min-width: 0; border-radius: 12px;">
+        style="flex: 1 1 0; min-width: 0; border-radius: 12px"
+      >
         <div class="text-caption">{{ day.label }}</div>
         <div class="text-h6 q-mt-xs">{{ day.number }}</div>
       </q-card>
     </div>
 
-
     <!-- 📊 CARDS DE RENDA -->
     <!-- 📊 CARDS DE RENDA -->
     <div class="row q-mb-lg cards-renda-container">
-
       <!-- Renda do dia selecionado -->
       <q-card class="q-pa-md q-mr-md card-renda-dia card-renda">
         <div class="row items-center justify-between">
@@ -80,9 +90,7 @@
           <q-icon name="today" class="text-h5" />
         </div>
 
-        <div class="text-caption q-mt-sm">
-          Data: {{ formatDate(dataSelecionada) }}
-        </div>
+        <div class="text-caption q-mt-sm">Data: {{ formatDate(dataSelecionada) }}</div>
       </q-card>
 
       <!-- Renda da semana -->
@@ -103,13 +111,13 @@
           {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
         </div>
       </q-card>
-
     </div>
 
-    <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
-      :dia-selecionado="diaSelecionado" />
-
-
+    <AgendamentosPage
+      :data-selecionada="dataSelecionada"
+      :dias-da-semana="diasDaSemana"
+      :dia-selecionado="diaSelecionado"
+    />
   </q-page>
 </template>
 
@@ -126,10 +134,7 @@ import { useAuthStore } from 'stores/auth'
 const auth = useAuthStore()
 const $q = useQuasar()
 
-const meses = [
-  'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-  'jul', 'ago', 'set', 'out', 'nov', 'dez'
-]
+const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB']
 
@@ -139,7 +144,7 @@ const inicioDaSemana = ref(inicioSemana(hoje))
 const fimDeSemana = ref(fimSemana(hoje))
 
 // dia clicado nos cards
-const diaSelecionado = ref(1)
+const diaSelecionado = ref(0)
 const dataSelecionada = ref(null)
 
 // Estado de renda
@@ -192,7 +197,7 @@ const diasDaSemana = computed(() => {
     lista.push({
       label: dias[d.getDay()],
       number: d.getDate(),
-      full: d
+      full: d,
     })
   }
 
@@ -209,9 +214,9 @@ function selecionarDia(index) {
 // ------------------ formatação moeda ------------------
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
-  currency: 'BRL'
+  currency: 'BRL',
 })
-const formatoMoeda = v => currencyFormatter.format(Number(v || 0))
+const formatoMoeda = (v) => currencyFormatter.format(Number(v || 0))
 
 // ------------------ BUSCA DE RENDA DO DIA ------------------
 async function fetchDiaDaReceita() {
@@ -227,15 +232,11 @@ async function fetchDiaDaReceita() {
     const res = await api.get('/rendas/calcularTotalPorDia', {
       params: {
         dia: dateISO,
-        usuario_id: auth.user.id
-      }
+        usuario_id: auth.user.id,
+      },
     })
 
-    diaDaReceita.value =
-      res.data?.valorTotalDia ??
-      res.data?.total ??
-      0
-
+    diaDaReceita.value = res.data?.valorTotalDia ?? res.data?.total ?? 0
   } catch (e) {
     console.warn('Erro ao buscar renda do dia', e)
     diaDaReceita.value = 0
@@ -243,7 +244,6 @@ async function fetchDiaDaReceita() {
 
   loadingDay.value = false
 }
-
 
 // ------------------ BUSCA DA RENDA SEMANAL ------------------
 async function fetchReceitaDaSemana() {
@@ -255,15 +255,10 @@ async function fetchReceitaDaSemana() {
     const end = toISODate(fimDeSemana.value)
 
     const res = await api.get('/revenues/week', {
-      params: { start, end }
+      params: { start, end },
     })
 
-    receitaDaSemana.value =
-      res.data?.week_total ??
-      res.data?.total ??
-      res.data?.value ??
-      0
-
+    receitaDaSemana.value = res.data?.week_total ?? res.data?.total ?? res.data?.value ?? 0
   } catch (e) {
     console.warn('Erro ao buscar renda da semana', e)
     receitaDaSemana.value = 0
@@ -283,10 +278,31 @@ function avancarUmaSemana() {
 }
 
 watch([inicioDaSemana, fimDeSemana], () => {
+  // ao mudar a semana, tenta selecionar o dia de hoje se estiver na semana atual,
+  // caso contrário seleciona o primeiro dia da semana
+  const hojeMid = new Date()
+  hojeMid.setHours(0, 0, 0, 0)
+  const idx = diasDaSemana.value.findIndex((d) => {
+    const fd = new Date(d.full)
+    fd.setHours(0, 0, 0, 0)
+    return fd.getTime() === hojeMid.getTime()
+  })
+  diaSelecionado.value = idx >= 0 ? idx : 0
+  dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
   fetchReceitaDaSemana()
+  fetchDiaDaReceita()
 })
 
 onMounted(() => {
+  // seleciona índice do dia de hoje dentro da semana atual (se existir)
+  const hojeMid = new Date()
+  hojeMid.setHours(0, 0, 0, 0)
+  const idx = diasDaSemana.value.findIndex((d) => {
+    const fd = new Date(d.full)
+    fd.setHours(0, 0, 0, 0)
+    return fd.getTime() === hojeMid.getTime()
+  })
+  diaSelecionado.value = idx >= 0 ? idx : 0
   dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
   fetchDiaDaReceita()
   fetchReceitaDaSemana()
@@ -374,7 +390,9 @@ function toggleTheme() {
   /* dark base */
   color: #fff;
   /* texto claro para dark */
-  transition: background 0.3s, color 0.3s;
+  transition:
+    background 0.3s,
+    color 0.3s;
   flex: 1 1 0;
   min-width: 0;
   display: flex;
@@ -389,7 +407,6 @@ function toggleTheme() {
   background: linear-gradient(144deg, #777777, #494949);
   color: white;
 }
-
 
 /* Card da semana */
 .card-renda-semana {
