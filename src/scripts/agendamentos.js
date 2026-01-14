@@ -83,25 +83,69 @@ export function useAgendamentos(dataSelecionada) {
   
 
   const horariosDoDia = computed(() => {
-    const slots = []
-    for (let h = 8; h <= 18; h++) {
-      const agendamento = agendamentos.value.find((item) => {
-        const itemDate = new Date(item.data_horario)
-        return (
-          itemDate.getHours() === h &&
-          itemDate.toDateString() === new Date(dataSelecionada.value).toDateString()
-        )
-      })
-      slots.push({ hora: h, agendamento })
+  if (!horariosAtendimento.value.length) return []
+
+  const diaSemana = getDiaSemanaBackend(dataSelecionada.value)
+
+  const horarioDia = horariosAtendimento.value.find(
+    (h) => h.dia_semana === diaSemana && h.ativo === 1
+  )
+
+  // Dia sem atendimento
+  if (!horarioDia) return []
+
+  const inicio = horaStringParaInt(horarioDia.inicio)
+  const fim = horaStringParaInt(horarioDia.fim)
+
+  const almocoInicio = horarioDia.almoco_inicio
+    ? horaStringParaInt(horarioDia.almoco_inicio)
+    : null
+
+  const almocoFim = horarioDia.almoco_fim
+    ? horaStringParaInt(horarioDia.almoco_fim)
+    : null
+
+  const slots = []
+
+  for (let h = inicio; h < fim; h++) {
+    // pula horário de almoço
+    if (
+      almocoInicio !== null &&
+      almocoFim !== null &&
+      h >= almocoInicio &&
+      h < almocoFim
+    ) {
+      continue
     }
-    return slots
-  })
+
+    const agendamento = agendamentos.value.find((item) => {
+      const itemDate = new Date(item.data_horario)
+      return (
+        itemDate.getHours() === h &&
+        itemDate.toDateString() === new Date(dataSelecionada.value).toDateString()
+      )
+    })
+
+    slots.push({ hora: h, agendamento })
+  }
+
+  return slots
+})
+
 
   const carregarHorariosAtendimento = async () => {
     const response = await api.get(
       '/horarios-atendimento/buscarHorariosAtendimentos'
     )
     horariosAtendimento.value = response.data
+  }
+  const horaStringParaInt = (hora) => {
+    return Number(hora.split(':')[0])
+  }
+
+  const getDiaSemanaBackend = (date) => {
+    const jsDay = new Date(date).getDay() // 0..6
+    return jsDay === 0 ? 1 : jsDay + 1
   }
 
   const atualizarPreco = (servicoId) => {
@@ -186,18 +230,20 @@ export function useAgendamentos(dataSelecionada) {
   loadAgendamentos()
   carregarHorariosAtendimento()
 
-  return {
-    agendamentos,
-    servicos,
-    modalAberto,
-    novoAgendamento,
-    abrirModal,
-    loadAgendamentos,
-    horariosDoDia,
-    atualizarPreco,
-    statusColor,
-    statusClass,
-    formatoMoeda,
-    salvarAgendamento,
-  }
+ return {
+  agendamentos,
+  servicos,
+  horariosAtendimento,
+  modalAberto,
+  novoAgendamento,
+  abrirModal,
+  loadAgendamentos,
+  horariosDoDia,
+  atualizarPreco,
+  statusColor,
+  statusClass,
+  formatoMoeda,
+  salvarAgendamento,
+}
+
 }
