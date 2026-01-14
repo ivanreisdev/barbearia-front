@@ -1,52 +1,10 @@
 <template>
   <q-layout view="hHh lpR fFf">
 
-    <!-- HEADER -->
-    <q-header elevated class="bg-dark">
-      <q-toolbar>
-
-        <!-- botão de menu -->
-        <q-btn
-          dense
-          flat
-          round
-          icon="menu"
-          @click="drawer = !drawer"
-        />
-
-<q-toolbar-title>
-  Olá, {{ auth.user?.name || 'Usuário' }}
-</q-toolbar-title>
-
-        <!-- botão de alternar tema -->
-        <q-btn
-          flat
-          dense
-          round
-          :icon="isDark ? 'dark_mode' : 'light_mode'"
-          @click="toggleTheme"
-          class="q-mr-sm"
-        />
-
-        <!-- logout -->
-        <q-btn
-          flat
-          dense
-          round
-          icon="logout"
-          @click="logout"
-          v-if="auth.token"
-        />
-      </q-toolbar>
-    </q-header>
+    <!-- HEADER REMOVIDO -->
 
     <!-- DRAWER -->
-    <q-drawer
-      v-model="drawer"
-      side="left"
-      bordered
-      class="bg-grey-10 text-white"
-    >
+    <q-drawer v-model="drawer" side="left" bordered class="bg-grey-10 text-white">
       <q-list padding>
 
         <!-- DASHBOARD -->
@@ -82,11 +40,7 @@
         </q-item>
 
         <!-- CONFIGURAÇÕES -->
-        <q-expansion-item
-          icon="settings"
-          label="Configurações"
-          switch-toggle-side
-        >
+        <q-expansion-item icon="settings" label="Configurações" switch-toggle-side>
           <q-list class="bg-grey-9">
 
             <q-item clickable v-ripple to="/config/usuario">
@@ -129,6 +83,16 @@
           <q-item-section>Avaliar App</q-item-section>
         </q-item>
 
+        <q-separator />
+
+        <!-- LOGOUT -->
+        <q-item clickable v-ripple @click="logout">
+          <q-item-section avatar>
+            <q-icon name="logout" />
+          </q-item-section>
+          <q-item-section>Sair</q-item-section>
+        </q-item>
+
       </q-list>
     </q-drawer>
 
@@ -141,23 +105,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useAuthStore } from 'stores/auth'   // <-- aqui você IMPORTA o auth store
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useAuthStore } from 'stores/auth'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 
 const drawer = ref(true)
-const auth = useAuthStore()    // <-- aqui você USA o store (auth.user, auth.token, etc.)
-
+const auth = useAuthStore()
 const router = useRouter()
-const $q = useQuasar()
 
-// Tema atual do Quasar
-const isDark = ref($q.dark.isActive)
-
-function toggleTheme() {
-  $q.dark.toggle()
-  isDark.value = $q.dark.isActive
+function avaliarApp() {
+  window.open("https://google.com", "_blank")
 }
 
 function logout() {
@@ -165,14 +122,27 @@ function logout() {
   router.push('/login')
 }
 
-function avaliarApp() {
-  window.open("https://google.com", "_blank")
+function handleToggleDrawer() {
+  drawer.value = !drawer.value
 }
+
+onMounted(() => {
+  window.addEventListener('toggle-drawer', handleToggleDrawer)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('toggle-drawer', handleToggleDrawer)
+})
 </script>
 
 
 <style>
 .bg-dark {
   background-color: #111 !important;
+}
+
+.no-divider {
+  box-shadow: none !important;
+  border-bottom: 0 !important;
 }
 </style>

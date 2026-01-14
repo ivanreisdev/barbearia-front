@@ -1,20 +1,40 @@
 <template>
   <q-page padding>
+    <q-toolbar class="dashboard-toolbar q-mb-md">
 
-    <div class="dashboard-header row items-center q-mb-md justify-between">
-      <div class="row items-center">
-        <q-avatar size="56" class="q-mr-md"
-          style="background: linear-gradient(144deg, #777777, #494949); color: white;">
-
+      <!-- LADO ESQUERDO: Avatar + texto -->
+      <div class="row items-center header-left">
+        <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white;">
           {{ (auth.user && auth.user.name) ? auth.user.name.charAt(0) : 'U' }}
         </q-avatar>
 
-        <div>
-          <div class="text-h6 user-name">Olá, <span class="user-name-bold">{{ auth.user ? auth.user.name : 'Usuário'
-          }}</span></div>
-          <div class="text-subtitle2 text-grey-6">Bem-vindo de volta — confira seus agendamentos</div>
+        <div class="user-info">
+          <div class="text-h6 user-name">
+            Olá,
+            <span class="user-name-bold">
+              {{ auth.user ? auth.user.name : 'Usuário' }}
+            </span>
+          </div>
+          <div class="text-subtitle2 text-grey-6">
+            Bem-vindo de volta — confira seus agendamentos
+          </div>
         </div>
       </div>
+
+      <!-- EMPURRA PARA A DIREITA -->
+      <q-space />
+
+      <!-- LADO DIREITO: Ações -->
+      <div class="row items-center q-gutter-sm">
+        <q-btn flat dense round icon="menu" @click="abrirMenu" />
+        <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
+          disabled />
+      </div>
+
+    </q-toolbar>
+
+
+    <div class="dashboard-header row items-center q-mb-md justify-between">
 
       <div v-if="inicioDaSemana && fimDeSemana" class="week-filter row items-center q-pa-sm">
         <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
@@ -45,7 +65,7 @@
     <div class="row q-mb-lg cards-renda-container">
 
       <!-- Renda do dia selecionado -->
-      <q-card class="q-pa-md q-mr-md card-renda-dia" style="min-width:200px; flex: 1;">
+      <q-card class="q-pa-md q-mr-md card-renda-dia card-renda">
         <div class="row items-center justify-between">
           <div>
             <div class="text-caption">Renda do dia</div>
@@ -64,7 +84,7 @@
       </q-card>
 
       <!-- Renda da semana -->
-      <q-card class="q-pa-md card-renda-semana" style="min-width:200px; flex: 1;">
+      <q-card class="q-pa-md card-renda-semana card-renda">
         <div class="row items-center justify-between">
           <div>
             <div class="text-caption">Renda (semana)</div>
@@ -78,7 +98,7 @@
         </div>
 
         <div class="text-caption q-mt-sm">
-          Período: {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
+          {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
         </div>
       </q-card>
 
@@ -95,11 +115,14 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AgendamentosPage from 'pages/AgendamentosPage.vue'
 
-import { useAuthStore } from 'stores/auth'   // <-- aqui você IMPORTA o auth store
+// auth store imported below for toolbar and data fetching
 
 import { api } from 'boot/axios'
+import { useQuasar } from 'quasar'
+import { useAuthStore } from 'stores/auth'
 
 const auth = useAuthStore()
+const $q = useQuasar()
 
 const meses = [
   'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
@@ -266,6 +289,20 @@ onMounted(() => {
   fetchDiaDaReceita()
   fetchReceitaDaSemana()
 })
+
+// --- toolbar local: abrir menu, alternar tema, logout ---
+const isDark = ref($q.dark.isActive)
+
+function abrirMenu() {
+  window.dispatchEvent(new CustomEvent('toggle-drawer'))
+}
+
+function toggleTheme() {
+  $q.dark.toggle()
+  isDark.value = $q.dark.isActive
+}
+
+// logout moved to main drawer/menu
 </script>
 
 <style scoped>
@@ -278,8 +315,48 @@ onMounted(() => {
   cursor: pointer;
 }
 
+/* Header left: avatar + user info should stay on one line */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.header-left q-avatar {
+  flex: 0 0 auto;
+}
+
+.user-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.user-info .user-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
 .cards-renda-container {
   margin-top: 25px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.card-renda {
+  border-radius: 16px !important;
+  padding: 16px;
+  min-height: 96px;
 }
 
 /* Card do dia */
