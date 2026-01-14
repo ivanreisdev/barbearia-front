@@ -31,6 +31,8 @@ export function useAgendamentos(dataSelecionada) {
 
   const agendamentos = ref([])
   const servicos = ref([])
+  const horariosAtendimento = ref([])
+
 
   const modalAberto = ref(false)
   const novoAgendamento = ref({
@@ -94,6 +96,13 @@ export function useAgendamentos(dataSelecionada) {
     }
     return slots
   })
+
+  const carregarHorariosAtendimento = async () => {
+    const response = await api.get(
+      '/horarios-atendimento/buscarHorariosAtendimentos'
+    )
+    horariosAtendimento.value = response.data
+  }
 
   const atualizarPreco = (servicoId) => {
     const selecionado = servicos.value.find((s) => s.id === servicoId)
@@ -175,6 +184,7 @@ export function useAgendamentos(dataSelecionada) {
 
   // Carrega inicialmente
   loadAgendamentos()
+  carregarHorariosAtendimento()
 
   return {
     agendamentos,
