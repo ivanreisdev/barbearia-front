@@ -36,16 +36,18 @@
 
     <div class="dashboard-header row items-center q-mb-md justify-between">
 
-      <div v-if="inicioDaSemana && fimDeSemana" class="week-filter row items-center q-pa-sm">
-        <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
-
-        <div class="week-range q-px-md text-center">
-          <div class="text-caption">Semana</div>
+      <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
+        <div class="week-range q-px-md row items-center no-wrap">
+          <q-icon name="calendar_today" class="q-mr-sm text-h6 week-icon" aria-hidden="true" />
           <div class="text-h6">{{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}</div>
         </div>
+      </div>
 
+      <div v-if="inicioDaSemana && fimDeSemana" class="week-actions row items-center q-pa-sm">
+        <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
         <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
       </div>
+
     </div>
 
     <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
@@ -419,5 +421,16 @@ function toggleTheme() {
 
 .chev-btn {
   color: #ffffff;
+}
+
+.week-display {
+  display: flex;
+  align-items: center;
+}
+
+.week-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>
