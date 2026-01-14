@@ -96,10 +96,24 @@
       </q-list>
     </q-drawer>
 
-    <!-- CONTEÚDO DAS PÁGINAS -->
+    <!-- RODAPÉ: VERSÃO DO APLICATIVO -->
+
     <q-page-container>
-      <router-view />
+      <q-page class="q-pa-md column">
+
+        <!-- conteúdo normal -->
+        <router-view />
+
+        <!-- footer no fim do scroll -->
+        <div class="q-mt-xl text-center text-caption text-grey-5">
+          Versão JetBarber Beta
+        </div>
+
+      </q-page>
     </q-page-container>
+
+
+
 
   </q-layout>
 </template>

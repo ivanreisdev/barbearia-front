@@ -18,7 +18,9 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: 'dashboard', component: () => import('pages/DashboardPage.vue'), beforeEnter: requireAuth },
-      { path: 'agendamentos', component: () => import('pages/AgendamentosPage.vue'), beforeEnter: requireAuth }
+      { path: 'agendamentos', component: () => import('pages/AgendamentosPage.vue'), beforeEnter: requireAuth },
+      { path: 'config/barbearia', component: () => import('pages/config/BarbeariaPage.vue'), beforeEnter: requireAuth }
+
     ]
   }
 ]
