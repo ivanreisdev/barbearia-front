@@ -78,6 +78,7 @@ export function useAgendamentos(dataSelecionada) {
       console.error(err)
     }
   }
+  
 
   const horariosDoDia = computed(() => {
     const slots = []
