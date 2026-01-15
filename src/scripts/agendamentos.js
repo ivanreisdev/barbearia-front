@@ -80,7 +80,7 @@ export function useAgendamentos(dataSelecionada) {
       console.error(err)
     }
   }
-  
+
 
   const horariosDoDia = computed(() => {
   if (!horariosAtendimento.value.length) return []
@@ -178,6 +178,7 @@ export function useAgendamentos(dataSelecionada) {
         return 'grey'
     }
   }
+  
 
   const statusClass = (status) => {
     switch (status) {
@@ -191,6 +192,21 @@ export function useAgendamentos(dataSelecionada) {
         return $q.dark.isActive ? 'bg-grey-10' : 'bg-grey-2'
     }
   }
+  function calcularHorarioFim(horaInicio, duracaoMinutos) {
+  const inicio = new Date()
+  inicio.setHours(horaInicio, 0, 0, 0)
+
+  const fim = new Date(inicio.getTime() + duracaoMinutos * 60000)
+
+  const hInicio = String(inicio.getHours()).padStart(2, '0')
+  const mInicio = String(inicio.getMinutes()).padStart(2, '0')
+
+  const hFim = String(fim.getHours()).padStart(2, '0')
+  const mFim = String(fim.getMinutes()).padStart(2, '0')
+
+  return `${hInicio}:${mInicio} - ${hFim}:${mFim}`
+}
+
 
   const formatoMoeda = (valor) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
@@ -212,24 +228,24 @@ export function useAgendamentos(dataSelecionada) {
 
     // res.data = { success: true, data: {...} }
     if (res.data?.success) {
-        safeNotify({ 
-          type: 'positive', 
-          message: 'Agendamento criado com sucesso!' 
+        safeNotify({
+          type: 'positive',
+          message: 'Agendamento criado com sucesso!'
         })
       modalAberto.value = false
       await loadAgendamentos() // atualiza a lista
       console.log('Agendamento criado:', res.data.data) // log do objeto criado
     } else {
-        safeNotify({ 
-          type: 'negative', 
-          message: res.data?.message || 'Erro ao criar agendamento' 
+        safeNotify({
+          type: 'negative',
+          message: res.data?.message || 'Erro ao criar agendamento'
         })
     }
   } catch (err) {
     console.error('Erro ao criar agendamento:', err.response?.data || err)
-      safeNotify({ 
-        type: 'negative', 
-        message: 'Erro ao criar agendamento' 
+      safeNotify({
+        type: 'negative',
+        message: 'Erro ao criar agendamento'
       })
   }
 }
@@ -253,6 +269,7 @@ export function useAgendamentos(dataSelecionada) {
   statusClass,
   formatoMoeda,
   salvarAgendamento,
+  calcularHorarioFim
 }
 
 }

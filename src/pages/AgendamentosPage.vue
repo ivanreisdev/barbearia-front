@@ -6,50 +6,78 @@
     </div>
 
     <!-- Lista de Agendamentos por hora -->
-    <div class="q-gutter-md">
-      <q-card v-for="slot in horariosDoDia" :key="slot.hora" clickable :class="[
-        $q.dark.isActive ? 'bg-grey-10' : 'bg-grey-2',
-        $q.dark.isActive ? 'text-white' : 'text-dark'
-      ]" class="q-pa-md q-mb-md card-agendamento" style="position: relative">
-        <!-- Botão + para criar novo agendamento -->
-        <q-btn v-if="slot.tipo === 'normal' && !slot.agendamento" icon="add" round dense color="primary" size="sm" flat
-          class="absolute-top-right q-mr-xs q-mt-xs" @click="abrirModal(slot.hora)" />
+    <div class="agenda-container">
 
-        <q-card-section>
-          <div class="text-caption">{{ slot.hora }}:00</div>
+  <div
+    v-for="slot in horariosDoDia"
+    :key="slot.hora"
+    class="agenda-row"
+    :class="{
+      'row-almoco': slot.tipo === 'almoco'
+    }"
+  >
 
-          <!-- HORÁRIO DE ALMOÇO -->
-          <template v-if="slot.tipo === 'almoco'">
-            <div class="text-body2 q-mt-sm text-orange">
-              🍽 Hora do almoço
-            </div>
-          </template>
-
-          <!-- AGENDADO -->
-          <template v-else-if="slot.agendamento">
-            <div class="text-h6 q-mt-xs">
-              <strong>{{ slot.agendamento.servico.nome }}</strong> -
-              {{ formatoMoeda(slot.agendamento.servico.preco) }}
-            </div>
-
-            <div class="text-caption q-mt-xs">
-              Cliente: {{ slot.agendamento.cliente?.nome || 'Cliente não informado' }}<br />
-              Barbeiro: {{ slot.agendamento.barbeiro?.nome || '—' }}
-            </div>
-          </template>
-
-          <!-- LIVRE -->
-          <template v-else>
-            <div class="text-body2 q-mt-xs text-grey-5">
-              Horário indisponível
-            </div>
-          </template>
-        </q-card-section>
-
-
-        <q-separator v-if="slot.agendamento" />
-      </q-card>
+    <!-- COLUNA DA HORA -->
+    <div class="agenda-hora">
+      {{ slot.hora }}:00
     </div>
+
+    <!-- COLUNA DO SLOT -->
+    <div class="agenda-slot">
+
+      <!-- ALMOÇO -->
+      <template v-if="slot.tipo === 'almoco'">
+        <div class="almoco-box">
+          🍽 Hora do almoço
+        </div>
+      </template>
+
+      <!-- AGENDADO -->
+      <template v-else-if="slot.agendamento">
+        <q-card class="agendamento-card" bordered>
+  <q-card-section class="relative-position">
+
+    <!-- HORÁRIO NO TOPO DIREITO -->
+    <div class="card-horario">
+      {{ calcularHorarioFim(slot.hora, slot.agendamento.servico.duracao_minutos) }}
+    </div>
+
+    <div class="text-weight-bold q-mb-xs">
+      {{ slot.agendamento.servico.nome }}
+    </div>
+
+    <div class="text-caption">
+      {{ formatoMoeda(slot.agendamento.servico.preco) }}<br>
+      Cliente: {{ slot.agendamento.cliente?.nome || '—' }}<br>
+      Barbeiro: {{ slot.agendamento.barbeiro?.nome || '—' }}
+    </div>
+
+  </q-card-section>
+</q-card>
+
+      </template>
+
+      <!-- LIVRE -->
+      <template v-else>
+        <div class="slot-livre">
+          Horário livre
+          <q-btn
+            icon="add"
+            round
+            dense
+            flat
+            size="sm"
+            color="primary"
+            @click="abrirModal(slot.hora)"
+          />
+        </div>
+      </template>
+
+    </div>
+  </div>
+
+</div>
+
 
     <!-- Modal de novo agendamento -->
     <q-dialog v-model="modalAberto" maximized persistent>
@@ -119,5 +147,7 @@ const {
   modalAberto,
   servicos,
   formatoMoeda,
+  calcularHorarioFim,
+  atualizarPreco,
 } = useAgendamentos(dataSelecionada)
 </script>
