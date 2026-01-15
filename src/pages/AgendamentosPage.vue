@@ -12,28 +12,40 @@
         $q.dark.isActive ? 'text-white' : 'text-dark'
       ]" class="q-pa-md q-mb-md card-agendamento" style="position: relative">
         <!-- Botão + para criar novo agendamento -->
-        <q-btn v-if="!slot.agendamento" icon="add" round dense color="primary" size="sm" flat
+        <q-btn v-if="slot.tipo === 'normal' && !slot.agendamento" icon="add" round dense color="primary" size="sm" flat
           class="absolute-top-right q-mr-xs q-mt-xs" @click="abrirModal(slot.hora)" />
 
         <q-card-section>
           <div class="text-caption">{{ slot.hora }}:00</div>
 
-          <template v-if="slot.agendamento">
+          <!-- HORÁRIO DE ALMOÇO -->
+          <template v-if="slot.tipo === 'almoco'">
+            <div class="text-body2 q-mt-sm text-orange">
+              🍽 Hora do almoço
+            </div>
+          </template>
+
+          <!-- AGENDADO -->
+          <template v-else-if="slot.agendamento">
             <div class="text-h6 q-mt-xs">
               <strong>{{ slot.agendamento.servico.nome }}</strong> -
               {{ formatoMoeda(slot.agendamento.servico.preco) }}
             </div>
 
             <div class="text-caption q-mt-xs">
-              Cliente: {{ slot.agendamento.cliente ? slot.agendamento.cliente.nome : 'Cliente não informado' }}<br />
-              Barbeiro: {{ slot.agendamento.barbeiro ? slot.agendamento.barbeiro.nome : '—' }}
+              Cliente: {{ slot.agendamento.cliente?.nome || 'Cliente não informado' }}<br />
+              Barbeiro: {{ slot.agendamento.barbeiro?.nome || '—' }}
             </div>
           </template>
 
+          <!-- LIVRE -->
           <template v-else>
-            <div class="text-body2 q-mt-xs text-grey-5">Sem agendamento</div>
+            <div class="text-body2 q-mt-xs text-grey-5">
+              Horário indisponível
+            </div>
           </template>
         </q-card-section>
+
 
         <q-separator v-if="slot.agendamento" />
       </q-card>

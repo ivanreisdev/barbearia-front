@@ -108,26 +108,35 @@ export function useAgendamentos(dataSelecionada) {
   const slots = []
 
   for (let h = inicio; h < fim; h++) {
-    // pula horário de almoço
-    if (
-      almocoInicio !== null &&
-      almocoFim !== null &&
-      h >= almocoInicio &&
-      h < almocoFim
-    ) {
-      continue
-    }
-
-    const agendamento = agendamentos.value.find((item) => {
-      const itemDate = new Date(item.data_horario)
-      return (
-        itemDate.getHours() === h &&
-        itemDate.toDateString() === new Date(dataSelecionada.value).toDateString()
-      )
+  // Horário de almoço
+  if (
+    almocoInicio !== null &&
+    almocoFim !== null &&
+    h >= almocoInicio &&
+    h < almocoFim
+  ) {
+    slots.push({
+      hora: h,
+      tipo: 'almoco',
+      agendamento: null
     })
-
-    slots.push({ hora: h, agendamento })
+    continue
   }
+
+  const agendamento = agendamentos.value.find((item) => {
+    const itemDate = new Date(item.data_horario)
+    return (
+      itemDate.getHours() === h &&
+      itemDate.toDateString() === new Date(dataSelecionada.value).toDateString()
+    )
+  })
+
+  slots.push({
+    hora: h,
+    tipo: 'normal',
+    agendamento
+  })
+}
 
   return slots
 })
