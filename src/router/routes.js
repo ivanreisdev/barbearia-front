@@ -13,16 +13,28 @@ const requireAuth = (to, from, next) => {
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: () => import('pages/LoginPage.vue') },
+  { path: '/register', component: () => import('pages/RegisterPage.vue') }, // rota de registro adicionada
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: 'dashboard', component: () => import('pages/DashboardPage.vue'), beforeEnter: requireAuth },
-      { path: 'agendamentos', component: () => import('pages/AgendamentosPage.vue'), beforeEnter: requireAuth },
-      { path: 'config/barbearia', component: () => import('pages/config/BarbeariaPage.vue'), beforeEnter: requireAuth }
-
-    ]
-  }
+      {
+        path: 'dashboard',
+        component: () => import('pages/DashboardPage.vue'),
+        beforeEnter: requireAuth,
+      },
+      {
+        path: 'agendamentos',
+        component: () => import('pages/AgendamentosPage.vue'),
+        beforeEnter: requireAuth,
+      },
+      {
+        path: 'config/barbearia',
+        component: () => import('pages/config/BarbeariaPage.vue'),
+        beforeEnter: requireAuth,
+      },
+    ],
+  },
 ]
 
 export default routes

@@ -30,6 +30,25 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+     async registrar(payload) {
+  try {
+    const { data } = await api.post('/register', payload)
+
+this.token = data.token
+        localStorage.setItem('token', data.token)
+
+        // salva user
+        this.user = data.user
+        localStorage.setItem('user', JSON.stringify(data.user))
+
+        return true
+  } catch (error) {
+    throw new Error(
+      error?.response?.data?.message || 'Erro ao registrar usuário'
+    )
+  }
+},
+
     logout() {
       this.token = null
       this.user = null
