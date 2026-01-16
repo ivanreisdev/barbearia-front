@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { api } from 'boot/axios'
 import { useQuasar, Notify } from 'quasar'
 
@@ -36,6 +36,7 @@ export function useAgendamentos(dataSelecionada) {
 
   const agendamentos = ref([])
   const servicos = ref([])
+  const horariosDisponiveis = ref([]) // opções vindas da rota de disponibilidade
   const horariosAtendimento = ref([])
 
   const modalAberto = ref(false)
@@ -48,11 +49,56 @@ export function useAgendamentos(dataSelecionada) {
     barbeiro: '',
   })
 
-  const abrirModal = async (hora) => {
+  // busca horários disponíveis no backend para serviço+data selecionados
+  const buscarHorariosDisponiveis = async (servicoId, dataISO) => {
+    horariosDisponiveis.value = []
+    if (!servicoId || !dataISO) return
+
+    try {
+      const res = await api.get('/horarios-atendimento/buscarHorariosDisponiveis', {
+        params: { servicoId, data: dataISO },
+      })
+
+      // espera { horarios: ["09:00", ...] }
+      const raw = res.data && (res.data.horarios || res.data)
+      if (Array.isArray(raw)) {
+        // mapeia para { label, value } esperado pelo q-select
+        horariosDisponiveis.value = raw.map((h) => ({ label: h, value: h }))
+      } else {
+        horariosDisponiveis.value = []
+      }
+
+      console.log('Horários disponíveis:', horariosDisponiveis.value)
+    } catch (err) {
+      console.error('Erro ao buscar horários disponíveis:', err)
+      safeNotify({ type: 'negative', message: 'Erro ao buscar horários disponíveis' })
+      horariosDisponiveis.value = []
+    }
+  }
+
+  // observa seleção de serviço/data no modal e chama a rota quando ambos existirem
+  watch(
+    [() => novoAgendamento.value.servico, () => novoAgendamento.value.data],
+    ([servico, data]) => {
+      if (servico && data) {
+        // garante formato YYYY-MM-DD
+        const dataISO = new Date(data).toISOString().split('T')[0]
+        buscarHorariosDisponiveis(servico, dataISO)
+      } else {
+        horariosDisponiveis.value = []
+      }
+    },
+  )
+
+  const abrirModal = async (hora = null) => {
+    // abre o modal; se hora for null => não pré-preenche data/hora (usuário deve escolher a data)
     modalAberto.value = true
 
-    const data = new Date(dataSelecionada.value)
-    const dataFormatada = data.toISOString().split('T')[0]
+    let dataFormatada = ''
+    if (hora !== null && dataSelecionada?.value) {
+      const data = new Date(dataSelecionada.value)
+      dataFormatada = data.toISOString().split('T')[0]
+    }
 
     novoAgendamento.value = {
       cliente: '',
@@ -61,16 +107,18 @@ export function useAgendamentos(dataSelecionada) {
       servico: null,
       preco: 0,
       barbeiro: '',
-      data: dataFormatada,
-      hora: `${hora.toString().padStart(2, '0')}:00`,
+      data: dataFormatada, // se vazio, campo data permanece vazio e campo hora fica desabilitado no template
+      hora: hora !== null ? `${String(hora).padStart(2, '0')}:00` : '',
       repetir: false,
     }
 
     try {
-      const { data } = await api.get('/servicos/buscarServicos')
-      servicos.value = data
+      const res = await api.get('/servicos/buscarServicos')
+      servicos.value = res.data
+      // limpa horários disponíveis ao abrir modal
+      horariosDisponiveis.value = []
     } catch (err) {
-      console.error(err)
+      console.error('Erro ao carregar serviços:', err)
       safeNotify({ type: 'negative', message: 'Erro ao carregar serviços' })
     }
   }
@@ -128,6 +176,35 @@ export function useAgendamentos(dataSelecionada) {
 
     return slots
   })
+  const horariosPadrao = computed(() => {
+    // se há horários vindos da API (modal: serviço+data selecionados), usa-os
+    if (horariosDisponiveis.value && horariosDisponiveis.value.length) {
+      return horariosDisponiveis.value
+    }
+
+    // fallback: gera horários padrão (30 em 30) como antes
+    const horarios = []
+    let hora = 8
+    let minuto = 0
+
+    while (hora < 18) {
+      const hh = String(hora).padStart(2, '0')
+      const mm = String(minuto).padStart(2, '0')
+
+      horarios.push({
+        label: `${hh}:${mm}`,
+        value: `${hh}:${mm}`,
+      })
+
+      minuto += 30
+      if (minuto === 60) {
+        minuto = 0
+        hora++
+      }
+    }
+
+    return horarios
+  })
 
   const carregarHorariosAtendimento = async () => {
     const response = await api.get('/horarios-atendimento/buscarHorariosAtendimentos')
@@ -168,10 +245,20 @@ export function useAgendamentos(dataSelecionada) {
   const alturaSlot = 200 // altura em pixels por intervalo — ajustar conforme CSS
 
   function aplicarAgendamentos(slots, agendamentos, intervalo = 60) {
+    // iso da data selecionada (ex: "2026-01-16")
+    const selectedDateISO =
+      dataSelecionada.value && dataSelecionada.value
+        ? new Date(dataSelecionada.value).toISOString().split('T')[0]
+        : null
+
     agendamentos.forEach((ag) => {
+      // se não estiver na data selecionada, ignora
+      const agDateISO = new Date(ag.data_horario).toISOString().split('T')[0]
+      if (selectedDateISO && agDateISO !== selectedDateISO) return
+
       const data = new Date(ag.data_horario)
       const inicio = data.getHours() * 60 + data.getMinutes()
-      const fim = inicio + ag.servico.duracao_minutos
+      const fim = inicio + (ag.servico?.duracao_minutos || 0)
 
       // encontra o índice do slot que contém o início do agendamento
       const startIndex = slots.findIndex(
@@ -194,7 +281,7 @@ export function useAgendamentos(dataSelecionada) {
       slots[startIndex].agendamentos.push({
         ag,
         inicio,
-        duracao: ag.servico.duracao_minutos,
+        duracao: ag.servico?.duracao_minutos || 0,
       })
     })
 
@@ -253,80 +340,67 @@ export function useAgendamentos(dataSelecionada) {
   }
   const colunasMax = 3 // quantos cards lado a lado você permite
 
-const ESPACAMENTO = 6 // espaço entre cards (px)
-const ALTURA_MINIMA = 70 // altura mínima de um card
+  const ESPACAMENTO = 6 // espaço entre cards (px)
+  const ALTURA_MINIMA = 70 // altura mínima de um card
 
-const estiloCard = (item, slot) => {
-  const topBase =
-    ((item.inicio - slot.inicioMinutos) / 60) * alturaSlot
+  const estiloCard = (item, slot) => {
+    const topBase = ((item.inicio - slot.inicioMinutos) / 60) * alturaSlot
 
-  const altura = Math.max(
-    (item.duracao / 60) * alturaSlot,
-    ALTURA_MINIMA
-  )
+    const altura = Math.max((item.duracao / 60) * alturaSlot, ALTURA_MINIMA)
 
-  return {
-    position: 'absolute',
-    left: '8px',
-    right: '8px',
-    top: topBase + item.linha * (ALTURA_MINIMA + ESPACAMENTO) + 'px',
-    height: altura + 'px',
-    zIndex: 5,
+    return {
+      position: 'absolute',
+      left: '8px',
+      right: '8px',
+      top: topBase + item.linha * (ALTURA_MINIMA + ESPACAMENTO) + 'px',
+      height: altura + 'px',
+      zIndex: 5,
+    }
   }
-}
 
+  function processarAgendamentos(slot) {
+    const linhas = []
 
-function processarAgendamentos(slot) {
-  const linhas = []
+    return slot.agendamentos.map((item) => {
+      const inicio = item.inicio
+      const fim = item.inicio + item.duracao
 
-  return slot.agendamentos.map((item) => {
-    const inicio = item.inicio
-    const fim = item.inicio + item.duracao
+      let linhaIndex = 0
 
-    let linhaIndex = 0
-
-    // procura uma linha livre
-    for (; linhaIndex < linhas.length; linhaIndex++) {
-      const ultimoFimDaLinha = linhas[linhaIndex]
-      if (inicio >= ultimoFimDaLinha) {
-        break
+      // procura uma linha livre
+      for (; linhaIndex < linhas.length; linhaIndex++) {
+        const ultimoFimDaLinha = linhas[linhaIndex]
+        if (inicio >= ultimoFimDaLinha) {
+          break
+        }
       }
-    }
 
-    // se não achou, cria nova linha
-    if (!linhas[linhaIndex]) {
-      linhas[linhaIndex] = fim
-    } else {
-      linhas[linhaIndex] = fim
-    }
+      // se não achou, cria nova linha
+      if (!linhas[linhaIndex]) {
+        linhas[linhaIndex] = fim
+      } else {
+        linhas[linhaIndex] = fim
+      }
 
-    return {
-      ...item,
-      linha: linhaIndex
-    }
+      return {
+        ...item,
+        linha: linhaIndex,
+      }
+    })
+  }
+  const horariosProcessados = computed(() => {
+    return horariosDoDia.value.map((slot) => {
+      const ags = slot.agendamentos ? processarAgendamentos(slot) : []
+
+      const totalLinhas = ags.length ? Math.max(...ags.map((a) => a.linha)) + 1 : 1
+
+      return {
+        ...slot,
+        agendamentosProcessados: ags,
+        alturaRow: totalLinhas * (ALTURA_MINIMA + ESPACAMENTO),
+      }
+    })
   })
-}
-const horariosProcessados = computed(() => {
-  return horariosDoDia.value.map(slot => {
-    const ags = slot.agendamentos
-      ? processarAgendamentos(slot)
-      : []
-
-    const totalLinhas = ags.length
-      ? Math.max(...ags.map(a => a.linha)) + 1
-      : 1
-
-    return {
-      ...slot,
-      agendamentosProcessados: ags,
-      alturaRow:
-        totalLinhas * (ALTURA_MINIMA + ESPACAMENTO)
-    }
-  })
-})
-
-
-
 
   const formatoMoeda = (valor) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
@@ -374,29 +448,30 @@ const horariosProcessados = computed(() => {
   loadAgendamentos()
   carregarHorariosAtendimento()
 
+  // Recarrega agendamentos quando a data selecionada muda
+  watch(dataSelecionada, () => {
+    loadAgendamentos()
+  })
+
+  // --------------------
+  // Exporte o ref de horários disponíveis para uso no componente
+  // --------------------
   return {
-    agendamentos,
-    servicos,
-    horariosAtendimento,
-    modalAberto,
-    novoAgendamento,
-    alturaSlot,
-    ALTURA_MINIMA,
-    ESPACAMENTO,
-    processarAgendamentos,
-    colunasMax,
-    estiloCard,
+    horariosProcessados, // agora retorna o computed correto
+    horariosPadrao,
     abrirModal,
-    loadAgendamentos,
-    horariosDoDia,
-    horariosProcessados,
-    atualizarPreco,
-    statusColor,
-    statusClass,
-    formatoMoeda,
     salvarAgendamento,
+    novoAgendamento,
+    modalAberto,
+    servicos,
+    horariosDisponiveis,
+    estiloCard,
+    processarAgendamentos,
+    formatoMoeda,
     calcularHorarioFim,
-    aplicarAgendamentos,
-    gerarSlots,
+    atualizarPreco,
+    colunasMax,
+    statusClass,
+    statusColor,
   }
 }

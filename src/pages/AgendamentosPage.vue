@@ -8,13 +8,12 @@
     <!-- Lista de Agendamentos por hora -->
     <div class="agenda-container">
       <div
-  v-for="slot in horariosProcessados"
-  :key="slot.inicioMinutos"
-  class="agenda-row"
-  :class="{ 'row-almoco': slot.tipo === 'almoco' }"
-  :style="{ minHeight: slot.alturaRow + 'px' }"
->
-
+        v-for="slot in horariosProcessados"
+        :key="slot.inicioMinutos"
+        class="agenda-row"
+        :class="{ 'row-almoco': slot.tipo === 'almoco' }"
+        :style="{ minHeight: slot.alturaRow + 'px' }"
+      >
         <!-- COLUNA DA HORA -->
         <div class="agenda-hora">{{ slot.hora }}:{{ slot.minuto }}</div>
 
@@ -22,16 +21,13 @@
         <div class="agenda-slot">
           <!-- Renderiza todos os agendamentos que começam neste slot -->
           <template v-if="slot.agendamentos?.length && slot.tipo !== 'almoco'">
-  <q-card
-    v-for="item in processarAgendamentos(slot)"
-    :key="item.ag.id"
-    class="agendamento-card"
-    bordered
-    :style="estiloCard(item, slot)"
-  >
-
-
-
+            <q-card
+              v-for="item in processarAgendamentos(slot)"
+              :key="item.ag.id"
+              class="agendamento-card"
+              bordered
+              :style="estiloCard(item, slot)"
+            >
               <q-card-section class="relative-position">
                 <div class="card-horario">
                   {{ calcularHorarioFim(item.inicio, item.duracao) }}
@@ -40,8 +36,8 @@
                   {{ calcularHorarioFim(item.inicio, item.duracao) }}
                 </div>
                 <div class="text-subtitle1 text-weight-bold q-mt-xs q-mb-xs">
-  {{ item.ag.cliente?.nome || '—' }}
-</div>
+                  {{ item.ag.cliente?.nome || '—' }}
+                </div>
 
                 <div class="text-caption">
                   {{ formatoMoeda(item.ag.servico.preco) }}<br />
@@ -52,13 +48,8 @@
           </template>
 
           <!-- SLOT LIVRE -->
-          <div
-            v-else-if="!slot.ocupado && slot.tipo === 'normal'"
-            class="slot-livre"
-            @click="abrirModal(slot.inicioMinutos)"
-          >
+          <div v-else-if="!slot.ocupado && slot.tipo === 'normal'" class="slot-livre">
             Horário livre
-            <q-btn icon="add" round dense flat size="sm" color="primary" />
           </div>
           <!-- caso seja ocupado mas não hajam agendamentos iniciando aqui (continuação), deixa vazio -->
           <div v-else class="slot-ocupado"></div>
@@ -121,18 +112,23 @@
               @update:model-value="atualizarPreco"
             />
 
-            <q-input
-              v-model="novoAgendamento.data"
-              type="date"
-              rounded
-              filled
-              label="Data"
-              readonly
-            />
+            <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data" />
 
             <div class="row q-col-gutter-sm">
               <div class="col">
-                <q-input v-model="novoAgendamento.hora" rounded filled label="Horário" readonly />
+                <q-select
+      v-model="novoAgendamento.hora"
+      :options="horariosPadrao"
+      option-label="label"
+      option-value="value"
+      emit-value
+      map-options
+      rounded
+      filled
+      label="Horário"
+      :disable="!novoAgendamento.data"
+      :placeholder="novoAgendamento.data ? 'Selecione um horário' : 'Selecione a data primeiro'"
+    />
               </div>
 
               <div class="col-auto">
@@ -159,6 +155,17 @@
         </q-card>
       </div>
     </q-dialog>
+
+    <!-- Botão fixo para novo agendamento -->
+    <q-btn
+      icon="add"
+      fab
+      round
+      unelevated
+      color="primary"
+      style="position: fixed; right: 24px; bottom: 24px; z-index: 2000"
+      @click="abrirModalGlobal"
+    />
   </q-page>
 </template>
 
@@ -172,6 +179,7 @@ const dataSelecionada = toRef(props, 'dataSelecionada')
 
 const {
   horariosProcessados,
+  horariosPadrao,
   abrirModal,
   salvarAgendamento,
   novoAgendamento,
@@ -183,4 +191,7 @@ const {
   calcularHorarioFim,
   atualizarPreco,
 } = useAgendamentos(dataSelecionada)
+
+// Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)
+const abrirModalGlobal = () => abrirModal?.()
 </script>
