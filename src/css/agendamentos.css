@@ -1,87 +1,83 @@
- .card-agendamento {
-	border-radius: 12px;
-	cursor: pointer;
-	transition: transform 0.15s;
+.card-agendamento {
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s;
 }
 
 .card-agendamento:hover {
-	transform: translateY(-2px);
+  transform: translateY(-2px);
 }
 
 .absolute-top-right {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	z-index: 10;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 
 .card-agendamento {
-	border-radius: 12px;
-	cursor: pointer;
-	transition: transform 0.15s;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s;
 }
 
 .card-agendamento:hover {
-	transform: translateY(-2px);
+  transform: translateY(-2px);
 }
 
 .absolute-top-right {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	z-index: 10;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 
 .agendamento-wrapper {
-	min-height: 100vh;
-	background: radial-gradient(circle at top, #0d1b2a, #050b14);
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0d1b2a, #050b14);
 }
 
 .header-agendamento {
-	height: 220px;
-	background:
-		linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
-		url('/img/barbearia-bg.jpg') center/cover;
-	border-bottom-left-radius: 28px;
-	border-bottom-right-radius: 28px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	text-align: center;
-	color: white;
+  height: 220px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+    url('/img/barbearia-bg.jpg') center/cover;
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
 }
 
 .header-content {
-	padding-top: 40px;
+  padding-top: 40px;
 }
 
 .card-form {
-	max-width: 420px;
-	margin: -60px auto 0;
-	border-radius: 22px;
-	background: #1e1e1e;
-	color: white;
-	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  max-width: 420px;
+  margin: -60px auto 0;
+  border-radius: 22px;
+  background: #1e1e1e;
+  color: white;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
 .q-field--filled .q-field__control {
-	background: #2a2a2a;
+  background: #2a2a2a;
 }
 
 .btn-agendar {
-	background: linear-gradient(135deg, #e38b5a, #d17442);
-	color: white;
-	height: 52px;
-	border-radius: 16px;
-	font-weight: 600;
-	letter-spacing: 1px;
+  background: linear-gradient(135deg, #e38b5a, #d17442);
+  color: white;
+  height: 52px;
+  border-radius: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
-
-
-
 /* agendamentos hoje */
-
 
 .agenda-container {
   border-top: 1px solid #444;
@@ -89,15 +85,19 @@
 
 .agenda-row {
   display: flex;
-  min-height: 60px;
+  align-items: stretch;
+  min-height: 300px; /* ajustar se alturaSlot for diferente */
+  box-sizing: border-box;
   border-bottom: 1px solid #444;
-  align-items: center;
 }
 
 .agenda-hora {
-  width: 80px;
+  width: 90px; /* ajuste conforme seu layout */
   text-align: right;
-  padding-right: 12px;
+  padding: 8px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: #aaa;
 }
@@ -128,9 +128,12 @@
 
 /* COLUNA DA HORA */
 .agenda-hora {
-  width: 80px;
+  width: 90px; /* ajuste conforme seu layout */
   text-align: right;
-  padding: 8px 12px;
+  padding: 8px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: #aaa;
 }
@@ -147,6 +150,13 @@
   max-width: 420px;
   height: 100%;
   border-left: 4px solid #2196f3;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* HORÁRIO LIVRE */
@@ -156,6 +166,10 @@
   align-items: center;
   gap: 8px;
   color: #888;
+  min-height: 60px;
+  justify-content: space-between;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 /* ALMOÇO */
@@ -174,4 +188,136 @@
   right: 12px;
   font-size: 12px;
   color: #666;
+}
+.agenda-row {
+  height: 300px; /* altura de 15 min */
+  display: flex;
+  border-bottom: 1px solid #444;
+}
+
+.agenda-hora {
+  width: 90px; /* ajuste conforme seu layout */
+  text-align: right;
+  padding: 8px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.agenda-slot {
+  flex: 1;
+  position: relative;
+  padding: 4px 8px;
+}
+
+.agendamento-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden; /* evita que o conteúdo "vaze" do card */
+  padding: 0;
+}
+
+/* a seção que contém o conteúdo do card */
+.agendamento-card .q-card-section {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 0; /* importante para permitir que overflow funcione em flex children */
+}
+
+/* título e descrição com corte quando não couberem */
+.agendamento-card .text-weight-bold,
+.agendamento-card .text-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* se quiser permitir quebra, remova esta linha */
+}
+
+/* horario posicionado no canto (mantém o layout interno) */
+.card-horario {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-edicao{
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #666;
+}
+
+.agendamento-card {
+  height: 120px; /* altura fixa desejada — ajuste conforme necessário */
+  min-height: 120px;
+  max-height: 120px;
+  overflow: hidden; /* evita que conteúdo vaze para fora */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* garante que a seção interna respeite overflow em elementos flex */
+.agendamento-card .q-card-section {
+  padding: 8px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* textos cortados se não couberem */
+.agendamento-card .text-weight-bold,
+.agendamento-card .text-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* assegura que o container do slot permita cartões posicionados além do seu conteúdo */
+.agenda-slot {
+  flex: 1;
+  position: relative; /* necessário para posicionamento absoluto dos cards dentro do slot */
+  overflow: visible; /* permite que cards maiores (span > 1) se estendam sobre próximas linhas */
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* cards posicionados dentro do slot */
+.agendamento-card {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* evita que cards empurrem o fluxo normal */
+.slot-ocupado {
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+.agendamento-card {
+  border-radius: 8px;
+  font-size: 12px;
+}
+.agenda-row {
+  position: relative;
 }
