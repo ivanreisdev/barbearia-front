@@ -59,41 +59,14 @@
 
       <!-- Modal de detalhes do agendamento -->
 
-    <q-dialog v-model="modalAgendamento">
-  <q-card style="min-width: 400px">
-    <q-card-section class="row items-center">
-      <div class="text-h6">Detalhes do Agendamento</div>
-      <q-space />
-      <q-btn icon="close" flat round dense v-close-popup />
-    </q-card-section>
+    <ModalCancelarAgendamento
+  v-model="modalAgendamento"
+  :agendamento="agendamentoSelecionado"
+  :formato-moeda="formatoMoeda"
+  :calcular-horario-fim="calcularHorarioFim"
+  @cancelar="cancelarAgendamento"
+/>
 
-    <q-separator />
-
-    <q-card-section v-if="agendamentoSelecionado">
-      <p><strong>Cliente:</strong> {{ agendamentoSelecionado.ag.cliente?.nome }}</p>
-      <p><strong>Serviço:</strong> {{ agendamentoSelecionado.ag.servico.nome }}</p>
-      <p><strong>Valor:</strong> {{ formatoMoeda(agendamentoSelecionado.ag.servico.preco) }}</p>
-      <p><strong>Início:</strong> {{ agendamentoSelecionado.inicio }}</p>
-      <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} min</p>
-      <p><strong>Fim:</strong>
-        {{ calcularHorarioFim(
-          agendamentoSelecionado.inicio,
-          agendamentoSelecionado.duracao
-        ) }}
-      </p>
-    </q-card-section>
-
-    <q-separator />
-
-<q-card-action>
-      <q-btn flat color="negative" label="Cancelar Agendamento" @click="cancelarAgendamento" />
-</q-card-action>
-    <q-card-actions align="right">
-      <q-btn flat label="Fechar" v-close-popup />
-    </q-card-actions>
-
-  </q-card>
-</q-dialog>
 
 
     <!-- Modal de novo agendamento -->
@@ -209,6 +182,7 @@
 </template>
 
 <script setup>
+  import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendamento.vue'
 import '../css/agendamentos.css'
 import { toRef, defineProps } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
