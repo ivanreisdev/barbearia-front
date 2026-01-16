@@ -123,13 +123,39 @@ export function useAgendamentos(dataSelecionada) {
     }
   }
 
-  const loadAgendamentos = async () => {
+  // carrega agendamentos, opcionalmente filtrando por data (YYYY-MM-DD or Date)
+  const loadAgendamentos = async (dateParam = null) => {
     try {
-      const { data } = await api.get('/agendamentos/buscarAgendamentos')
-      agendamentos.value = data
-      console.log('Agendamentos carregados:', data)
+      // determina data a ser enviada para a API (YYYY-MM-DD) — prioriza dateParam, senão dataSelecionada.value
+      const dateISO = dateParam
+        ? new Date(dateParam).toISOString().split('T')[0]
+        : dataSelecionada?.value
+          ? new Date(dataSelecionada.value).toISOString().split('T')[0]
+          : null
+
+      const params = {}
+      if (dateISO) params.data = dateISO
+
+      const res = await api.get('/agendamentos/buscarAgendamentos', { params })
+
+      // a API pode retornar array direto ou { agendamentos: [...] }
+      let payload = res.data
+      if (payload && payload.agendamentos) payload = payload.agendamentos
+      agendamentos.value = Array.isArray(payload) ? payload : []
+
+      // garantia adicional: filtrar localmente por data se API não fizer
+      if (dateISO && agendamentos.value.length) {
+        agendamentos.value = agendamentos.value.filter((ag) => {
+          const agDate = ag.data_horario
+            ? new Date(ag.data_horario).toISOString().split('T')[0]
+            : null
+          return agDate === dateISO
+        })
+      }
     } catch (err) {
-      console.error(err)
+      console.error('Erro ao carregar agendamentos:', err)
+      safeNotify({ type: 'negative', message: 'Erro ao carregar agendamentos' })
+      agendamentos.value = []
     }
   }
 
@@ -444,13 +470,13 @@ export function useAgendamentos(dataSelecionada) {
     }
   }
 
-  // Carrega inicialmente
-  loadAgendamentos()
+  // Carrega inicialmente (usa a data selecionada atual se houver)
+  loadAgendamentos(dataSelecionada?.value)
   carregarHorariosAtendimento()
 
   // Recarrega agendamentos quando a data selecionada muda
-  watch(dataSelecionada, () => {
-    loadAgendamentos()
+  watch(dataSelecionada, (nova) => {
+    loadAgendamentos(nova)
   })
 
   // --------------------
