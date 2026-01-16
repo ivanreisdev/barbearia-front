@@ -94,68 +94,56 @@
   </div>
 
  <q-dialog v-model="modalCancelar" maximized persistent>
-  <div class="agendamento-wrapper">
+  <div class="modal-cancelamento">
 
-    <!-- HEADER -->
-<div class="header-agendamento header-cancelamento">
-  <q-btn
-    icon="arrow_back"
-    flat
-    round
-    color="white"
-    class="absolute-top-left q-ma-md"
-    @click="modalCancelar = false"
-  />
+    <!-- HEADER FIXO -->
+    <div class="header-agendamento header-cancelamento">
+      <q-btn
+        icon="arrow_back"
+        flat
+        round
+        color="white"
+        class="absolute-top-left q-ma-md"
+        @click="modalCancelar = false"
+      />
 
-  <div class="header-content text-white">
-    <div class="text-h5 text-weight-medium">Cancelamento</div>
-    <div class="text-caption opacity-8">
-      Você está prestes a cancelar este agendamento.
+      <div class="header-content text-white">
+        <div class="text-h5 text-weight-medium">Cancelamento</div>
+        <div class="text-caption opacity-8">
+          Você está prestes a cancelar este agendamento.
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
+    <!-- CORPO DO MODAL -->
+    <div class="modal-body">
 
-    <!-- CARD -->
-    <q-card class="card-form">
+      <div class="agendamento-info text-center q-gutter-md">
 
-      <q-card-section class="text-center q-gutter-md">
+        <div class="text-subtitle1 text-weight-medium">
+          {{ dataFormatada }}
+        </div>
 
-     <div class="agendamento-info text-center q-gutter-xs">
+        <div class="row items-center justify-center">
+          <span class="text-h6 text-weight-bold">
+            {{ horarioInicio }}
+          </span>
 
-  <div class="text-subtitle1 text-weight-medium">
-    {{ dataFormatada }}
-  </div>
+          <span class="text-h6 text-weight-bold">
+            {{ horarioFim }}
+          </span>
+        </div>
 
-  <div class="row items-center justify-center q-my-xs">
-    <span class="text-h6 text-weight-bold">
-      {{ horarioInicio }}
-    </span>
+        <div class="text-h5 text-weight-medium inter-semibold cliente-nome q-mt-md">
+          {{ agendamento?.cliente?.nome }}
+        </div>
 
+        <div class="text-h8 text-grey-6 inter-semibold">
+          {{ agendamento?.servico?.nome }}
+          - {{ formatoMoeda(agendamento?.servico?.preco) }}
+        </div>
 
-
-    <span class="text-h6 text-weight-bold">
-      {{ horarioFim }}
-    </span>
-  </div>
-
-<br>
-<br>
- <div class="text-h5 text-weight-medium q-mt-sm inter-semibold cliente-nome">
-  {{ agendamento?.cliente?.nome }}
-</div>
-
-  <div class="text-h8 text-grey-6 inter-semibold">
-    {{ agendamento?.servico?.nome }} - {{ formatoMoeda(agendamento?.servico?.preco) }}
-  </div>
-
-</div>
-
-
-        <br>
-        <br>
-
-        <div class="text-caption">
+        <div class="q-mt-xl text-caption inter-semibold">
           Deslize para confirmar o cancelamento
         </div>
 
@@ -170,11 +158,13 @@
           @change="confirmarCancelamento"
         />
 
-      </q-card-section>
+      </div>
 
-    </q-card>
+    </div>
   </div>
 </q-dialog>
+
+
 
 
 
@@ -328,6 +318,40 @@ const cancelar = async () => {
 }
 .card-form {
   border-radius: 42px;
+}
+
+.modal-cancelamento {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #201a1a;
+}
+
+.header-agendamento {
+  height: 250px;
+  flex-shrink: 0;
+  border-radius: 0 0 50px 50px ;
+}
+
+.header-cancelamento {
+  background: linear-gradient(135deg, #c50327a8, #f56363);
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.agendamento-info {
+  width: 100%;
+  max-width: 420px;
+}
+
+.cliente-nome {
+  color: #e57373;
 }
 
 
