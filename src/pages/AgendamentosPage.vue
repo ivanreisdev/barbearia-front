@@ -21,14 +21,15 @@
         <div class="agenda-slot">
           <!-- Renderiza todos os agendamentos que começam neste slot -->
           <template v-if="slot.agendamentos?.length && slot.tipo !== 'almoco'">
-            <q-card
+        <q-card
   v-for="item in processarAgendamentos(slot)"
   :key="item.ag.id"
   class="agendamento-card cursor-pointer"
   bordered
   :style="estiloCard(item, slot)"
-  @click="abrirModalAgendamento(item)"
+  @click="irParaDetalheAgendamento(item.ag.id)"
 >
+
 
               <q-card-section class="relative-position">
                 <div class="card-horario">
@@ -199,7 +200,7 @@ const {
   modalAberto,
   servicos,
   estiloCard,
-  abrirModalAgendamento,
+  //abrirModalAgendamento,
   agendamentoSelecionado,
   modalAgendamento,
   processarAgendamentos,
@@ -207,6 +208,7 @@ const {
   calcularHorarioFim,
   atualizarPreco,
   cancelarAgendamento,
+  irParaDetalheAgendamento,
 } = useAgendamentos(dataSelecionada)
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)

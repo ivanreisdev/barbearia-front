@@ -1,6 +1,9 @@
 import { ref, computed, watch } from 'vue'
 import { api } from 'boot/axios'
 import { useQuasar, Notify } from 'quasar'
+import { useRouter } from 'vue-router'
+
+
 
 export function useAgendamentos(dataSelecionada) {
   const $q = useQuasar()
@@ -40,6 +43,7 @@ export function useAgendamentos(dataSelecionada) {
   const horariosAtendimento = ref([])
   const modalAgendamento = ref(false)
 const agendamentoSelecionado = ref(null)
+const router = useRouter()
 
   const modalAberto = ref(false)
   const novoAgendamento = ref({
@@ -160,6 +164,23 @@ const agendamentoSelecionado = ref(null)
       agendamentos.value = []
     }
   }
+const buscarAgendamentoPorId = async (id) => {
+  try {
+
+    if (!id) return null
+
+    const res = await api.get(`/agendamentos/buscarAgendamento/${id}`)
+
+    return res.data || null
+  } catch (err) {
+    console.error('Erro ao buscar agendamento:', err)
+    safeNotify({
+      type: 'negative',
+      message: 'Erro ao buscar agendamento'
+    })
+    return null
+  }
+}
 
   const horariosDoDia = computed(() => {
     if (!horariosAtendimento.value.length) return []
@@ -461,9 +482,11 @@ const cancelarAgendamento = () => {
         type: 'negative',
         message: 'Erro ao cancelar agendamento',
       })
-    }) 
+    })
 }
-
+const irParaDetalheAgendamento = (id) => {
+  router.push(`/agendamentos/${id}`)
+}
   const formatoMoeda = (valor) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
 
@@ -507,7 +530,7 @@ const cancelarAgendamento = () => {
   }
 
   // Carrega inicialmente (usa a data selecionada atual se houver)
-  loadAgendamentos(dataSelecionada?.value)
+  //loadAgendamentos(dataSelecionada?.value)
   carregarHorariosAtendimento()
 
   // Recarrega agendamentos quando a data selecionada muda
@@ -535,9 +558,11 @@ const cancelarAgendamento = () => {
     colunasMax,
     statusClass,
     statusColor,
+    irParaDetalheAgendamento,
     agendamentoSelecionado,
     modalAgendamento,
     abrirModalAgendamento,
     cancelarAgendamento,
+    buscarAgendamentoPorId,
   }
 }
