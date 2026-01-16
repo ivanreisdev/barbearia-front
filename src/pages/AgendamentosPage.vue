@@ -22,26 +22,26 @@
           <!-- Renderiza todos os agendamentos que começam neste slot -->
           <template v-if="slot.agendamentos?.length && slot.tipo !== 'almoco'">
             <q-card
-              v-for="item in processarAgendamentos(slot)"
-              :key="item.ag.id"
-              class="agendamento-card"
-              bordered
-              :style="estiloCard(item, slot)"
-            >
+  v-for="item in processarAgendamentos(slot)"
+  :key="item.ag.id"
+  class="agendamento-card cursor-pointer"
+  bordered
+  :style="estiloCard(item, slot)"
+  @click="abrirModalAgendamento(item)"
+>
+
               <q-card-section class="relative-position">
                 <div class="card-horario">
                   {{ calcularHorarioFim(item.inicio, item.duracao) }}
                 </div>
-                <div class="card-edicao">
-                  {{ calcularHorarioFim(item.inicio, item.duracao) }}
+                <div class="card-nome-servico">
+                  {{ item.ag.servico.nome }}
                 </div>
-                <div class="text-subtitle1 text-weight-bold q-mt-xs q-mb-xs">
+                <div class="card-valor-servico">
+                  {{ formatoMoeda(item.ag.servico.preco) }}
+                </div>
+                 <div class="card-nome-cliente">
                   {{ item.ag.cliente?.nome || '—' }}
-                </div>
-
-                <div class="text-caption">
-                  {{ formatoMoeda(item.ag.servico.preco) }}<br />
-                  Cliente: {{ item.ag.servico.nome }}<br />
                 </div>
               </q-card-section>
             </q-card>
@@ -56,6 +56,45 @@
         </div>
       </div>
     </div>
+
+      <!-- Modal de detalhes do agendamento -->
+
+    <q-dialog v-model="modalAgendamento">
+  <q-card style="min-width: 400px">
+    <q-card-section class="row items-center">
+      <div class="text-h6">Detalhes do Agendamento</div>
+      <q-space />
+      <q-btn icon="close" flat round dense v-close-popup />
+    </q-card-section>
+
+    <q-separator />
+
+    <q-card-section v-if="agendamentoSelecionado">
+      <p><strong>Cliente:</strong> {{ agendamentoSelecionado.ag.cliente?.nome }}</p>
+      <p><strong>Serviço:</strong> {{ agendamentoSelecionado.ag.servico.nome }}</p>
+      <p><strong>Valor:</strong> {{ formatoMoeda(agendamentoSelecionado.ag.servico.preco) }}</p>
+      <p><strong>Início:</strong> {{ agendamentoSelecionado.inicio }}</p>
+      <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} min</p>
+      <p><strong>Fim:</strong>
+        {{ calcularHorarioFim(
+          agendamentoSelecionado.inicio,
+          agendamentoSelecionado.duracao
+        ) }}
+      </p>
+    </q-card-section>
+
+    <q-separator />
+
+<q-card-action>
+      <q-btn flat color="negative" label="Cancelar Agendamento" @click="cancelarAgendamento" />
+</q-card-action>
+    <q-card-actions align="right">
+      <q-btn flat label="Fechar" v-close-popup />
+    </q-card-actions>
+
+  </q-card>
+</q-dialog>
+
 
     <!-- Modal de novo agendamento -->
     <q-dialog v-model="modalAberto" maximized persistent>
@@ -186,10 +225,14 @@ const {
   modalAberto,
   servicos,
   estiloCard,
+  abrirModalAgendamento,
+  agendamentoSelecionado,
+  modalAgendamento,
   processarAgendamentos,
   formatoMoeda,
   calcularHorarioFim,
   atualizarPreco,
+  cancelarAgendamento,
 } = useAgendamentos(dataSelecionada)
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)

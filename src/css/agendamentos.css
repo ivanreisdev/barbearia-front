@@ -248,16 +248,44 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+    font-family: 'Inter', sans-serif;
+  font-weight: 600;
 }
-.card-edicao{
+.card-nome-servico {
   position: absolute;
   top: 6px;
   right: 8px;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #666;
+  color: #c0c0c0;
+    font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+.card-nome-cliente {
+  position: absolute;
+  top: 90px;
+  left: 8px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+    font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+.card-valor-servico {
+  position: absolute;
+  top: 90px;
+  right: 8px;
+    font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
 }
 
 .agendamento-card {
@@ -320,4 +348,13 @@
 }
 .agenda-row {
   position: relative;
+}
+
+.agendamento-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.agendamento-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
 }

@@ -38,6 +38,8 @@ export function useAgendamentos(dataSelecionada) {
   const servicos = ref([])
   const horariosDisponiveis = ref([]) // opções vindas da rota de disponibilidade
   const horariosAtendimento = ref([])
+  const modalAgendamento = ref(false)
+const agendamentoSelecionado = ref(null)
 
   const modalAberto = ref(false)
   const novoAgendamento = ref({
@@ -427,6 +429,40 @@ export function useAgendamentos(dataSelecionada) {
       }
     })
   })
+const abrirModalAgendamento = (item) => {
+  agendamentoSelecionado.value = item
+  modalAgendamento.value = true
+}
+
+const cancelarAgendamento = () => {
+  const payload = {
+    agendamentoId: agendamentoSelecionado.value.ag.id,
+    }
+    api.post('/agendamentos/cancelarAgendamento', payload)
+
+    .then((res) => {
+      if (res.data?.success) {
+        safeNotify({
+          type: 'positive',
+          message: 'Agendamento cancelado com sucesso!',
+        })
+        modalAgendamento.value = false
+        loadAgendamentos() // atualiza a lista
+      } else {
+        safeNotify({
+          type: 'negative',
+          message: res.data?.message || 'Erro ao cancelar agendamento',
+        })
+      }
+    })
+    .catch((err) => {
+      console.error('Erro ao cancelar agendamento:', err.response?.data || err)
+      safeNotify({
+        type: 'negative',
+        message: 'Erro ao cancelar agendamento',
+      })
+    }) 
+}
 
   const formatoMoeda = (valor) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
@@ -499,5 +535,9 @@ export function useAgendamentos(dataSelecionada) {
     colunasMax,
     statusClass,
     statusColor,
+    agendamentoSelecionado,
+    modalAgendamento,
+    abrirModalAgendamento,
+    cancelarAgendamento,
   }
 }
