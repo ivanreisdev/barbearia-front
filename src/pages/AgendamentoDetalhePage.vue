@@ -148,15 +148,21 @@
         </div>
 
         <!-- SLIDER -->
-        <q-slider
-          v-model="sliderCancelar"
-          :min="0"
-          :max="100"
-          color="negative"
-          track-color="grey-4"
-          thumb-color="negative"
-          @change="confirmarCancelamento"
-        />
+        <div class="swipe-container">
+  <div class="swipe-track">
+    <div
+      class="swipe-thumb"
+      :style="{ transform: `translateX(${swipeX}px)` }"
+      @mousedown="startSwipe"
+      @touchstart="startSwipe"
+    >
+      <q-icon name="arrow_forward" size="24px" />
+    </div>
+
+    <span class="swipe-text">Deslize para direita</span>
+  </div>
+</div>
+
 
       </div>
 
@@ -188,7 +194,45 @@ const router = useRouter()
 const agendamento = ref(null)
 const loading = ref(true)
 const modalCancelar = ref(false)
-const sliderCancelar = ref(0)
+
+const swipeX = ref(0)
+const maxSwipe = 260
+let startX = 0
+let dragging = false
+
+const startSwipe = (e) => {
+  dragging = true
+  startX = e.touches ? e.touches[0].clientX : e.clientX
+
+  document.addEventListener('mousemove', moveSwipe)
+  document.addEventListener('mouseup', endSwipe)
+  document.addEventListener('touchmove', moveSwipe)
+  document.addEventListener('touchend', endSwipe)
+}
+
+const moveSwipe = (e) => {
+  if (!dragging) return
+
+  const currentX = e.touches ? e.touches[0].clientX : e.clientX
+  const diff = currentX - startX
+
+  swipeX.value = Math.max(0, Math.min(diff, maxSwipe))
+}
+
+const endSwipe = () => {
+  dragging = false
+
+  if (swipeX.value >= maxSwipe) {
+    confirmarCancelamento()
+  } else {
+    swipeX.value = 0
+  }
+
+  document.removeEventListener('mousemove', moveSwipe)
+  document.removeEventListener('mouseup', endSwipe)
+  document.removeEventListener('touchmove', moveSwipe)
+  document.removeEventListener('touchend', endSwipe)
+}
 
 const {
   buscarAgendamentoPorId,
@@ -210,18 +254,20 @@ onMounted(async () => {
   }
 })
 
-const confirmarCancelamento = async (valor) => {
-  if (valor === 100) {
+const confirmarCancelamento = async () => {
+  try {
     if (!agendamento.value?.id) return
 
     await cancelar(agendamento.value.id)
 
-    sliderCancelar.value = 0
     modalCancelar.value = false
 
-    router.back()
+    router.replace('/agenda') // 👈 caminho seguro
+  } catch (error) {
+    console.error(error)
   }
 }
+
 
 /* =========================
  * RESPONSIVO
@@ -354,5 +400,42 @@ const cancelar = async () => {
   color: #e57373;
 }
 
+.swipe-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.swipe-track {
+  position: relative;
+  width: 320px;
+  height: 56px;
+  background: #5f6368;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.swipe-text {
+  color: white;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.swipe-thumb {
+  position: absolute;
+  left: 4px;
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
 
 </style>
