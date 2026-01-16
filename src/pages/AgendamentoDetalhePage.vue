@@ -77,12 +77,14 @@
 
     <!-- AÇÃO SEMPRE EMBAIXO -->
     <q-btn
-      outline
-      color="dark"
-      class="full-width"
-      label="Cancelar agendamento"
-      @click="cancelar"
-    />
+  outline
+  color="dark"
+  class="full-width"
+  label="Cancelar agendamento"
+  @click="modalCancelar = true"
+/>
+
+
 
   </template>
 
@@ -90,6 +92,92 @@
   <div v-else class="text-grey text-center q-mt-xl">
     Carregando agendamento...
   </div>
+
+ <q-dialog v-model="modalCancelar" maximized persistent>
+  <div class="agendamento-wrapper">
+
+    <!-- HEADER -->
+<div class="header-agendamento header-cancelamento">
+  <q-btn
+    icon="arrow_back"
+    flat
+    round
+    color="white"
+    class="absolute-top-left q-ma-md"
+    @click="modalCancelar = false"
+  />
+
+  <div class="header-content text-white">
+    <div class="text-h5 text-weight-medium">Cancelamento</div>
+    <div class="text-caption opacity-8">
+      Você está prestes a cancelar este agendamento.
+    </div>
+  </div>
+</div>
+
+
+    <!-- CARD -->
+    <q-card class="card-form">
+
+      <q-card-section class="text-center q-gutter-md">
+
+     <div class="agendamento-info text-center q-gutter-xs">
+
+  <div class="text-subtitle1 text-weight-medium">
+    {{ dataFormatada }}
+  </div>
+
+  <div class="row items-center justify-center q-my-xs">
+    <span class="text-h6 text-weight-bold">
+      {{ horarioInicio }}
+    </span>
+
+
+
+    <span class="text-h6 text-weight-bold">
+      {{ horarioFim }}
+    </span>
+  </div>
+
+<br>
+<br>
+ <div class="text-h5 text-weight-medium q-mt-sm inter-semibold cliente-nome">
+  {{ agendamento?.cliente?.nome }}
+</div>
+
+  <div class="text-h8 text-grey-6 inter-semibold">
+    {{ agendamento?.servico?.nome }} - {{ formatoMoeda(agendamento?.servico?.preco) }}
+  </div>
+
+</div>
+
+
+        <br>
+        <br>
+
+        <div class="text-caption">
+          Deslize para confirmar o cancelamento
+        </div>
+
+        <!-- SLIDER -->
+        <q-slider
+          v-model="sliderCancelar"
+          :min="0"
+          :max="100"
+          color="negative"
+          track-color="grey-4"
+          thumb-color="negative"
+          @change="confirmarCancelamento"
+        />
+
+      </q-card-section>
+
+    </q-card>
+  </div>
+</q-dialog>
+
+
+
 
 </div>
 
@@ -99,6 +187,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import '../css/agendamentos.css'
 import { useQuasar } from 'quasar'
 import { useAgendamentos } from 'src/scripts/agendamentos'
 
@@ -108,6 +197,8 @@ const router = useRouter()
 
 const agendamento = ref(null)
 const loading = ref(true)
+const modalCancelar = ref(false)
+const sliderCancelar = ref(0)
 
 const {
   buscarAgendamentoPorId,
@@ -128,6 +219,19 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+const confirmarCancelamento = async (valor) => {
+  if (valor === 100) {
+    if (!agendamento.value?.id) return
+
+    await cancelar(agendamento.value.id)
+
+    sliderCancelar.value = 0
+    modalCancelar.value = false
+
+    router.back()
+  }
+}
 
 /* =========================
  * RESPONSIVO
@@ -213,4 +317,18 @@ const cancelar = async () => {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
+.agendamento-info {
+  font-family: 'Inter', sans-serif;
+}
+.header-cancelamento {
+  background: linear-gradient(135deg, #ac012059, #da4d4d);
+}
+.cliente-nome {
+  color: #e57373; /* vermelho claro */
+}
+.card-form {
+  border-radius: 42px;
+}
+
+
 </style>
