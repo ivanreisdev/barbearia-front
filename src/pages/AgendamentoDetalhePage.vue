@@ -14,12 +14,13 @@
     />
 
     <div class="q-ml-md">
-      <div class="text-h6 text-weight-bold">
+      <div class="text-h6 text-weight-bold inter-semibold">
         {{ dataFormatada }}
       </div>
-      <div class="text-caption text-grey-6">
-        {{ horarioInicio }} às {{ horarioFim }}
-      </div>
+     <div class="text-caption text-grey-6 inter-semibold">
+  {{ horarioFim }}
+</div>
+
     </div>
   </div>
 
@@ -32,33 +33,33 @@
       <div class="col-12 col-md-7">
 
         <div class="q-mb-xl">
-          <div class="text-caption text-grey-6">CLIENTE</div>
-          <div class="text-subtitle1 text-weight-bold">
+          <div class="text-caption text-grey-6 inter-semibold">CLIENTE</div>
+          <div class="text-subtitle1 text-weight-bold inter-semibold">
             {{ agendamento.cliente?.nome || '—' }}
           </div>
-          <div class="text-caption text-grey-6">
+          <div class="text-caption text-grey-6 inter-semibold">
             {{ agendamento.cliente?.celular || '—' }}
           </div>
         </div>
 
         <div class="q-mb-xl">
-          <div class="text-caption text-grey-6">SERVIÇO(S)</div>
+          <div class="text-caption text-grey-6 inter-semibold">SERVIÇO(S)</div>
           <div class="row q-gutter-sm q-mt-sm">
-            <q-chip color="grey-3" text-color="dark">
+            <q-chip color="grey-3" text-color="dark" class="inter-semibold">
               {{ agendamento.servico.nome }}
             </q-chip>
           </div>
         </div>
 
         <div class="q-mb-xl">
-          <div class="text-caption text-grey-6">PRODUTO(S)</div>
+          <div class="text-caption text-grey-6 inter-semibold">PRODUTO(S)</div>
           <q-btn round dense icon="add" disable class="q-mt-sm" />
         </div>
 
 
         <div class="q-mb-xl">
-          <div class="text-caption text-grey-6">TOTAL</div>
-          <div class="text-h5 text-weight-bold">
+          <div class="text-caption text-grey-6 inter-semibold">TOTAL</div>
+          <div class="text-h5 text-weight-bold inter-semibold">
             {{ formatoMoeda(agendamento.servico.preco) }}
           </div>
         </div>
@@ -104,7 +105,9 @@ import { useAgendamentos } from 'src/scripts/agendamentos'
 const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
+
 const agendamento = ref(null)
+const loading = ref(true)
 
 const {
   buscarAgendamentoPorId,
@@ -113,44 +116,76 @@ const {
   calcularHorarioFim
 } = useAgendamentos()
 
+/* =========================
+ * CARREGAMENTO
+ * ========================= */
 onMounted(async () => {
-  agendamento.value = await buscarAgendamentoPorId(route.params.id)
+  loading.value = true
+
+  try {
+    agendamento.value = await buscarAgendamentoPorId(route.params.id)
+  } finally {
+    loading.value = false
+  }
 })
 
+/* =========================
+ * RESPONSIVO
+ * ========================= */
 const containerClass = computed(() =>
   $q.screen.lt.md ? 'container-mobile' : 'container-desktop'
 )
 
-const horarioInicio = computed(() => {
-  if (!agendamento.value) return ''
-  const d = new Date(agendamento.value.data_horario)
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-})
+/* =========================
+ * HORÁRIOS
+ * ========================= */
+
 
 const horarioFim = computed(() => {
-  if (!agendamento.value) return ''
-  return calcularHorarioFim(
-    agendamento.value.data_horario,
-    agendamento.value.servico.duracao_minutos
-  )
-})
+  if (!agendamento.value) return '';
 
+  // extrai horas e minutos da string "2026-01-13T09:00:00"
+  const [horaStr, minStr] = agendamento.value.data_horario
+    .split(' ')[1] // pega só "09:00:00"
+    .split(':');   // separa ["09", "00", "00"]
+
+  const inicioMinutos = parseInt(horaStr) * 60 + parseInt(minStr);
+
+  // agora passa para a sua função do jeito que ela está
+  return calcularHorarioFim(inicioMinutos, agendamento.value.servico.duracao_minutos);
+});
+
+console.log('horarioFim =', horarioFim.value);
+
+
+/* =========================
+ * DATA FORMATADA
+ * ========================= */
 const dataFormatada = computed(() => {
   if (!agendamento.value) return ''
-  const d = new Date(agendamento.value.data_horario)
+
+  const d = new Date(agendamento.value.data_horario.replace(' ', 'T'))
+
   return d.toLocaleDateString('pt-BR', {
-    weekday: 'short',
+    weekday: 'long',
     day: '2-digit',
     month: 'short',
     year: 'numeric'
   })
 })
 
+/* =========================
+ * AÇÃO
+ * ========================= */
 const cancelar = async () => {
-  await cancelarAgendamento(agendamento.value)
+  if (!agendamento.value?.id) return
+
+  await cancelarAgendamento(agendamento.value.id)
+
   router.back()
 }
 </script>
+
 
 <style scoped>
 .container-mobile {
@@ -173,5 +208,9 @@ const cancelar = async () => {
     transparent 16px
   );
   border-radius: 2px;
+}
+.inter-semibold {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
 }
 </style>

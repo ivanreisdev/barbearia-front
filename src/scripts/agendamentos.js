@@ -375,6 +375,8 @@ const buscarAgendamentoPorId = async (id) => {
     }
   }
   function calcularHorarioFim(horaInicio, duracaoMinutos) {
+
+    console.log('calcularHorarioFim chamado com:', horaInicio, duracaoMinutos)
     // agora recebe minutos desde meia-noite (ex: 9:45 -> 9*60 + 45 = 585)
     const inicioMinutos = horaInicio
     const fimMinutos = inicioMinutos + duracaoMinutos
@@ -455,11 +457,11 @@ const abrirModalAgendamento = (item) => {
   modalAgendamento.value = true
 }
 
-const cancelarAgendamento = () => {
+const cancelarAgendamento = (id = null) => {
   const payload = {
-    agendamentoId: agendamentoSelecionado.value.ag.id,
-    }
-    api.post('/agendamentos/cancelarAgendamento', payload)
+    agendamentoId: id !== null ? id : agendamentoSelecionado.value.ag.id
+  }
+      api.post('/agendamentos/cancelarAgendamento', payload)
 
     .then((res) => {
       if (res.data?.success) {
@@ -484,6 +486,8 @@ const cancelarAgendamento = () => {
       })
     })
 }
+
+
 const irParaDetalheAgendamento = (id) => {
   router.push(`/agendamentos/${id}`)
 }
