@@ -52,6 +52,66 @@
             </q-card-section>
         </q-card>
 
+        <!-- Serviços -->
+ <!-- SERVIÇOS -->
+<!-- SERVIÇOS -->
+<div class="q-mt-xl servicos-section">
+  <div class="text-subtitle1 q-mb-md">Serviços</div>
+
+  <div class="servicos-wrapper">
+    <!-- Botão esquerda (desktop) -->
+    <q-btn
+      flat
+      round
+      dense
+      icon="chevron_left"
+      class="scroll-btn left"
+      @click="scrollServicos(-1)"
+    />
+
+    <!-- Lista horizontal -->
+    <div ref="servicosContainer" class="servicos-container">
+      <q-card
+        v-for="servico in servicos"
+        :key="servico.id"
+        class="servico-card"
+        flat
+        bordered
+      >
+        <q-card-section class="text-center">
+          <div class="text-subtitle2">{{ servico.nome }}</div>
+          <div class="text-caption text-grey">
+            R$ {{ servico.preco }}
+          </div>
+        </q-card-section>
+      </q-card>
+
+      <!-- Adicionar -->
+      <q-card
+        class="servico-card add-card flex flex-center"
+        flat
+        bordered
+        @click="adicionarServico"
+      >
+        <q-icon name="add" size="32px" color="primary" />
+      </q-card>
+    </div>
+
+    <!-- Botão direita -->
+    <q-btn
+      flat
+      round
+      dense
+      icon="chevron_right"
+      class="scroll-btn right"
+      @click="scrollServicos(1)"
+    />
+  </div>
+</div>
+
+
+
+
         <!-- Botão salvar -->
         <div class="row justify-end q-mt-xl">
             <q-btn color="primary" icon="save" label="Salvar Configurações" @click="salvarConfiguracoes" />
@@ -62,138 +122,24 @@
 
 <script setup>
 import BotaoVoltar from 'components/BotaoVoltar.vue'
-import { ref, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import { api } from 'boot/axios'
-
-const $q = useQuasar()
-
-// Dias da semana dinâmicos
-const diasSemana = ref([])
-
-// Informações da barbearia
-const barbearia = ref({
-    nome: '',
-    telefone: '',
-    endereco: '',
-    id: null,
-})
-
-// Labels e mapeamento fixo
-const labels = [
-    { key: 'domingo', label: 'Domingo', dia_semana: 1 },
-    { key: 'segunda', label: 'Segunda-feira', dia_semana: 2 },
-    { key: 'terca', label: 'Terça-feira', dia_semana: 3 },
-    { key: 'quarta', label: 'Quarta-feira', dia_semana: 4 },
-    { key: 'quinta', label: 'Quinta-feira', dia_semana: 5 },
-    { key: 'sexta', label: 'Sexta-feira', dia_semana: 6 },
-    { key: 'sabado', label: 'Sábado', dia_semana: 7 }
-]
-
-// --- Função de salvar
-const salvarConfiguracoes = async () => {
-    try {
-        const horarios = diasSemana.value.map(dia => ({
-            dia_semana: dia.dia_semana,
-            ativo: dia.ativo ? 1 : 0,
-            inicio: dia.inicio + ':00',
-            almoco_inicio: dia.almocoInicio ? dia.almocoInicio + ':00' : null,
-            almoco_fim: dia.almocoFim ? dia.almocoFim + ':00' : null,
-            fim: dia.fim + ':00'
-        }))
-
-        const payload = {
-            horarios,
-            dadosBarbearia: {
-                nome: barbearia.value.nome,
-                telefone: barbearia.value.telefone,
-                endereco: barbearia.value.endereco,
-                id: barbearia.value.id
-            }
-        }
-
-
-        const response = await api.post('/horarios-atendimento/atualizarHorariosDeFuncionamento', payload)
-
-        $q.notify({
-            type: 'positive',
-            message: 'Configurações salvas com sucesso!',
-            position: 'top',
-            icon: 'check_circle',
-            timeout: 2500
-        })
-
-        console.log('Resposta da API:', response.data)
-    } catch (error) {
-        console.error('Erro ao salvar configurações:', error)
-        $q.notify({
-            type: 'negative',
-            message: 'Erro ao salvar configurações',
-            position: 'top',
-            icon: 'error',
-            timeout: 3000
-        })
-    }
-}
-
-// --- Buscar horários da API e gerar diasSemana dinamicamente
-const buscarHorarios = async () => {
-    try {
-        const response = await api.get('/horarios-atendimento/buscarHorariosAtendimentos')
-        const dados = response.data
-
-        // Cria um map para garantir que só exista um registro por dia_semana
-        const diasMap = {}
-        dados.forEach(item => {
-            diasMap[item.dia_semana] = item
-        })
-
-        // Monta o array diasSemana seguindo a ordem fixa de labels
-        diasSemana.value = labels.map(l => {
-            const item = diasMap[l.dia_semana] || {}
-            return {
-                key: l.key,
-                label: l.label,
-                dia_semana: l.dia_semana,
-                ativo: item.ativo === 1 || false,
-                inicio: item.inicio ? item.inicio.slice(0, 5) : '09:00',
-                almocoInicio: item.almoco_inicio ? item.almoco_inicio.slice(0, 5) : '',
-                almocoFim: item.almoco_fim ? item.almoco_fim.slice(0, 5) : '',
-                fim: item.fim ? item.fim.slice(0, 5) : '18:00'
-            }
-        })
-
-        console.log('Dias da semana carregados da API:', diasSemana.value)
-    } catch (error) {
-        console.error('Erro ao buscar horários:', error)
-        $q.notify({ type: 'negative', message: 'Erro ao carregar horários da barbearia' })
-    }
-}
-
-// --- Buscar informações da barbearia
-const buscarBarbearia = async () => {
-    try {
-        const res = await api.get('/barbearia/info') // ajuste sua rota
-        const dados = res.data
-        console.log('Dados da barbearia:', dados)
-        barbearia.value.nome = dados.barbearia.nome || ''
-        barbearia.value.telefone = dados.barbearia.telefone || ''
-        barbearia.value.endereco = dados.barbearia.endereco || ''
-        barbearia.value.id = dados.barbearia.id || null
-    } catch (e) {
-        console.warn('Erro ao buscar informações da barbearia', e)
-        $q.notify({ type: 'negative', message: 'Erro ao carregar informações da barbearia' })
-    }
-}
-
-// --- Executar ao montar
-onMounted(() => {
-    buscarHorarios()
-    buscarBarbearia()
-})
+import { useConfiguracoesBarbearia } from '../config/scripts/configuracoesBarbearia.js'
+const {
+  diasSemana,
+  barbearia,
+  servicosContainer,
+  servicos,
+  scrollServicos,
+  adicionarServico,
+  salvarConfiguracoes
+} = useConfiguracoesBarbearia()
 </script>
 
 
 
 
-<style scoped></style>
+<style scoped>
+ /* 🔒 BLOQUEIA SCROLL GLOBAL */
+
+
+</style>
+

@@ -47,6 +47,15 @@ const routes = [
       {
         path: 'config/barbearia',
         component: () => import('pages/config/BarbeariaPage.vue')
+      },
+      {
+        path: 'config/servicos',
+        component: () => import('pages/config/ServicosPage.vue')
+      },
+      {
+        path: 'servicosCreate/:barbeariaId',
+        name: 'servicos-create',
+        component: () => import('pages/ServicosCreatePage.vue')
       }
     ]
   }

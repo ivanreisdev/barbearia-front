@@ -148,18 +148,29 @@
         </div>
 
         <!-- SLIDER -->
-        <div class="swipe-container">
-  <div class="swipe-track">
-    <div
-      class="swipe-thumb"
-      :style="{ transform: `translateX(${swipeX}px)` }"
-      @mousedown="startSwipe"
-      @touchstart="startSwipe"
-    >
-      <q-icon name="arrow_forward" size="24px" />
-    </div>
+         <div class="row justify-center q-mt-md">
 
-    <span class="swipe-text">Deslize para direita</span>
+        <div class="swipe-container">
+  <!-- TRACK QUE PREENCHE -->
+  <div
+    class="swipe-fill"
+    :style="{ width: fillPercent + '%' }"
+  ></div>
+
+  <!-- TEXTO -->
+  <span class="swipe-text">
+    Deslize para a direita
+  </span>
+
+  <!-- BOTÃO -->
+  <div
+    class="swipe-thumb"
+    :style="{ transform: `translateX(${swipeX}px)` }"
+    @mousedown="startSwipe"
+    @touchstart="startSwipe"
+  >
+    <q-icon name="chevron_right" size="26px" color="negative" />
+
   </div>
 </div>
 
@@ -168,12 +179,8 @@
 
     </div>
   </div>
+  </div>
 </q-dialog>
-
-
-
-
-
 
 </div>
 
@@ -200,6 +207,10 @@ const maxSwipe = 260
 let startX = 0
 let dragging = false
 
+const fillPercent = computed(() => {
+  return Math.min((swipeX.value / maxSwipe) * 100, 100)
+})
+
 const startSwipe = (e) => {
   dragging = true
   startX = e.touches ? e.touches[0].clientX : e.clientX
@@ -213,10 +224,10 @@ const startSwipe = (e) => {
 const moveSwipe = (e) => {
   if (!dragging) return
 
-  const currentX = e.touches ? e.touches[0].clientX : e.clientX
-  const diff = currentX - startX
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX
+  let delta = clientX - startX
 
-  swipeX.value = Math.max(0, Math.min(diff, maxSwipe))
+  swipeX.value = Math.max(0, Math.min(delta, maxSwipe))
 }
 
 const endSwipe = () => {
@@ -436,6 +447,55 @@ const cancelar = async () => {
   justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease;
+}
+.swipe-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 52px;
+  background: #4b4f56;
+  border-radius: 26px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.swipe-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #d32f2f, #ff5252);
+  border-radius: 26px;
+  transition: width 0.1s linear;
+}
+
+.swipe-text {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.swipe-thumb {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 </style>

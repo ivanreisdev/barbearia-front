@@ -119,7 +119,7 @@ const router = useRouter()
     }
 
     try {
-      const res = await api.get('/servicos/buscarServicos')
+      const res = await api.get('/servicos/buscarServicosPorBarbeariaId')
       servicos.value = res.data
       // limpa horários disponíveis ao abrir modal
       horariosDisponiveis.value = []
