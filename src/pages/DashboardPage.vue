@@ -351,8 +351,9 @@ function toggleTheme() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  align-items: start;
+  align-items: stretch; /* 🔥 ESSENCIAL */
 }
+
 
 .card-renda {
   border-radius: 16px !important;
@@ -361,12 +362,16 @@ function toggleTheme() {
 }
 
 /* Card do dia */
-.card-renda-dia {
+.card-renda {
   border-radius: 16px !important;
-  background: linear-gradient(144deg, #777777, #494949);
-  /* laranja */
-  color: white;
+  padding: 16px;
+  min-height: 96px;
+  height: 100%;        /* 🔥 */
+  display: flex;       /* 🔥 */
+  flex-direction: column;
+  justify-content: space-between; /* 🔥 distribui conteúdo */
 }
+
 
 .card-dia {
   background: #2b2b2b;
@@ -455,4 +460,14 @@ function toggleTheme() {
   font-size: 16px;
   /* desktop */
 }
+@media (max-width: 600px) {
+  .cards-renda-container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .card-renda {
+    min-height: 120px; /* opcional */
+  }
+}
+
 </style>

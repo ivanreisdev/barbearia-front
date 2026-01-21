@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    
+
     <!-- Lista de Agendamentos por hora -->
     <div class="agenda-container">
       <div
@@ -145,11 +145,11 @@
               </div>
             </div>
 
-            <q-toggle
+            <!-- <q-toggle
               v-model="novoAgendamento.repetir"
               label="Repetir este agendamento"
               color="primary"
-            />
+            /> -->
           </q-card-section>
 
           <!-- BOTÃO -->
