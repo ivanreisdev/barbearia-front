@@ -98,8 +98,11 @@ const buscarServicos = async () => {
   }
 }
 
-
-
+const editarServicos = () => {
+    router.push({
+      name: 'servicos-page',
+    })
+  }
 
   const salvarConfiguracoes = async () => {
     try {
@@ -142,6 +145,8 @@ const buscarServicos = async () => {
     servicos,
     // scrollServicos,
     buscarServicos,
+    editarServicos,
+
     adicionarServico
   }
 }

@@ -60,8 +60,8 @@
       <div class="row items-center justify-between q-mb-md">
         <div class="text-caption text-grey-5">SERVIÇOS</div>
 
-        <div class="text-caption text-orange">
-          EDITAR
+        <div class="text-caption text-orange" @click="editarServicos">
+          GERENCIAR
         </div>
       </div>
 
@@ -120,7 +120,8 @@ const {
   barbearia,
   servicos,
   adicionarServico,
-  salvarConfiguracoes
+  salvarConfiguracoes,
+  editarServicos
 } = useConfiguracoesBarbearia()
 </script>
 

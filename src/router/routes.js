@@ -50,6 +50,7 @@ const routes = [
       },
       {
         path: 'config/servicos',
+        name: 'servicos-page',
         component: () => import('pages/config/ServicosPage.vue')
       },
       {
