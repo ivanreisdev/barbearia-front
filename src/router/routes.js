@@ -57,19 +57,19 @@ const routes = [
         path: 'servicosCreate/:barbeariaId',
         name: 'servicos-create',
         component: () => import('pages/ServicosCreatePage.vue')
-      },
-      {
-        path: 'servicosUpdate/:servicoId',
-        name: 'servicos-update',
-        component: () => import('pages/ServicosUpdatePage.vue'),
-        props: true
-      },
-      {
-        path: 'servicosDelete/:servicoId',
-        name: 'servicos-delete',
-        component: () => import('pages/ServicosDeletePage.vue'),
-        props: true
       }
+      // {
+      //   path: 'servicosUpdate/:servicoId',
+      //   name: 'servicos-update',
+      //   component: () => import('pages/ServicosUpdatePage.vue'),
+      //   props: true
+      // },
+      // {
+      //   path: 'servicosDelete/:servicoId',
+      //   name: 'servicos-delete',
+      //   component: () => import('pages/ServicosDeletePage.vue'),
+      //   props: true
+      // }
     ]
   }
 ]

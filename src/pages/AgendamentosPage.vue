@@ -1,10 +1,6 @@
 <template>
   <q-page padding>
-    <!-- Cabeçalho -->
-    <div class="row justify-between items-center q-mb-lg">
-      <h4 :class="$q.dark.isActive ? 'text-white' : 'text-dark'">Agendamentos do dia</h4>
-    </div>
-
+    
     <!-- Lista de Agendamentos por hora -->
     <div class="agenda-container">
       <div
