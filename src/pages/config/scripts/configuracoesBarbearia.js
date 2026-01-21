@@ -2,8 +2,10 @@ import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
+
 export const useConfiguracoesBarbearia = () => {
   const $q = useQuasar()
+  const router = useRouter()
 
   const diasSemana = ref([])
 
@@ -13,35 +15,22 @@ export const useConfiguracoesBarbearia = () => {
     endereco: '',
     id: null
   })
-  const router = useRouter()
 
-
-
-const servicosContainer = ref(null)
+  const adicionarServico = () => {
+    router.push({
+      name: 'servicos-create',
+      params: {
+        barbeariaId: barbearia.value.id
+      }
+    })
+  }
 
 const servicos = ref([
   { id: null,
     nome: '',
     preco: '' }
 ])
-
-const scrollServicos = (direcao) => {
-  const el = servicosContainer.value
-  if (!el) return
-  el.scrollLeft += direcao * 220
-}
-
-const adicionarServico = () => {
-  router.push({
-    name: 'servicos-create',
-    params: {
-      barbeariaId: barbearia.value.id
-    }
-  })
-}
-
-
-
+console.log('servicos ref', servicos);
   const labels = [
     { key: 'domingo', label: 'Domingo', dia_semana: 1 },
     { key: 'segunda', label: 'Segunda-feira', dia_semana: 2 },
@@ -149,9 +138,9 @@ const buscarServicos = async () => {
     diasSemana,
     barbearia,
     salvarConfiguracoes,
-    servicosContainer,
+    // servicosContainer,
     servicos,
-    scrollServicos,
+    // scrollServicos,
     buscarServicos,
     adicionarServico
   }
