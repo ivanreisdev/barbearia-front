@@ -3,10 +3,7 @@
     <q-toolbar class="dashboard-toolbar q-mb-md">
       <!-- LADO ESQUERDO: Avatar + texto -->
       <div class="row items-center header-left">
-        <q-avatar
-          size="56"
-          style="background: linear-gradient(144deg, #777777, #494949); color: white"
-        >
+        <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white">
           {{ auth.user && auth.user.name ? auth.user.name.charAt(0) : 'U' }}
         </q-avatar>
 
@@ -29,25 +26,19 @@
       <!-- LADO DIREITO: Ações -->
       <div class="row items-center q-gutter-sm">
         <q-btn flat dense round icon="menu" @click="abrirMenu" />
-        <q-btn
-          flat
-          dense
-          round
-          :icon="isDark ? 'dark_mode' : 'light_mode'"
-          @click="toggleTheme"
-          v-show="false"
-          disabled
-        />
+        <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
+          disabled />
       </div>
     </q-toolbar>
 
-    <div class="dashboard-header row items-center q-mb-md justify-between">
+    <div class="dashboard-header row items-center q-mb-md justify-between no-wrap">
       <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
         <div class="week-range q-px-md row items-center no-wrap">
           <q-icon name="calendar_today" class="q-mr-sm text-h6 week-icon" aria-hidden="true" />
-          <div class="text-h6">
+          <div class="text-h6 week-text">
             {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
           </div>
+
         </div>
       </div>
 
@@ -59,15 +50,10 @@
 
     <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
     <div class="row q-gutter-sm q-mb-lg">
-      <q-card
-        v-for="(day, index) in diasDaSemana"
-        :key="index"
-        clickable
-        @click="selecionarDia(index)"
+      <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
         class="q-pa-sm text-center cursor-pointer card-dia"
         :class="{ 'card-dia-selecionado': diaSelecionado === index }"
-        style="flex: 1 1 0; min-width: 0; border-radius: 12px"
-      >
+        style="flex: 1 1 0; min-width: 0; border-radius: 12px">
         <div class="text-caption">{{ day.label }}</div>
         <div class="text-h6 q-mt-xs">{{ day.number }}</div>
       </q-card>
@@ -113,11 +99,8 @@
       </q-card>
     </div>
 
-    <AgendamentosPage
-      :data-selecionada="dataSelecionada"
-      :dias-da-semana="diasDaSemana"
-      :dia-selecionado="diaSelecionado"
-    />
+    <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
+      :dia-selecionado="diaSelecionado" />
   </q-page>
 </template>
 
@@ -449,5 +432,27 @@ function toggleTheme() {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.dashboard-header {
+  flex-wrap: nowrap;
+}
+
+.week-display {
+  min-width: 0;
+  /* evita overflow estranho */
+}
+
+.week-range {
+  white-space: nowrap;
+}
+
+.week-actions {
+  flex-shrink: 0;
+}
+
+.week-text {
+  font-size: 16px;
+  /* desktop */
 }
 </style>
