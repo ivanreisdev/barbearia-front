@@ -123,20 +123,34 @@
             <div class="servico-info text-center q-gutter-lg">
 
               <!-- Nome -->
+
               <div class="text-h6 text-weight-medium servico-nome-delete">
                 {{ servicoSelecionado?.nome }}
               </div>
 
               <!-- Infos -->
-              <div class="row items-center justify-center q-gutter-md info-servico">
-                <span class="chip-info servico-duracao">
-                  {{ servicoSelecionado?.duracao }}
-                </span>
+              <div class="row justify-center q-gutter-lg info-servico">
 
-                <span class="chip-info preco">
-                  {{ servicoSelecionado?.preco }}
-                </span>
+                <div class="info-item">
+                  <div class="subtitulo-exclusao">
+                    Duração
+                  </div>
+                  <span class="chip-info servico-duracao">
+                    {{ servicoSelecionado?.duracao }}
+                  </span>
+                </div>
+
+                <div class="info-item">
+                  <div class="subtitulo-exclusao">
+                    Valor
+                  </div>
+                  <span class="chip-info preco">
+                    {{ servicoSelecionado?.preco }}
+                  </span>
+                </div>
+
               </div>
+
 
               <!-- Texto -->
               <div class="q-mt-xl text-caption opacity-8 texto-deslize">
@@ -682,4 +696,11 @@ header-subtitulo {
 .modal-content {
   padding: 24px;
 }
+.info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 </style>
