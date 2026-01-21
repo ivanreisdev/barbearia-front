@@ -1,163 +1,226 @@
 <!-- Cabeçalho -->
 <template>
-  <q-page class="q-pa-lg bg-dark">
+  <q-page class="q-pa-lg bg-dark relative-position">
 
-    <!-- Header -->
-    <div class="row items-center q-mb-md">
-      <q-btn flat round icon="arrow_back" @click="$router.back()" />
-    </div>
+    <!-- LOADING -->
+    <q-inner-loading :showing="loading">
+      <q-spinner-dots size="40px" color="orange" />
+    </q-inner-loading>
+    <div v-if="!loading">
+      <!-- Header -->
 
-    <div class="text-h6 text-white q-mb-xs text-center">
-      Serviços
-    </div>
+      <div class="row items-center q-mb-md">
+        <q-btn flat round icon="arrow_back" @click="$router.back()" />
+      </div>
 
-    <div class="text-caption text-grey-5 q-mb-lg text-center">
-      Cadastre e edite os serviços fornecidos pela empresa
-    </div>
+      <div class="text-h6 text-white q-mb-xs text-center">
+        Serviços
+      </div>
 
-    <!-- INSERIR NOVO SERVIÇO -->
-    <div class="text-caption text-grey-6 q-mb-sm">
-      INSERIR UM NOVO SERVIÇO
-    </div>
-    <q-card class="q-mb-xl novo-servico-card">
-      <q-card-section>
+      <div class="text-caption text-grey-5 q-mb-lg text-center">
+        Cadastre e edite os serviços fornecidos pela empresa
+      </div>
 
-        <div class="text-caption text-grey-6 q-mb-sm">
-          NOME DO SERVIÇO
-        </div>
-        <q-input dense dark filled placeholder="EX: Corte Social" class="input-dark q-mb-md" v-model="form.nome" />
+      <!-- INSERIR NOVO SERVIÇO -->
+      <div class="text-caption text-grey-6 q-mb-sm">
+        INSERIR UM NOVO SERVIÇO
+      </div>
+      <q-card class="q-mb-xl novo-servico-card">
+        <q-card-section>
 
-        <div class="row q-col-gutter-sm q-mb-md">
-          <div class="col-6">
-            <div class="text-caption text-grey-6 q-mb-sm">
-              DURAÇÃO (min)
+          <div class="text-caption text-grey-6 q-mb-sm">
+            NOME DO SERVIÇO
+          </div>
+          <q-input dense dark filled placeholder="EX: Corte Social" class="input-dark q-mb-md" v-model="form.nome" />
+
+          <div class="row q-col-gutter-sm q-mb-md">
+            <div class="col-6">
+              <div class="text-caption text-grey-6 q-mb-sm">
+                DURAÇÃO (min)
+              </div>
+              <q-input dense dark filled type="number" placeholder="Duração (min)" class="input-dark"
+                v-model="form.duracao" />
             </div>
-            <q-input dense dark filled type="number" placeholder="Duração (min)" class="input-dark"
-              v-model="form.duracao" />
+
+            <div class="col-6">
+              <div class="text-caption text-grey-6 q-mb-sm">
+                PREÇO
+              </div>
+              <q-input dense dark filled prefix="R$" placeholder=" 0,00" class="input-dark" v-model="form.preco"
+                mask="#,##" reverse-fill-mask />
+            </div>
           </div>
 
-          <div class="col-6">
-            <div class="text-caption text-grey-6 q-mb-sm">
-              PREÇO
+          <!-- Botão -->
+          <q-btn label="ADICIONAR À LISTA" unelevated class="full-width btn-add-servico" size="md" @click="salvar" />
+
+        </q-card-section>
+      </q-card>
+
+      <div class="text-caption text-grey-6 q-mb-sm">
+        LISTA DE SERVIÇOS
+      </div>
+
+      <q-list class="servicos-list">
+
+        <q-item v-for="servico in servicos" :key="servico.id" clickable class="servico-card q-mb-sm">
+
+          <!-- Ícone -->
+          <q-item-section avatar>
+            <div class="icon-wrapper">
+              <q-icon name="content_cut" size="20px" color="orange-4" />
             </div>
-            <q-input dense dark filled prefix="R$" placeholder=" 0,00" class="input-dark" v-model="form.preco"
-              mask="#,##" reverse-fill-mask />
-          </div>
-        </div>
+          </q-item-section>
 
-        <!-- Botão -->
-        <q-btn label="ADICIONAR À LISTA" unelevated class="full-width btn-add-servico" size="md" @click="salvar" />
+          <!-- Infos -->
+          <q-item-section>
+            <q-item-label class="servico-nome">
+              {{ servico.nome }}
+            </q-item-label>
 
-      </q-card-section>
-    </q-card>
- 
-    <div class="text-caption text-grey-6 q-mb-sm">
-      LISTA DE SERVIÇOS
-    </div>
-
-    <q-list class="servicos-list">
-
-      <q-item v-for="servico in servicos" :key="servico.id" clickable class="servico-card q-mb-sm">
-
-        <!-- Ícone -->
-        <q-item-section avatar>
-          <div class="icon-wrapper">
-            <q-icon name="content_cut" size="20px" color="orange-4" />
-          </div>
-        </q-item-section>
-
-        <!-- Infos -->
-        <q-item-section>
-          <q-item-label class="servico-nome">
-            {{ servico.nome }}
-          </q-item-label>
-
-          <div class="row items-center q-gutter-sm servico-info">
-            <span>{{ servico.duracao }}</span>
-            <span>•</span>
-            <span>{{ servico.preco }}</span>
-          </div>
-        </q-item-section>
-
-        <!-- Ações -->
-        <q-item-section side>
-          <div class="row items-center q-gutter-xs">
-            <q-btn flat round dense icon="edit" color="grey-5" class="iconeEdiçao"
-              @click.stop="editarServico(servico)" />
-            <q-btn flat round dense icon="delete" color="grey-5" class="iconeDelete"
-              @click="abrirModalExcluir(servico)" />
-          </div>
-        </q-item-section>
-
-      </q-item>
-    </q-list>
-
-    <!-- MODAL Excluir serviço -->
-    <q-dialog v-model="modalExcluir" maximized persistent>
-      <div class="modal-excluir-servico">
-
-        <!-- HEADER -->
-        <div class="header-exclusao">
-          <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
-            @click="fecharModalExcluir" />
-
-          <div class="header-content text-white">
-            <div class="titulo-exclusao">
-              Excluir serviço
+            <div class="row items-center q-gutter-sm servico-info">
+              <span>{{ servico.duracao }}</span>
+              <span>•</span>
+              <span>{{ servico.preco }}</span>
             </div>
-            <div class="subtitulo-exclusao">
-              Essa ação não poderá ser desfeita
+          </q-item-section>
+
+          <!-- Ações -->
+          <q-item-section side>
+            <div class="row items-center q-gutter-xs">
+              <q-btn flat round dense icon="edit" color="grey-5" class="iconeEdiçao"
+                @click="AbrirModaleditarServico(servico)" />
+              <q-btn flat round dense icon="delete" color="grey-5" class="iconeDelete"
+                @click="abrirModalExcluir(servico)" />
+            </div>
+          </q-item-section>
+
+        </q-item>
+      </q-list>
+
+      <!-- MODAL Excluir serviço -->
+      <q-dialog v-model="modalExcluir" maximized persistent>
+        <div class="modal-excluir-servico">
+
+          <!-- HEADER -->
+          <div class="header-exclusao">
+            <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
+              @click="fecharModalExcluir" />
+
+            <div class="header-content text-white">
+              <div class="titulo-exclusao">
+                Excluir serviço
+              </div>
+              <div class="subtitulo-exclusao">
+                Essa ação não poderá ser desfeita
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- BODY -->
-        <div class="modal-body">
+          <!-- BODY -->
+          <div class="modal-body">
 
-          <div class="servico-info text-center q-gutter-lg">
+            <div class="servico-info text-center q-gutter-lg">
 
-            <!-- Nome -->
-            <div class="text-h6 text-weight-medium servico-nome-delete">
-              {{ servicoSelecionado?.nome }}
-            </div>
+              <!-- Nome -->
+              <div class="text-h6 text-weight-medium servico-nome-delete">
+                {{ servicoSelecionado?.nome }}
+              </div>
 
-            <!-- Infos -->
-            <div class="row items-center justify-center q-gutter-md info-servico">
-              <span class="chip-info servico-duracao">
-                {{ servicoSelecionado?.duracao }}
-              </span>
-
-              <span class="chip-info preco">
-                {{ servicoSelecionado?.preco }}
-              </span>
-            </div>
-
-            <!-- Texto -->
-            <div class="q-mt-xl text-caption opacity-8 texto-deslize">
-              Deslize para confirmar a exclusão
-            </div>
-
-            <!-- SLIDER -->
-            <div class="row justify-center q-mt-md">
-              <div class="swipe-container">
-
-                <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
-
-                <span class="swipe-text">
-                  Deslize para a direita
+              <!-- Infos -->
+              <div class="row items-center justify-center q-gutter-md info-servico">
+                <span class="chip-info servico-duracao">
+                  {{ servicoSelecionado?.duracao }}
                 </span>
 
-                <div class="swipe-thumb" :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="startSwipe"
-                  @touchstart="startSwipe">
-                  <q-icon name="chevron_right" size="26px" color="negative" />
-                </div>
+                <span class="chip-info preco">
+                  {{ servicoSelecionado?.preco }}
+                </span>
+              </div>
 
+              <!-- Texto -->
+              <div class="q-mt-xl text-caption opacity-8 texto-deslize">
+                Deslize para confirmar a exclusão
+              </div>
+
+              <!-- SLIDER -->
+              <div class="row justify-center q-mt-md">
+                <div class="swipe-container">
+
+                  <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
+
+                  <span class="swipe-text">
+                    Deslize para a direita
+                  </span>
+
+                  <div class="swipe-thumb" :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="startSwipe"
+                    @touchstart="startSwipe">
+                    <q-icon name="chevron_right" size="26px" color="negative" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </q-dialog>
+      </q-dialog>
+
+
+      <!--  modal Editar -->
+      <q-dialog v-model="modalEditarServico" maximized persistent>
+        <!-- OVERLAY -->
+        <div class="modal-overlay">
+
+          <!-- MODAL CARD -->
+          <div class="modal-editar-servico">
+            <!-- HEADER -->
+            <div class="modal-header header-editar-servico">
+              <q-btn flat round icon="arrow_back" color="white" @click="fecharModalEditar" />
+
+              <div class="modal-title">
+                ATUALIZE SEU SERVIÇO
+              </div>
+
+              <!-- Spacer invisível para balancear -->
+              <div class="header-spacer"></div>
+
+            </div>
+            <!-- CONTEÚDO -->
+            <div class="modal-content">
+
+              <div class="text-caption text-grey-5 q-mb-sm">
+
+              </div>
+
+              <div class="text-caption text-grey-6 q-mb-sm">
+                NOME DO SERVIÇO
+              </div>
+
+              <q-input dense dark filled class="input-dark q-mb-md" v-model="servicoSelecionado.nome" />
+
+              <div class="row q-col-gutter-sm q-mb-md">
+                <div class="col-6">
+                  <div class="text-caption text-grey-6 q-mb-sm">
+                    DURAÇÃO (min)
+                  </div>
+                  <q-input dense dark filled type="number" v-model="servicoSelecionado.duracao" />
+                </div>
+
+                <div class="col-6">
+                  <div class="text-caption text-grey-6 q-mb-sm">
+                    PREÇO
+                  </div>
+                  <q-input dense dark filled prefix="R$" mask="#,##" reverse-fill-mask
+                    v-model="servicoSelecionado.preco" />
+                </div>
+              </div>
+
+              <q-btn label="ATUALIZAR SERVIÇO" unelevated class="full-width btn-add-servico" @click="atualizar" />
+
+            </div>
+          </div>
+        </div>
+      </q-dialog>
+    </div>
   </q-page>
 </template>
 
@@ -165,10 +228,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
+
 import 'src/css/servicos.css'
-import { useRouter } from 'vue-router'
-const router = useRouter()
+
 const $q = useQuasar()
+const loading = ref(true)
 
 const servicos = ref([
   {
@@ -178,10 +242,9 @@ const servicos = ref([
     duracao: ''
   }
 ])
-
 const servicoSelecionado = ref(null)
-
 const modalExcluir = ref(false)
+const modalEditarServico = ref(false)
 const swipeX = ref(0)
 const maxSwipe = 260
 let startX = 0
@@ -234,6 +297,16 @@ const abrirModalExcluir = (servico) => {
   swipeX.value = 0
   modalExcluir.value = true
 }
+const AbrirModaleditarServico = (servico) => {
+  servicoSelecionado.value = {
+    id: servico.id,
+    nome: servico.nome,
+    duracao: parseInt(servico.duracao),
+    preco: servico.preco.replace('R$', '').trim()
+  }
+
+  modalEditarServico.value = true
+}
 
 
 const fecharModalExcluir = () => {
@@ -242,7 +315,9 @@ const fecharModalExcluir = () => {
   modalExcluir.value = false
 }
 
-
+const fecharModalEditar = () => {
+  modalEditarServico.value = false
+}
 const buscarServicos = async () => {
   console.log(localStorage.getItem('user'));
   try {
@@ -267,17 +342,6 @@ const form = ref({
   duracao: null,
   preco: ''
 })
-
-const editarServico = (servico) => {
-  // Lógica para editar o serviço
-  router.push({
-    name: 'servicos-update',
-    params: {
-      servicoId: servico.id
-    }
-  })
-
-}
 
 const excluirServico = async (servico) => {
   try {
@@ -325,9 +389,46 @@ const salvar = async () => {
     })
   }
 }
-onMounted(() => {
-  buscarServicos()
+
+const atualizar = async () => {
+  if (!servicoSelecionado.value) return
+
+  try {
+    await api.put('/servicos/editarServico', {
+      id: servicoSelecionado.value.id,
+      nome: servicoSelecionado.value.nome,
+      duracao_minutos: servicoSelecionado.value.duracao,
+      preco: String(servicoSelecionado.value.preco).replace(',', '.')
+    })
+
+    $q.notify({
+      type: 'positive',
+      message: 'Serviço atualizado com sucesso!'
+    })
+
+    modalEditarServico.value = false
+    servicoSelecionado.value = null
+    buscarServicos()
+
+  } catch (error) {
+    console.error(error)
+    $q.notify({
+      type: 'negative',
+      message: 'Erro ao atualizar serviço'
+    })
+  }
+}
+
+onMounted(async () => {
+  loading.value = true
+
+  try {
+    await buscarServicos()
+  } finally {
+    loading.value = false
+  }
 })
+
 </script>
 <style scoped>
 .inter-semibold {
@@ -382,7 +483,6 @@ onMounted(() => {
   width: 100%;
   max-width: 420px;
 }
-
 
 .swipe-container {
   width: 100%;
@@ -523,9 +623,63 @@ header-subtitulo {
 }
 
 .btn-add-servico {
-  font-size: 0.30rem;
+  font-size: 0.90rem;
   padding: 15px;
   /* 12px */
   letter-spacing: 0.5px;
+}
+
+/* Overlay transparente */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  /* TRANSPARÊNCIA REAL */
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card do modal */
+.modal-editar-servico {
+  width: 100%;
+  max-width: 420px;
+  background: #121212;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+}
+
+.header-editar-servico {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+
+.modal-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.header-spacer {
+  width: 40px;
+  /* largura aproximada do botão */
+}
+
+/* Conteúdo */
+.modal-content {
+  padding: 24px;
 }
 </style>

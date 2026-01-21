@@ -8,6 +8,7 @@ export const useConfiguracoesBarbearia = () => {
   const router = useRouter()
 
   const diasSemana = ref([])
+  const loading = ref(true)
 
   const barbearia = ref({
     nome: '',
@@ -131,11 +132,20 @@ const editarServicos = () => {
     }
   }
 
-  onMounted(() => {
-    buscarHorarios()
-    buscarBarbearia()
-    buscarServicos()
-  })
+onMounted(async () => {
+  loading.value = true
+
+  try {
+    await Promise.all([
+      buscarHorarios(),
+      buscarBarbearia(),
+      buscarServicos()
+    ])
+  } finally {
+    loading.value = false
+  }
+})
+
 
   return {
     diasSemana,
@@ -146,6 +156,7 @@ const editarServicos = () => {
     // scrollServicos,
     buscarServicos,
     editarServicos,
+    loading,
 
     adicionarServico
   }
