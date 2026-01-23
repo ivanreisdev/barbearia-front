@@ -187,7 +187,7 @@
   top: 8px;
   right: 12px;
   font-size: 12px;
-  color: #666;
+  color: #918e8e;
 }
 .agenda-row {
   height: 300px; /* altura de 15 min */
@@ -352,9 +352,89 @@
 
 .agendamento-card {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-color: #2e2e2e;
 }
 
 .agendamento-card:hover {
   transform: scale(1.02);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+
+
+
+
+
+
+
+
+
+.floating-wrapper {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+}
+
+/* Cadeado */
+.btn-lock {
+  background: #e2dada;
+  width: 54px;
+  height: 54px;
+
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+
+  flex-shrink: 0;
+}
+
+/* Botão principal */
+.btn-main {
+  flex: 1; /* 👈 ocupa TODO o restante da largura */
+  height: 54px;
+
+  padding: 0 20px;
+  text-transform: none;
+  font-weight: 500;
+
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  background-color: #696969
+}
+
+.btn-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center; /* texto no centro */
+}
+
+.btn-text {
+  pointer-events: none;
+}
+
+.btn-arrow {
+  position: absolute;
+  right: 16px; /* distância da borda */
+}
+.slot-almoco {
+  display: flex;
+  align-items: center;      /* centro vertical */
+  justify-content: center;  /* centro horizontal */
+  gap: 8px;
+
+  width: 100%;
+  height: 100%;
+
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffb74d;
+    font-family: 'Inter', sans-serif;
 }

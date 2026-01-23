@@ -20,10 +20,8 @@
         </div>
       </div>
 
-      <!-- EMPURRA PARA A DIREITA -->
       <q-space />
 
-      <!-- LADO DIREITO: Ações -->
       <div class="row items-center q-gutter-sm">
         <q-btn flat dense round icon="menu" @click="abrirMenu" />
         <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
@@ -34,7 +32,7 @@
     <div class="dashboard-header row items-center q-mb-md justify-between no-wrap">
       <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
         <div class="week-range q-px-md row items-center no-wrap">
-          <q-icon name="calendar_today" class="q-mr-sm text-h6 week-icon" aria-hidden="true" />
+          <q-icon name="calendar_today" class="q-mr-sm text-h week-icon" aria-hidden="true" />
           <div class="text-h6 week-text">
             {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
           </div>
@@ -47,6 +45,7 @@
         <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
       </div>
     </div>
+    
 
     <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
     <div class="row q-gutter-sm q-mb-lg">
@@ -234,14 +233,15 @@ async function fetchReceitaDaSemana() {
   receitaDaSemana.value = 0
 
   try {
-    const start = toISODate(inicioDaSemana.value)
-    const end = toISODate(fimDeSemana.value)
+    const dataInicial = toISODate(inicioDaSemana.value);
+    const dataFinal = toISODate(fimDeSemana.value);
 
-    const res = await api.get('/revenues/week', {
-      params: { start, end },
+
+    const res = await api.get('/financeiro/buscarRendaSemanal', {
+      params: { dataInicial, dataFinal },
     })
 
-    receitaDaSemana.value = res.data?.week_total ?? res.data?.total ?? res.data?.value ?? 0
+    receitaDaSemana.value = res.data?.valorTotalSemana ?? res.data?.valorTotalSemana ?? res.data?.value ?? 0
   } catch (e) {
     console.warn('Erro ao buscar renda da semana', e)
     receitaDaSemana.value = 0
@@ -351,7 +351,8 @@ function toggleTheme() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  align-items: stretch; /* 🔥 ESSENCIAL */
+  align-items: stretch;
+  /* 🔥 ESSENCIAL */
 }
 
 
@@ -366,10 +367,13 @@ function toggleTheme() {
   border-radius: 16px !important;
   padding: 16px;
   min-height: 96px;
-  height: 100%;        /* 🔥 */
-  display: flex;       /* 🔥 */
+  height: 100%;
+  /* 🔥 */
+  display: flex;
+  /* 🔥 */
   flex-direction: column;
-  justify-content: space-between; /* 🔥 distribui conteúdo */
+  justify-content: space-between;
+  /* 🔥 distribui conteúdo */
 }
 
 
@@ -399,9 +403,9 @@ function toggleTheme() {
 /* Card da semana */
 .card-renda-semana {
   border-radius: 16px !important;
-  background: linear-gradient(135deg, #ffffff, #def5de);
+  /* background: linear-gradient(135deg, #ffffff, #def5de); */
   /* verde claro */
-  color: #3a3a3a;
+  color: #fffbfb;
 }
 
 /* Ícones brancos */
@@ -460,14 +464,20 @@ function toggleTheme() {
   font-size: 16px;
   /* desktop */
 }
+
 @media (max-width: 600px) {
   .cards-renda-container {
     grid-template-columns: 1fr 1fr;
   }
 
   .card-renda {
-    min-height: 120px; /* opcional */
+    min-height: 120px;
+    /* opcional */
   }
+}
+
+.card-renda-dia{
+  background-color: #777777;
 }
 
 </style>
