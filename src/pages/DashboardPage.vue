@@ -1,105 +1,122 @@
 <template>
-  <q-page padding>
-    <q-toolbar class="dashboard-toolbar q-mb-md">
-      <!-- LADO ESQUERDO: Avatar + texto -->
-      <div class="row items-center header-left">
-        <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white">
-          {{ auth.user && auth.user.name ? auth.user.name.charAt(0) : 'U' }}
-        </q-avatar>
+  <q-page>
 
-        <div class="user-info">
-          <div class="text-h6 user-name">
-            Olá,
-            <span class="user-name-bold">
-              {{ auth.user ? auth.user.name : 'Usuário' }}
-            </span>
+    <div class="header-dashboard">
+      <q-toolbar class="dashboard-toolbar q-mb-sm">
+        <!-- LADO ESQUERDO: Avatar + texto -->
+        <div class="row items-center header-left">
+          <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white">
+            {{ auth.user && auth.user.name ? auth.user.name.charAt(0) : 'U' }}
+          </q-avatar>
+
+          <div class="user-info">
+            <div class="text-h6 user-name">
+              Olá,
+              <span class="user-name-bold">
+                {{ auth.user ? auth.user.name : 'Usuário' }}
+              </span>
+            </div>
+            <div class="text-subtitle2 text-grey-6 texto-comun">
+              confira seus agendamentos
+            </div>
           </div>
-          <div class="text-subtitle2 text-grey-6">
-            Bem-vindo de volta — confira seus agendamentos
+        </div>
+
+        <q-space />
+
+        <div class="row items-center q-gutter-sm">
+          <q-btn flat dense round icon="menu" @click="abrirMenu" />
+          <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
+            disabled />
+        </div>
+      </q-toolbar>
+
+      <div class="dashboard-header row items-center q-mb-sm justify-between no-wrap">
+        <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
+          <div class="week-range q-px-md row items-center no-wrap">
+            <q-icon name="calendar_today" class="q-mr-sm text-h week-icon" aria-hidden="true" />
+            <div class="text-h6 week-text">
+              {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
+            </div>
+
           </div>
+        </div>
+
+        <div v-if="inicioDaSemana && fimDeSemana" class="week-actions row items-center q-pa-sm">
+          <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
+          <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
         </div>
       </div>
 
-      <q-space />
 
-      <div class="row items-center q-gutter-sm">
-        <q-btn flat dense round icon="menu" @click="abrirMenu" />
-        <q-btn flat dense round :icon="isDark ? 'dark_mode' : 'light_mode'" @click="toggleTheme" v-show="false"
-          disabled />
-      </div>
-    </q-toolbar>
-
-    <div class="dashboard-header row items-center q-mb-md justify-between no-wrap">
-      <div v-if="inicioDaSemana && fimDeSemana" class="week-display row items-center">
-        <div class="week-range q-px-md row items-center no-wrap">
-          <q-icon name="calendar_today" class="q-mr-sm text-h week-icon" aria-hidden="true" />
-          <div class="text-h6 week-text">
-            {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
-          </div>
-
-        </div>
-      </div>
-
-      <div v-if="inicioDaSemana && fimDeSemana" class="week-actions row items-center q-pa-sm">
-        <q-btn flat round dense icon="chevron_left" @click="voltarUmaSemana" class="chev-btn" />
-        <q-btn flat round dense icon="chevron_right" @click="avancarUmaSemana" class="chev-btn" />
+      <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
+      <div class="row q-gutter-xs q-mb-sm">
+        <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
+          class="q-pa-sm text-center cursor-pointer card-dia"
+          :class="{ 'card-dia-selecionado': diaSelecionado === index }"
+          style="flex: 1 1 0; min-width: 0; border-radius: 12px">
+          <div class="text-caption">{{ day.label }}</div>
+          <div class="text-h6 q-mt-xs">{{ day.number }}</div>
+        </q-card>
       </div>
     </div>
-    
-
-    <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
-    <div class="row q-gutter-sm q-mb-lg">
-      <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
-        class="q-pa-sm text-center cursor-pointer card-dia"
-        :class="{ 'card-dia-selecionado': diaSelecionado === index }"
-        style="flex: 1 1 0; min-width: 0; border-radius: 12px">
-        <div class="text-caption">{{ day.label }}</div>
-        <div class="text-h6 q-mt-xs">{{ day.number }}</div>
-      </q-card>
-    </div>
-
     <!-- 📊 CARDS DE RENDA -->
     <!-- 📊 CARDS DE RENDA -->
-    <div class="row q-mb-lg cards-renda-container">
+    <div class="row q-gutter-xs cards-renda-container">
       <!-- Renda do dia selecionado -->
-      <q-card class="q-pa-md q-mr-md card-renda-dia card-renda">
+      <q-card class="q-pa-md q-mr-xs card-renda-dia card-renda">
         <div class="row items-center justify-between">
           <div>
-            <div class="text-caption">Renda do dia</div>
-            <div class="text-h6 q-mt-xs">
+            <div class="dia-cards-renda">{{ buscarMesDia(dataSelecionada) }}</div>
+            <div class="valor-renda-cards q-mt-xs">
               <q-skeleton v-if="loadingDay" type="text" width="120px" />
               <span v-else>{{ formatoMoeda(diaDaReceita) }}</span>
             </div>
-          </div>
-
-          <q-icon name="today" class="text-h5" />
-        </div>
-
-        <div class="text-caption q-mt-sm">Data: {{ formatDate(dataSelecionada) }}</div>
-      </q-card>
-
-      <!-- Renda da semana -->
-      <q-card class="q-pa-md card-renda-semana card-renda">
-        <div class="row items-center justify-between">
-          <div>
-            <div class="text-caption">Renda (semana)</div>
-            <div class="text-h6 q-mt-xs">
-              <q-skeleton v-if="loadingWeek" type="text" width="120px" />
-              <span v-else>{{ formatoMoeda(receitaDaSemana) }}</span>
+            <div class="quantidade-agend-cards q-mt-xs">
+              <q-skeleton v-if="loadingDay" type="text" width="120px" />
+              <span v-else>{{ quantidadeAgendamentoDia }}</span>
             </div>
           </div>
 
-          <q-icon name="attach_money" class="text-h5" />
+          <!-- <q-icon name="today" class="text-h5" /> -->
         </div>
 
-        <div class="text-caption q-mt-sm">
-          {{ formatDate(inicioDaSemana) }} → {{ formatDate(fimDeSemana) }}
+        <!-- <div class="text-caption q-mt-sm">{{ buscarMesDia(dataSelecionada) }}</div> -->
+      </q-card>
+
+      <!-- Renda da semana -->
+      <q-card class="q-pa-xs card-renda-semana card-renda">
+        <div class="row items-center justify-between">
+          <div>
+            <div class="dia-cards-renda">{{ buscarMesDia(inicioDaSemana) }} à {{ buscarMesDia(fimDeSemana) }}</div>
+            <div class="valor-renda-cards q-mt-xs">
+              <q-skeleton v-if="loadingWeek" type="text" width="120px" />
+              <span v-else>{{ formatoMoeda(receitaDaSemana) }}</span>
+            </div>
+            <div class="quantidade-agend-cards q-mt-xs">
+              <q-skeleton v-if="loadingDay" type="text" width="120px" />
+              <span v-else>{{ quantidadeAgendamentoSemana }}</span>
+            </div>
+          </div>
+
+          <!-- <q-icon name="attach_money" class="text-h5" /> -->
         </div>
+
+        <!-- <div class="text-caption q-mt-sm">
+          {{ buscarMesDia(inicioDaSemana) }} à {{ buscarMesDia(fimDeSemana) }}
+        </div> -->
       </q-card>
     </div>
+    <br>
+    <br>
 
+
+
+    <!-- <div class="agendamentos-wrapper"> -->
     <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
       :dia-selecionado="diaSelecionado" />
+    <!-- </div> -->
+
   </q-page>
 </template>
 
@@ -132,6 +149,8 @@ const dataSelecionada = ref(null)
 // Estado de renda
 const diaDaReceita = ref(0)
 const receitaDaSemana = ref(0)
+const quantidadeAgendamentoDia = ref(0)
+const quantidadeAgendamentoSemana = ref(0)
 
 const loadingDay = ref(false)
 const loadingWeek = ref(false)
@@ -160,6 +179,14 @@ function formatDate(dt) {
   const mes = meses[d.getMonth()]
   const ano = d.getFullYear()
   return `${dia} ${mes} ${ano}`
+}
+
+function buscarMesDia(dt) {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const dia = String(d.getDate()).padStart(2, '0')
+  const mes = meses[d.getMonth()]
+  return `${dia} ${mes}`
 }
 
 function toISODate(dt) {
@@ -217,8 +244,10 @@ async function fetchDiaDaReceita() {
         usuario_id: auth.user.id,
       },
     })
+    console.log(res);
 
     diaDaReceita.value = res.data?.valorTotalDia ?? res.data?.total ?? 0
+    quantidadeAgendamentoDia.value = res.data?.quantidade_agendamentos ?? 0
   } catch (e) {
     console.warn('Erro ao buscar renda do dia', e)
     diaDaReceita.value = 0
@@ -242,6 +271,7 @@ async function fetchReceitaDaSemana() {
     })
 
     receitaDaSemana.value = res.data?.valorTotalSemana ?? res.data?.valorTotalSemana ?? res.data?.value ?? 0
+    quantidadeAgendamentoSemana.value = res.data?.quantidade_agendamentos ?? 0
   } catch (e) {
     console.warn('Erro ao buscar renda da semana', e)
     receitaDaSemana.value = 0
@@ -344,6 +374,7 @@ function toggleTheme() {
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  font-family: 'Inter', sans-serif;
 }
 
 .cards-renda-container {
@@ -402,11 +433,29 @@ function toggleTheme() {
 
 /* Card da semana */
 .card-renda-semana {
+  position: relative;
   border-radius: 16px !important;
-  /* background: linear-gradient(135deg, #ffffff, #def5de); */
-  /* verde claro */
   color: #fffbfb;
+  background-color: #1e1e1e;
+  overflow: hidden;
 }
+
+/* camada da imagem */
+.card-renda-semana::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url('/imgs/logoSemEscrita.png');
+  background-repeat: no-repeat;
+  background-position: right -20px bottom 5px;
+  background-size: 130px;
+
+  opacity: 0.20;
+  /* 🔥 aqui controla o "apagado" */
+  pointer-events: none;
+}
+
 
 /* Ícones brancos */
 .card-renda-dia .q-icon,
@@ -426,6 +475,8 @@ function toggleTheme() {
 
 .week-range .text-h6 {
   letter-spacing: 0.2px;
+  font-family: 'Inter', sans-serif;
+
 }
 
 .chev-btn {
@@ -476,8 +527,82 @@ function toggleTheme() {
   }
 }
 
-.card-renda-dia{
-  background-color: #777777;
+.card-renda-dia {
+  position: relative;
+  background-color: #9e9e9e;
+  color: rgb(34, 34, 34);
+  overflow: hidden;
 }
 
+/* imagem de fundo escurecida */
+.card-renda-dia::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  background-image: url('/imgs/logoSemEscrita.png');
+  background-size: 130px;
+  background-repeat: no-repeat;
+  background-position: right bottom;
+
+  /* 🔥 deixa a imagem escura */
+  filter: brightness(0.1);
+
+  /* controla a força */
+  opacity: 0.2;
+
+  pointer-events: none;
+  background-position: right -20px bottom 5px;
+
+}
+
+
+.header-dashboard {
+  background: #0c0c0c;
+  /* um pouco mais claro que o fundo */
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-top: -16px;
+  margin-bottom: -96px;
+  padding: 16px;
+  border-bottom-left-radius: 50px;
+  border-bottom-right-radius: 50px;
+}
+
+.header-dashboard {
+  padding-bottom: 92px;
+  /* antes devia estar maior */
+}
+
+.cards-renda-container {
+  margin-top: -26px;
+  /* puxa os cards para cima */
+}
+
+.valor-renda-cards {
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  opacity: 80%;
+}
+
+.dia-cards-renda {
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+}
+
+.quantidade-agend-cards {
+  font-size: 28px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+}
+
+.texto-comun {
+  font-family: 'Inter', sans-serif;
+}
+
+/* .cards-renda-container {
+  margin-top: -24px;
+} */
 </style>

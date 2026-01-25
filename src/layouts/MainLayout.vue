@@ -1,9 +1,5 @@
 <template>
   <q-layout view="hHh lpR fFf">
-
-    <!-- HEADER REMOVIDO -->
-
-    <!-- DRAWER -->
     <q-drawer v-model="drawer" side="left" bordered class="bg-grey-10 text-white">
       <q-list padding>
 
@@ -158,5 +154,10 @@ onBeforeUnmount(() => {
 .no-divider {
   box-shadow: none !important;
   border-bottom: 0 !important;
+}
+.q{
+  background-color: rgb(77, 77, 77);
+  border-bottom-left-radius: 64px;
+  border-bottom-right-radius: 64px;
 }
 </style>
