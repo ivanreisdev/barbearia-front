@@ -41,9 +41,10 @@ export function useAgendamentos(dataSelecionada) {
   const servicos = ref([])
   const horariosDisponiveis = ref([]) // opções vindas da rota de disponibilidade
   const horariosAtendimento = ref([])
+  const horariosBloqueadosDaAgenda = ref([])
   const modalAgendamento = ref(false)
-const agendamentoSelecionado = ref(null)
-const router = useRouter()
+  const agendamentoSelecionado = ref(null)
+  const router = useRouter()
 
   const modalAberto = ref(false)
   const novoAgendamento = ref({
@@ -54,6 +55,100 @@ const router = useRouter()
     preco: 0,
     barbeiro: '',
   })
+
+
+  // Bloqueio
+
+  const formBloqueio = ref({
+    data: null,
+    hora_inicio: null,
+    hora_fim: null,
+    motivo: ''
+  })
+
+  const modalBloqueiaAgendamentos = ref(false)
+  const swipeX = ref(0)
+  const maxSwipe = 260
+  let startX = 0
+  let dragging = false
+
+  const fillPercent = computed(() => {
+    return Math.min((swipeX.value / maxSwipe) * 100, 100)
+  })
+
+  const startSwipe = (e) => {
+    dragging = true
+    startX = e.touches ? e.touches[0].clientX : e.clientX
+
+    document.addEventListener('mousemove', moveSwipe)
+    document.addEventListener('mouseup', endSwipe)
+    document.addEventListener('touchmove', moveSwipe)
+    document.addEventListener('touchend', endSwipe)
+  }
+
+  const moveSwipe = (e) => {
+    if (!dragging) return
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    let delta = clientX - startX
+
+    swipeX.value = Math.max(0, Math.min(delta, maxSwipe))
+  }
+
+  const endSwipe = () => {
+    dragging = false
+
+    if (swipeX.value >= maxSwipe) {
+      confirmarBloqueio()
+    } else {
+      swipeX.value = 0
+    }
+
+    document.removeEventListener('mousemove', moveSwipe)
+    document.removeEventListener('mouseup', endSwipe)
+    document.removeEventListener('touchmove', moveSwipe)
+    document.removeEventListener('touchend', endSwipe)
+  }
+
+  const confirmarBloqueio = async () => {
+    try {
+      const response = await api.post(
+        '/bloqueio-agendamentos/bloquearAgendamentosDoDia',
+        {
+          data: formBloqueio.value.data,
+          hora_inicio: formBloqueio.value.hora_inicio,
+          hora_fim: formBloqueio.value.hora_fim,
+          motivo: formBloqueio.value.motivo,
+        }
+      )
+
+      if (response.data.tipo === 'sucesso') {
+        safeNotify({
+          type: 'positive',
+          message: 'Agendamentos bloqueados com sucesso!',
+        })
+        modalBloqueiaAgendamentos.value = false
+        formBloqueio.value = '';
+        swipeX.value = 0;
+      } else {
+        safeNotify({
+          type: 'negative',
+          message: 'Erro ao bloquear agendamentos',
+        })
+      }
+
+    } catch (err) {
+      console.error('Erro ao bloquear agendamentos:', err)
+
+      safeNotify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Erro ao bloquear agendamentos',
+      })
+    }
+  }
+
+
+
 
   // busca horários disponíveis no backend para serviço+data selecionados
   const buscarHorariosDisponiveis = async (servicoId, dataISO) => {
@@ -163,23 +258,23 @@ const router = useRouter()
       agendamentos.value = []
     }
   }
-const buscarAgendamentoPorId = async (id) => {
-  try {
+  const buscarAgendamentoPorId = async (id) => {
+    try {
 
-    if (!id) return null
+      if (!id) return null
 
-    const res = await api.get(`/agendamentos/buscarAgendamento/${id}`)
+      const res = await api.get(`/agendamentos/buscarAgendamento/${id}`)
 
-    return res.data || null
-  } catch (err) {
-    console.error('Erro ao buscar agendamento:', err)
-    safeNotify({
-      type: 'negative',
-      message: 'Erro ao buscar agendamento'
-    })
-    return null
+      return res.data || null
+    } catch (err) {
+      console.error('Erro ao buscar agendamento:', err)
+      safeNotify({
+        type: 'negative',
+        message: 'Erro ao buscar agendamento'
+      })
+      return null
+    }
   }
-}
 
   const horariosDoDia = computed(() => {
     if (!horariosAtendimento.value.length) return []
@@ -243,6 +338,25 @@ const buscarAgendamentoPorId = async (id) => {
     const response = await api.get('/horarios-atendimento/buscarHorariosAtendimentos')
     horariosAtendimento.value = response.data
   }
+
+  const carregarHorariosBloqueadosDaAgenda = async () => {
+    try {
+      const response = await api.get(
+        '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
+        {
+          params: {
+            data: dataSelecionada.value
+          }
+        }
+      )
+
+      horariosBloqueadosDaAgenda.value = response.data
+    } catch (err) {
+      console.error('Erro ao buscar bloqueios da agenda:', err)
+    }
+  }
+
+
   const horaStringParaInt = (hora) => {
     return Number(hora.split(':')[0])
   }
@@ -436,45 +550,45 @@ const buscarAgendamentoPorId = async (id) => {
       }
     })
   })
-const abrirModalAgendamento = (item) => {
-  agendamentoSelecionado.value = item
-  modalAgendamento.value = true
-}
-
-const cancelarAgendamento = (id = null) => {
-  const payload = {
-    agendamentoId: id !== null ? id : agendamentoSelecionado.value.ag.id
+  const abrirModalAgendamento = (item) => {
+    agendamentoSelecionado.value = item
+    modalAgendamento.value = true
   }
-      api.post('/agendamentos/cancelarAgendamento', payload)
 
-    .then((res) => {
-      if (res.data?.success) {
-        safeNotify({
-          type: 'positive',
-          message: 'Agendamento cancelado com sucesso!',
-        })
-        modalAgendamento.value = false
-        loadAgendamentos() // atualiza a lista
-      } else {
+  const cancelarAgendamento = (id = null) => {
+    const payload = {
+      agendamentoId: id !== null ? id : agendamentoSelecionado.value.ag.id
+    }
+    api.post('/agendamentos/cancelarAgendamento', payload)
+
+      .then((res) => {
+        if (res.data?.success) {
+          safeNotify({
+            type: 'positive',
+            message: 'Agendamento cancelado com sucesso!',
+          })
+          modalAgendamento.value = false
+          loadAgendamentos() // atualiza a lista
+        } else {
+          safeNotify({
+            type: 'negative',
+            message: res.data?.message || 'Erro ao cancelar agendamento',
+          })
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao cancelar agendamento:', err.response?.data || err)
         safeNotify({
           type: 'negative',
-          message: res.data?.message || 'Erro ao cancelar agendamento',
+          message: 'Erro ao cancelar agendamento',
         })
-      }
-    })
-    .catch((err) => {
-      console.error('Erro ao cancelar agendamento:', err.response?.data || err)
-      safeNotify({
-        type: 'negative',
-        message: 'Erro ao cancelar agendamento',
       })
-    })
-}
+  }
 
 
-const irParaDetalheAgendamento = (id) => {
-  router.push(`/agendamentos/${id}`)
-}
+  const irParaDetalheAgendamento = (id) => {
+    router.push(`/agendamentos/${id}`)
+  }
   const formatoMoeda = (valor) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
 
@@ -520,6 +634,7 @@ const irParaDetalheAgendamento = (id) => {
   // Carrega inicialmente (usa a data selecionada atual se houver)
   //loadAgendamentos(dataSelecionada?.value)
   carregarHorariosAtendimento()
+  carregarHorariosBloqueadosDaAgenda()
 
   // Recarrega agendamentos quando a data selecionada muda
   watch(dataSelecionada, (nova) => {
@@ -552,5 +667,11 @@ const irParaDetalheAgendamento = (id) => {
     abrirModalAgendamento,
     cancelarAgendamento,
     buscarAgendamentoPorId,
+    modalBloqueiaAgendamentos,
+    fillPercent,
+    startSwipe,
+    formBloqueio,
+    confirmarBloqueio,
+    swipeX,
   }
 }

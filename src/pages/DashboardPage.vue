@@ -155,6 +155,9 @@ const quantidadeAgendamentoSemana = ref(0)
 const loadingDay = ref(false)
 const loadingWeek = ref(false)
 
+const horariosBloqueadosDaAgenda = ref([])
+
+
 // --------------------- Funções de data ---------------------
 function inicioSemana(dateRef) {
   const dt = new Date(dateRef)
@@ -218,6 +221,7 @@ function selecionarDia(index) {
   diaSelecionado.value = index
   dataSelecionada.value = diasDaSemana.value[index].full
   fetchDiaDaReceita()
+  carregarHorariosBloqueadosDaAgenda()
 }
 
 // ------------------ formatação moeda ------------------
@@ -235,6 +239,9 @@ async function fetchDiaDaReceita() {
 
   try {
     const dateISO = toISODate(dataSelecionada.value)
+    console.log('dateISO');
+
+    console.log(dateISO);
 
     const auth = useAuthStore()
 
@@ -285,41 +292,74 @@ function voltarUmaSemana() {
   fimDeSemana.value = new Date(fimDeSemana.value.getTime() - 7 * 86400000)
 }
 
+const carregarHorariosBloqueadosDaAgenda = async () => {
+  if (!dataSelecionada.value) return
+  try {
+    const dateIS = toISODate(dataSelecionada.value)
+    console.log('data');
+    console.log(dateIS);
+    const response = await api.get(
+      '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
+      {
+        params: {
+          data: dateIS
+        }
+      }
+    )
+
+    horariosBloqueadosDaAgenda.value = response.data ?? []
+  } catch (err) {
+    console.error('Erro ao buscar bloqueios da agenda:', err)
+  }
+}
+
 function avancarUmaSemana() {
   inicioDaSemana.value = new Date(inicioDaSemana.value.getTime() + 7 * 86400000)
   fimDeSemana.value = new Date(fimDeSemana.value.getTime() + 7 * 86400000)
 }
 
 watch([inicioDaSemana, fimDeSemana], () => {
-  // ao mudar a semana, tenta selecionar o dia de hoje se estiver na semana atual,
-  // caso contrário seleciona o primeiro dia da semana
   const hojeMid = new Date()
   hojeMid.setHours(0, 0, 0, 0)
+
   const idx = diasDaSemana.value.findIndex((d) => {
     const fd = new Date(d.full)
     fd.setHours(0, 0, 0, 0)
     return fd.getTime() === hojeMid.getTime()
   })
+
   diaSelecionado.value = idx >= 0 ? idx : 0
   dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
-  fetchReceitaDaSemana()
-  fetchDiaDaReceita()
 })
 
+watch(
+  () => dataSelecionada.value,
+  (novaData) => {
+    if (!novaData) return
+
+    fetchDiaDaReceita()
+    fetchReceitaDaSemana()
+    carregarHorariosBloqueadosDaAgenda()
+  },
+  { immediate: true }
+)
+
+
+
 onMounted(() => {
-  // seleciona índice do dia de hoje dentro da semana atual (se existir)
   const hojeMid = new Date()
   hojeMid.setHours(0, 0, 0, 0)
+
   const idx = diasDaSemana.value.findIndex((d) => {
     const fd = new Date(d.full)
     fd.setHours(0, 0, 0, 0)
     return fd.getTime() === hojeMid.getTime()
   })
+
   diaSelecionado.value = idx >= 0 ? idx : 0
   dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
-  fetchDiaDaReceita()
-  fetchReceitaDaSemana()
 })
+
 
 // --- toolbar local: abrir menu, alternar tema, logout ---
 const isDark = ref($q.dark.isActive)
