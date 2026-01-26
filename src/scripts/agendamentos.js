@@ -65,10 +65,9 @@ const router = useRouter()
         params: { servicoId, data: dataISO },
       })
 
-      // espera { horarios: ["09:00", ...] }
-      const raw = res.data && (res.data.horarios || res.data)
-      if (Array.isArray(raw)) {
-        // mapeia para { label, value } esperado pelo q-select
+      const raw = res.data?.horarios ?? []
+
+      if (raw.length > 0) {
         horariosDisponiveis.value = raw.map((h) => ({ label: h, value: h }))
       } else {
         horariosDisponiveis.value = []
@@ -226,34 +225,19 @@ const buscarAgendamentoPorId = async (id) => {
     return slots
   })
   const horariosPadrao = computed(() => {
-    // se há horários vindos da API (modal: serviço+data selecionados), usa-os
     if (horariosDisponiveis.value && horariosDisponiveis.value.length) {
       return horariosDisponiveis.value
     }
 
-    // fallback: gera horários padrão (30 em 30) como antes
-    const horarios = []
-    let hora = 8
-    let minuto = 0
-
-    while (hora < 18) {
-      const hh = String(hora).padStart(2, '0')
-      const mm = String(minuto).padStart(2, '0')
-
-      horarios.push({
-        label: `${hh}:${mm}`,
-        value: `${hh}:${mm}`,
-      })
-
-      minuto += 30
-      if (minuto === 60) {
-        minuto = 0
-        hora++
+    return [
+      {
+        label: 'Horários indisponíveis para essa data',
+        value: null,
+        disable: true
       }
-    }
-
-    return horarios
+    ]
   })
+
 
   const carregarHorariosAtendimento = async () => {
     const response = await api.get('/horarios-atendimento/buscarHorariosAtendimentos')

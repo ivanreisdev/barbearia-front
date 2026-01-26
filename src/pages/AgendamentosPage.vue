@@ -1,7 +1,8 @@
 <template>
   <q-page padding>
 
-    <div class="agenda-container">
+    <!-- ✅ AGENDA ABERTA -->
+    <div v-if="!barbeariaFechada" class="agenda-container">
       <div v-for="slot in horariosProcessados" :key="slot.inicioMinutos" class="agenda-row"
         :class="{ 'row-almoco': slot.tipo === 'almoco' }" :style="{ minHeight: slot.alturaRow + 'px' }">
         <!-- HORA -->
@@ -11,6 +12,7 @@
 
         <!-- SLOT -->
         <div class="agenda-slot">
+
           <!-- 🍽️ ALMOÇO -->
           <div v-if="slot.tipo === 'almoco'" class="slot-almoco">
             <q-icon name="restaurant" size="18px" />
@@ -44,21 +46,28 @@
             Horário livre
           </div>
 
-          <!-- ⚪ CONTINUAÇÃO / OCUPADO -->
+          <!-- ⚪ OCUPADO / CONTINUAÇÃO -->
           <div v-else class="slot-ocupado" />
         </div>
       </div>
     </div>
 
+    <!-- 🛑 BARBEARIA FECHADA -->
+    <div v-else class="agenda-fechada">
+      <div class="fechada-overlay">
+        <q-icon name="store" size="48px" />
+        <div class="text-h5 q-mt-md">Barbearia Fechada</div>
+        <div class="text-caption q-mt-sm">
+          Estamos fora do horário de atendimento
+        </div>
+      </div>
+    </div>
 
-    <!-- Modal de detalhes do agendamento -->
-
+    <!-- Modal de detalhes -->
     <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
       :formato-moeda="formatoMoeda" :calcular-horario-fim="calcularHorarioFim" @cancelar="cancelarAgendamento" />
 
-
-
-    <!-- Modal de novo agendamento -->
+    <!-- Modal novo agendamento -->
     <q-dialog v-model="modalAberto" maximized persistent>
       <div class="agendamento-wrapper">
         <!-- HEADER -->
@@ -77,8 +86,8 @@
         <!-- CARD -->
         <q-card class="card-form">
           <q-card-section class="q-gutter-md">
-            <q-input v-model="novoAgendamento.cliente" rounded filled label="Nome do cliente" />
 
+            <q-input v-model="novoAgendamento.cliente" rounded filled label="Nome do cliente" />
             <q-input v-model="novoAgendamento.telefone" rounded filled label="Telefone" mask="(##) #####-####" />
             <q-input v-model="novoAgendamento.email" rounded filled label="E-mail do cliente" type="email" />
 
@@ -91,17 +100,20 @@
               <div class="col">
                 <q-select v-model="novoAgendamento.hora" :options="horariosPadrao" option-label="label"
                   option-value="value" emit-value map-options rounded filled label="Horário"
-                  :disable="!novoAgendamento.data"
-                  :placeholder="novoAgendamento.data ? 'Selecione um horário' : 'Selecione a data primeiro'" />
+                  :disable="!novoAgendamento.data" :placeholder="novoAgendamento.data
+                    ? 'Selecione um horário'
+                    : 'Selecione a data primeiro'" />
               </div>
 
               <div class="col-auto">
-                <q-chip color="positive" text-color="white" class="q-mt-sm"> Livre </q-chip>
+                <q-chip color="positive" text-color="white" class="q-mt-sm">
+                  Livre
+                </q-chip>
               </div>
             </div>
+
           </q-card-section>
 
-          <!-- BOTÃO -->
           <q-card-actions class="q-pa-md">
             <q-btn label="AGENDAR" class="btn-agendar full-width" unelevated @click="salvarAgendamento" />
           </q-card-actions>
@@ -109,28 +121,26 @@
       </div>
     </q-dialog>
 
-    <!-- Botão fixo para novo agendamento -->
+    <!-- Botão fixo -->
     <div class="floating-wrapper">
-      <!-- BOTÃO CADEADO -->
       <q-btn flat dense icon="lock" class="btn-lock" color="black" @click="acaoCadeado" />
 
-      <!-- BOTÃO PRINCIPAL -->
       <q-btn unelevated class="btn-main" @click="abrirModalGlobal">
         <div class="btn-content">
           <span class="btn-text">Novo Agendamento</span>
           <q-icon name="arrow_forward" class="btn-arrow" />
         </div>
-
       </q-btn>
     </div>
 
   </q-page>
 </template>
 
+
 <script setup>
 import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendamento.vue'
 import '../css/agendamentos.css'
-import { toRef, defineProps } from 'vue'
+import { toRef, defineProps, computed } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
 
 const props = defineProps({ dataSelecionada: { type: Date, required: true } })
@@ -155,6 +165,10 @@ const {
   cancelarAgendamento,
   irParaDetalheAgendamento,
 } = useAgendamentos(dataSelecionada)
+
+const barbeariaFechada = computed(() => {
+  return !horariosProcessados.value || horariosProcessados.value.length === 0
+})
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)
 const abrirModalGlobal = () => abrirModal?.()
