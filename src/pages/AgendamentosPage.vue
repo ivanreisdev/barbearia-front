@@ -705,5 +705,4 @@ const abrirModalGlobal = () => abrirModal?.()
 }
 
 
-
 </style>

@@ -526,6 +526,7 @@ export function useAgendamentos(dataSelecionada) {
       h => h.dia_semana === diaSemanaSelecionado.value
     )
   })
+  const GAP = 6
 
   function estiloEvento(evento) {
     if (!horasDoDia.value.length) return {}
@@ -536,11 +537,11 @@ export function useAgendamentos(dataSelecionada) {
       (evento.inicioMinutos - inicioDia) * PIXELS_PER_MINUTE
 
     const height =
-      evento.duracao * PIXELS_PER_MINUTE
+      evento.duracao * PIXELS_PER_MINUTE - GAP
 
     return {
       top: `${top}px`,
-      height: `${height}px`
+      height: `${Math.max(height, 0)}px`
     }
   }
 
