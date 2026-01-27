@@ -6,7 +6,10 @@
       <div v-for="slot in horariosProcessados" :key="slot.inicioMinutos" class="agenda-row"
         :class="{ 'row-almoco': slot.tipo === 'almoco' }" :style="{ minHeight: slot.alturaRow + 'px' }">
         <!-- HORA -->
-        <div class="agenda-hora" :class="{ 'hora-almoco': slot.tipo === 'almoco' }">
+        <div class="agenda-hora" :class="{
+          'hora-almoco': slot.tipo === 'almoco',
+          'hora-bloqueio': slot.tipo === 'bloqueio'
+        }">
           {{ slot.hora }}:{{ slot.minuto }}
         </div>
 
@@ -19,9 +22,15 @@
             <span>Horário de Almoço</span>
           </div>
 
+          <!-- 🚫 BLOQUEIO -->
+          <div v-else-if="slot.tipo === 'bloqueio'" class="slot-bloqueado">
+            <q-icon name="block" size="18px" />
+            <span>Indisponível</span>
+          </div>
+
           <!-- 📌 AGENDAMENTOS -->
-          <template v-else-if="slot.agendamentos?.length">
-            <q-card v-for="item in processarAgendamentos(slot)" :key="item.ag.id"
+          <template v-else-if="slot.agendamentosProcessados?.length">
+            <q-card v-for="item in slot.agendamentosProcessados" :key="item.ag.id"
               class="agendamento-card cursor-pointer" bordered :style="estiloCard(item, slot)"
               @click="irParaDetalheAgendamento(item.ag.id)">
               <q-card-section class="relative-position">
@@ -48,6 +57,7 @@
 
           <!-- ⚪ OCUPADO / CONTINUAÇÃO -->
           <div v-else class="slot-ocupado" />
+
         </div>
       </div>
     </div>
@@ -62,6 +72,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Modal de detalhes -->
     <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
@@ -262,7 +273,7 @@ const {
   //abrirModalAgendamento,
   agendamentoSelecionado,
   modalAgendamento,
-  processarAgendamentos,
+  // processarAgendamentos,
   formatoMoeda,
   calcularHorarioFim,
   atualizarPreco,
@@ -472,6 +483,21 @@ const abrirModalGlobal = () => abrirModal?.()
 
 .descricao-header-bloqueio {
   font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.slot-bloqueado {
+  height: 100%;
+  background: repeating-linear-gradient(45deg,
+      #eeeeee,
+      #eeeeee 10px,
+      #e0e0e0 10px,
+      #e0e0e0 20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #616161;
   font-weight: 600;
 }
 </style>

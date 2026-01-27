@@ -279,6 +279,8 @@ export function useAgendamentos(dataSelecionada) {
   const horariosDoDia = computed(() => {
     if (!horariosAtendimento.value.length) return []
 
+    if (!dataSelecionada.value) return []
+
     const diaSemana = getDiaSemanaBackend(dataSelecionada.value)
 
     const horarioDia = horariosAtendimento.value.find(
@@ -294,19 +296,38 @@ export function useAgendamentos(dataSelecionada) {
       ? horaStringParaInt(horarioDia.almoco_inicio)
       : null
 
-    const almocoFim = horarioDia.almoco_fim ? horaStringParaInt(horarioDia.almoco_fim) : null
+    const almocoFim = horarioDia.almoco_fim
+      ? horaStringParaInt(horarioDia.almoco_fim)
+      : null
 
-    // intervalo usado para gerar slots (em minutos)
-    // agora gera slots de 60 min (1 hora)
+    // ⏱ intervalo em minutos (60 = 1h)
     const intervalo = 60
-    // usa o intervalo definido acima
+
     let slots = gerarSlots(inicio, fim, intervalo)
 
-    // ✅ 2. MARCA ALMOÇO
-    slots.forEach((slot) => {
+    // 🚫 BLOQUEIO (PRIMEIRO)
+    slots.forEach(slot => {
+      if (
+        horariosBloqueadosDaAgenda.value.length &&
+        slotEstaBloqueado(slot.inicioMinutos, horariosBloqueadosDaAgenda.value)
+      ) {
+        slot.tipo = 'bloqueio'
+        slot.ocupado = true
+      }
+    })
+
+    // 🍽️ ALMOÇO (SÓ SE NÃO FOR BLOQUEIO)
+    slots.forEach(slot => {
+      if (slot.tipo === 'bloqueio') return
+
       const h = Math.floor(slot.inicioMinutos / 60)
 
-      if (almocoInicio !== null && almocoFim !== null && h >= almocoInicio && h < almocoFim) {
+      if (
+        almocoInicio !== null &&
+        almocoFim !== null &&
+        h >= almocoInicio &&
+        h < almocoFim
+      ) {
         slot.tipo = 'almoco'
         slot.ocupado = true
       } else {
@@ -314,11 +335,29 @@ export function useAgendamentos(dataSelecionada) {
       }
     })
 
-    // ✅ 3. APLICA AGENDAMENTOS (agendamentos podem começar dentro do slot)
-    slots = aplicarAgendamentos(slots, agendamentos.value, intervalo)
+    // 📌 AGENDAMENTOS (SÓ EM SLOT NORMAL)
+    const slotsNormais = slots.filter(s => s.tipo === 'normal')
 
-    return slots
+    const slotsComAgendamento = aplicarAgendamentos(
+      slotsNormais,
+      agendamentos.value,
+      intervalo
+    )
+
+    // 🔁 REINSERE slots bloqueados e almoço
+    const mapaSlots = new Map(slotsComAgendamento.map(s => [s.inicioMinutos, s]))
+
+    slots.forEach(slot => {
+      if (slot.tipo !== 'normal') {
+        mapaSlots.set(slot.inicioMinutos, slot)
+      }
+    })
+
+    return Array.from(mapaSlots.values()).sort(
+      (a, b) => a.inicioMinutos - b.inicioMinutos
+    )
   })
+
   const horariosPadrao = computed(() => {
     if (horariosDisponiveis.value && horariosDisponiveis.value.length) {
       return horariosDisponiveis.value
@@ -338,24 +377,6 @@ export function useAgendamentos(dataSelecionada) {
     const response = await api.get('/horarios-atendimento/buscarHorariosAtendimentos')
     horariosAtendimento.value = response.data
   }
-
-  const carregarHorariosBloqueadosDaAgenda = async () => {
-    try {
-      const response = await api.get(
-        '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
-        {
-          params: {
-            data: dataSelecionada.value
-          }
-        }
-      )
-
-      horariosBloqueadosDaAgenda.value = response.data
-    } catch (err) {
-      console.error('Erro ao buscar bloqueios da agenda:', err)
-    }
-  }
-
 
   const horaStringParaInt = (hora) => {
     return Number(hora.split(':')[0])
@@ -507,6 +528,26 @@ export function useAgendamentos(dataSelecionada) {
     }
   }
 
+  const carregarHorariosBloqueadosDaAgenda = async () => {
+    try {
+      const dateIS = toISODate(dataSelecionada.value)
+      const response = await api.get(
+        '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
+        {
+          params: {
+            data: dateIS
+          }
+        }
+      )
+      horariosBloqueadosDaAgenda.value = response.data ?? []
+      console.log('horariosBloqueadosDaAgenda.value')
+      console.log(horariosBloqueadosDaAgenda.value)
+
+    } catch (err) {
+      console.error('Erro ao buscar bloqueios da agenda:', err)
+    }
+  }
+
   function processarAgendamentos(slot) {
     const linhas = []
 
@@ -539,17 +580,47 @@ export function useAgendamentos(dataSelecionada) {
   }
   const horariosProcessados = computed(() => {
     return horariosDoDia.value.map((slot) => {
-      const ags = slot.agendamentos ? processarAgendamentos(slot) : []
 
-      const totalLinhas = ags.length ? Math.max(...ags.map((a) => a.linha)) + 1 : 1
+      // 🚫 BLOQUEIO
+      if (slot.tipo === 'bloqueio') {
+        return {
+          ...slot,
+          agendamentosProcessados: [],
+          alturaRow: ALTURA_MINIMA * 1.5,
+          ocupado: true
+        }
+      }
+
+      // 🍽️ ALMOÇO
+      if (slot.tipo === 'almoco') {
+        return {
+          ...slot,
+          agendamentosProcessados: [],
+          alturaRow: ALTURA_MINIMA,
+          ocupado: true
+        }
+      }
+
+      // 📌 AGENDAMENTOS NORMAIS
+      const ags = slot.agendamentos
+        ? processarAgendamentos(slot)
+        : []
+
+      const totalLinhas = ags.length
+        ? Math.max(...ags.map(a => a.linha)) + 1
+        : 1
 
       return {
         ...slot,
         agendamentosProcessados: ags,
         alturaRow: totalLinhas * (ALTURA_MINIMA + ESPACAMENTO),
+        ocupado: ags.length > 0
       }
     })
   })
+
+
+
   const abrirModalAgendamento = (item) => {
     agendamentoSelecionado.value = item
     modalAgendamento.value = true
@@ -630,15 +701,35 @@ export function useAgendamentos(dataSelecionada) {
       })
     }
   }
+  function toISODate(dt) {
+    const d = new Date(dt)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  function slotEstaBloqueado(slotInicioMin, bloqueios) {
+    return bloqueios.some(b => {
+      const inicio = horaParaMinutos(b.hora_inicio)
+      const fim = horaParaMinutos(b.hora_fim)
+
+      return slotInicioMin >= inicio && slotInicioMin < fim
+    })
+  }
+
+
+  function horaParaMinutos(hora) {
+    const [h, m] = hora.split(':').map(Number)
+    return h * 60 + m
+  }
+
+
 
   // Carrega inicialmente (usa a data selecionada atual se houver)
   //loadAgendamentos(dataSelecionada?.value)
   carregarHorariosAtendimento()
-  carregarHorariosBloqueadosDaAgenda()
 
   // Recarrega agendamentos quando a data selecionada muda
   watch(dataSelecionada, (nova) => {
     loadAgendamentos(nova)
+    carregarHorariosBloqueadosDaAgenda()
   })
 
   // --------------------
@@ -673,5 +764,6 @@ export function useAgendamentos(dataSelecionada) {
     formBloqueio,
     confirmarBloqueio,
     swipeX,
+    horariosBloqueadosDaAgenda,
   }
 }

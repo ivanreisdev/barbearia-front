@@ -98,24 +98,14 @@
               <span v-else>{{ quantidadeAgendamentoSemana }}</span>
             </div>
           </div>
-
-          <!-- <q-icon name="attach_money" class="text-h5" /> -->
         </div>
-
-        <!-- <div class="text-caption q-mt-sm">
-          {{ buscarMesDia(inicioDaSemana) }} à {{ buscarMesDia(fimDeSemana) }}
-        </div> -->
       </q-card>
     </div>
     <br>
     <br>
 
-
-
-    <!-- <div class="agendamentos-wrapper"> -->
     <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
       :dia-selecionado="diaSelecionado" />
-    <!-- </div> -->
 
   </q-page>
 </template>
@@ -155,7 +145,7 @@ const quantidadeAgendamentoSemana = ref(0)
 const loadingDay = ref(false)
 const loadingWeek = ref(false)
 
-const horariosBloqueadosDaAgenda = ref([])
+// const horariosBloqueadosDaAgenda = ref([])
 
 
 // --------------------- Funções de data ---------------------
@@ -221,7 +211,7 @@ function selecionarDia(index) {
   diaSelecionado.value = index
   dataSelecionada.value = diasDaSemana.value[index].full
   fetchDiaDaReceita()
-  carregarHorariosBloqueadosDaAgenda()
+  // carregarHorariosBloqueadosDaAgenda()
 }
 
 // ------------------ formatação moeda ------------------
@@ -292,26 +282,24 @@ function voltarUmaSemana() {
   fimDeSemana.value = new Date(fimDeSemana.value.getTime() - 7 * 86400000)
 }
 
-const carregarHorariosBloqueadosDaAgenda = async () => {
-  if (!dataSelecionada.value) return
-  try {
-    const dateIS = toISODate(dataSelecionada.value)
-    console.log('data');
-    console.log(dateIS);
-    const response = await api.get(
-      '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
-      {
-        params: {
-          data: dateIS
-        }
-      }
-    )
+// const carregarHorariosBloqueadosDaAgenda = async () => {
+//   if (!dataSelecionada.value) return
+//   try {
+//     const dateIS = toISODate(dataSelecionada.value)
+//     const response = await api.get(
+//       '/bloqueio-agendamentos/buscarBloqueioDeAgenda',
+//       {
+//         params: {
+//           data: dateIS
+//         }
+//       }
+//     )
 
-    horariosBloqueadosDaAgenda.value = response.data ?? []
-  } catch (err) {
-    console.error('Erro ao buscar bloqueios da agenda:', err)
-  }
-}
+//     horariosBloqueadosDaAgenda.value = response.data ?? []
+//   } catch (err) {
+//     console.error('Erro ao buscar bloqueios da agenda:', err)
+//   }
+// }
 
 function avancarUmaSemana() {
   inicioDaSemana.value = new Date(inicioDaSemana.value.getTime() + 7 * 86400000)
@@ -339,7 +327,7 @@ watch(
 
     fetchDiaDaReceita()
     fetchReceitaDaSemana()
-    carregarHorariosBloqueadosDaAgenda()
+    // carregarHorariosBloqueadosDaAgenda()
   },
   { immediate: true }
 )
