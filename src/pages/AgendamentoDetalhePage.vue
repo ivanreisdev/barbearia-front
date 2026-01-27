@@ -225,7 +225,7 @@ const {
   buscarAgendamentoPorId,
   cancelarAgendamento,
   formatoMoeda,
-  calcularHorarioFim
+  calcularHorarioFimCancelamento
 } = useAgendamentos()
 
 /* =========================
@@ -269,18 +269,24 @@ const containerClass = computed(() =>
 
 
 const horarioFim = computed(() => {
-  if (!agendamento.value) return '';
+  if (!agendamento.value?.data_horario) return ''
 
-  // extrai horas e minutos da string "2026-01-13T09:00:00"
-  const [horaStr, minStr] = agendamento.value.data_horario
-    .split(' ')[1] // pega só "09:00:00"
-    .split(':');   // separa ["09", "00", "00"]
+  // quebra por espaço ou T
+  const horario = agendamento.value.data_horario.split(/[ T]/)[1]
 
-  const inicioMinutos = parseInt(horaStr) * 60 + parseInt(minStr);
+  if (!horario) return ''
 
-  // agora passa para a sua função do jeito que ela está
-  return calcularHorarioFim(inicioMinutos, agendamento.value.servico.duracao_minutos);
-});
+  const [horaStr, minStr] = horario.split(':')
+
+  const inicioMinutos =
+    parseInt(horaStr, 10) * 60 + parseInt(minStr, 10)
+
+  return calcularHorarioFimCancelamento(
+    inicioMinutos,
+    agendamento.value.servico.duracao_minutos
+  )
+})
+
 
 console.log('horarioFim =', horarioFim.value);
 

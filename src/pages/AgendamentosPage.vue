@@ -1,87 +1,67 @@
 <template>
   <q-page padding>
-
-    <!-- ✅ AGENDA ABERTA -->
-    <div v-if="!barbeariaFechada" class="agenda-container">
-      <div v-for="slot in horariosProcessados" :key="slot.inicioMinutos" class="agenda-row" :class="{
-        'row-almoco': slot.tipo === 'almoco',
-        'row-bloqueio': slot.tipo === 'bloqueio',
-        'row-bloqueio-parcial': slot.bloqueioParcial
-      }" :style="{ minHeight: slot.alturaRow + 'px' }">
-
-        <!-- ⏰ HORA -->
-        <div class="agenda-hora" :class="{
-          'hora-almoco': slot.tipo === 'almoco',
-          'hora-bloqueio': slot.tipo === 'bloqueio'
-        }">
-          {{ slot.hora }}:{{ slot.minuto }}
-        </div>
-
-        <!-- 📦 SLOT -->
-        <div class="agenda-slot">
-
-          <!-- 🍽️ ALMOÇO -->
-          <div v-if="slot.tipo === 'almoco'" class="slot-almoco">
-            <q-icon name="restaurant" size="18px" />
-            <span>Horário de Almoço</span>
-          </div>
-
-          <!-- 🚫 BLOQUEIO -->
-          <div v-else-if="slot.tipo === 'bloqueio'" class="slot-bloqueado" :style="{
-            height: (slot.bloqueioPercentual * 100) + '%'
-          }">
-            <q-icon name="block" size="18px" />
-
-            <span v-if="slot.bloqueioParcial">
-              Indisponível até {{ slot.bloqueioFim }}
-            </span>
-
-            <span v-else>
-              Indisponível
-            </span>
-          </div>
-  
-          <!-- 📌 AGENDAMENTOS -->
-          <template v-else-if="slot.agendamentosProcessados?.length">
-            <q-card v-for="item in slot.agendamentosProcessados" :key="item.ag.id"
-              class="agendamento-card cursor-pointer" bordered :style="estiloCard(item, slot)"
-              @click="irParaDetalheAgendamento(item.ag.id)">
-              <q-card-section class="relative-position">
-                <div class="card-horario">
-                  {{ calcularHorarioFim(item.inicio, item.duracao) }}
-                </div>
-                <div class="card-nome-servico">
-                  {{ item.ag.servico.nome }}
-                </div>
-                <div class="card-valor-servico">
-                  {{ formatoMoeda(item.ag.servico.preco) }}
-                </div>
-                <div class="card-nome-cliente">
-                  {{ item.ag.cliente?.nome || '—' }}
-                </div>
-              </q-card-section>
-            </q-card>
-          </template>
-
-          <!-- 🟢 LIVRE -->
-          <div v-else-if="!slot.ocupado && slot.tipo === 'normal'" class="slot-livre">
-            Horário livre
-          </div>
-
-          <!-- ⚪ CONTINUAÇÃO -->
-          <div v-else class="slot-ocupado" />
-
+    <div class="agenda-wrapper relative-position" :key="dataSelecionada">
+      <!-- HORAS -->
+      <div class="agenda-hours">
+        <div v-for="h in horasDoDia" :key="h" class="hour-row">
+          {{ h }}
         </div>
       </div>
-    </div>
-    <!-- 🛑 BARBEARIA FECHADA -->
-    <div v-else class="agenda-fechada">
-      <div class="fechada-overlay">
-        <q-icon name="store" size="48px" />
-        <div class="text-h5 q-mt-md">Barbearia Fechada</div>
-        <div class="text-caption q-mt-sm">
-          Estamos fora do horário de atendimento
-        </div>
+
+      <!-- GRID -->
+      <div class="agenda-grid">
+
+        <div v-for="h in horasDoDia" :key="h" class="grid-hour" />
+
+        <q-card v-for="ev in eventos" :key="ev.id" class="event-card" :class="ev.tipo" :style="estiloEvento(ev)"
+          clickable v-ripple @click="ev.tipo === 'agendamento' && irParaDetalheAgendamento(ev.id)">
+          <template v-if="ev.tipo === 'agendamento'">
+
+            <div class="conteudo">
+              <div class="text-bold card-nome-servico">
+                {{ formatarHorarioInicio(ev.inicio) }}
+                -
+                {{ calcularHorarioFim(ev.inicio, ev.duracao) }}
+              </div>
+
+              <div class="text-bold card-cliente-nome">
+                {{ ev.cliente?.nome || '—' }}
+              </div>
+
+              <div class="text-caption card-nome-cliente">
+                {{ ev.servico.nome }}
+              </div>
+            </div>
+
+            <div class="rodape">
+              <div class="text-caption card-nome-cliente">
+                R$ {{ ev.servico.preco }}
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="ev.tipo === 'almoco'">
+            <div class="almoco-card">
+              <div class="almoco-text">
+                <q-icon name="restaurant" size="32px" class="almoco-icon" /> {{ formatarHora(ev.hora_inicio) }}–{{
+                  formatarHora(ev.hora_fim) }}
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="texto-block">
+              FECHADO
+            </div>
+            <div class="bloqueado-text">
+              {{ ev.hora_inicio }}–{{ ev.hora_fim }}
+            </div>
+            <div class="motivo-bloqueio">
+              {{ ev.motivo }}
+            </div>
+          </template>
+        </q-card>
+
       </div>
     </div>
 
@@ -235,13 +215,9 @@
                 <div class="swipe-thumb" :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="startSwipe"
                   @touchstart="startSwipe">
                   <q-icon name="chevron_right" size="26px" color="negative" />
-
                 </div>
               </div>
-
-
             </div>
-
           </div>
         </div>
       </div>
@@ -259,34 +235,35 @@
       </q-btn>
     </div>
 
+    <div class="footer-agendamento">
+      <span class="btn-text">
+        <q-icon name="schedule" size="16px" />
+        {{ textoHorarioFuncionamento }}
+      </span>
+    </div>
+
   </q-page>
 </template>
-
 
 <script setup>
 import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendamento.vue'
 import '../css/agendamentos.css'
-import { toRef, defineProps, computed } from 'vue'
+import { toRef, defineProps } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
 
 const props = defineProps({ dataSelecionada: { type: Date, required: true } })
 const dataSelecionada = toRef(props, 'dataSelecionada')
 
 const {
-  horariosProcessados,
   horariosPadrao,
   abrirModal,
   salvarAgendamento,
   novoAgendamento,
   modalAberto,
   servicos,
-  estiloCard,
-  //abrirModalAgendamento,
   agendamentoSelecionado,
   modalAgendamento,
-  // processarAgendamentos,
   formatoMoeda,
-  calcularHorarioFim,
   atualizarPreco,
   cancelarAgendamento,
   irParaDetalheAgendamento,
@@ -295,11 +272,14 @@ const {
   fillPercent,
   startSwipe,
   swipeX,
+  eventos,
+  horasDoDia,
+  estiloEvento,
+  calcularHorarioFim,
+  formatarHorarioInicio,
+  formatarHora,
+  textoHorarioFuncionamento,
 } = useAgendamentos(dataSelecionada)
-
-const barbeariaFechada = computed(() => {
-  return !horariosProcessados.value || horariosProcessados.value.length === 0
-})
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)
 const abrirModalGlobal = () => abrirModal?.()
@@ -529,4 +509,201 @@ const abrirModalGlobal = () => abrirModal?.()
   background: rgba(22, 19, 19, 0.6);
   pointer-events: none;
 }
+
+.agenda-wrapper {
+  display: flex;
+}
+
+.agenda-hours {
+  width: 70px;
+}
+
+.hour-row {
+  height: 60px;
+  padding-top: 4px;
+  font-weight: bold;
+}
+
+.agenda-grid {
+  position: relative;
+  flex: 1;
+  border-left: 1px solid #333;
+}
+
+.grid-hour {
+  height: calc(60px * 4.5);
+  /* 60 * PIXELS_PER_MINUTE */
+}
+
+
+.event-card {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* 👈 joga tudo pra baixo */
+  padding: 6px;
+  margin-bottom: 6px; 
+}
+
+
+
+.event-card.agendamento {
+  background: #606163;
+  color: white;
+}
+
+.event-card.bloqueio {
+  background: #993030;
+  color: white;
+}
+
+:root {
+  --ppm: 4.5;
+}
+
+.grid-hour {
+  height: calc(60px * var(--ppm));
+}
+
+.hour-row {
+  height: calc(60px * var(--ppm));
+}
+
+.almoco-card {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+
+  background-image: url('/imgs/almoco3.png');
+  /* caminho da imagem */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  border-radius: 8px;
+  color: white;
+  position: relative;
+  opacity: 30%;
+}
+
+
+.almoco-icon {
+  font-size: 32px;
+}
+
+.almoco-text {
+  position: absolute;
+  top: -2px;
+  right: 8px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+
+}
+
+.bloqueado-text {
+  position: absolute;
+  top: 40px;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+
+}
+
+.almoco-card {
+  background-size: 100%;
+}
+
+@media (min-width: 1024px) {
+  .almoco-card {
+    background-size: 40%;
+    margin-top: 20px;
+  }
+}
+
+.motivo-bloqueio {
+  position: absolute;
+  /* top: 6px; */
+  /* right: 8px; */
+  font-size: 1.50rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.texto-block {
+  position: absolute;
+  top: 6px;
+  font-size: 1.50rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.footer-agendamento {
+  margin-top: 200px;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(20, 20, 20, 0.92);
+  backdrop-filter: blur(6px);
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  z-index: 10;
+}
+
+.footer-agendamento .btn-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  color: #e0e0e0;
+  letter-spacing: 0.3px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hour-row:last-child {
+  opacity: 0.6;
+  font-size: 0.8rem;
+}
+
+
+
 </style>

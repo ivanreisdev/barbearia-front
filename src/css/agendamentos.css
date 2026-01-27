@@ -263,11 +263,12 @@
     font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
-.card-nome-cliente {
+
+.card-cliente-nome {
   position: absolute;
-  top: 90px;
-  left: 8px;
-  font-size: 0.95rem;
+  top: 6px;
+  /* right: 8px; */
+  font-size: 1.0rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -275,6 +276,16 @@
     font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
+.card-nome-cliente {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
 .card-valor-servico {
   position: absolute;
   top: 90px;
