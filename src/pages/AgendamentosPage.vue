@@ -3,9 +3,13 @@
 
     <!-- ✅ AGENDA ABERTA -->
     <div v-if="!barbeariaFechada" class="agenda-container">
-      <div v-for="slot in horariosProcessados" :key="slot.inicioMinutos" class="agenda-row"
-        :class="{ 'row-almoco': slot.tipo === 'almoco' }" :style="{ minHeight: slot.alturaRow + 'px' }">
-        <!-- HORA -->
+      <div v-for="slot in horariosProcessados" :key="slot.inicioMinutos" class="agenda-row" :class="{
+        'row-almoco': slot.tipo === 'almoco',
+        'row-bloqueio': slot.tipo === 'bloqueio',
+        'row-bloqueio-parcial': slot.bloqueioParcial
+      }" :style="{ minHeight: slot.alturaRow + 'px' }">
+
+        <!-- ⏰ HORA -->
         <div class="agenda-hora" :class="{
           'hora-almoco': slot.tipo === 'almoco',
           'hora-bloqueio': slot.tipo === 'bloqueio'
@@ -13,7 +17,7 @@
           {{ slot.hora }}:{{ slot.minuto }}
         </div>
 
-        <!-- SLOT -->
+        <!-- 📦 SLOT -->
         <div class="agenda-slot">
 
           <!-- 🍽️ ALMOÇO -->
@@ -23,11 +27,20 @@
           </div>
 
           <!-- 🚫 BLOQUEIO -->
-          <div v-else-if="slot.tipo === 'bloqueio'" class="slot-bloqueado">
+          <div v-else-if="slot.tipo === 'bloqueio'" class="slot-bloqueado" :style="{
+            height: (slot.bloqueioPercentual * 100) + '%'
+          }">
             <q-icon name="block" size="18px" />
-            <span>Indisponível</span>
-          </div>
 
+            <span v-if="slot.bloqueioParcial">
+              Indisponível até {{ slot.bloqueioFim }}
+            </span>
+
+            <span v-else>
+              Indisponível
+            </span>
+          </div>
+  
           <!-- 📌 AGENDAMENTOS -->
           <template v-else-if="slot.agendamentosProcessados?.length">
             <q-card v-for="item in slot.agendamentosProcessados" :key="item.ag.id"
@@ -55,13 +68,12 @@
             Horário livre
           </div>
 
-          <!-- ⚪ OCUPADO / CONTINUAÇÃO -->
+          <!-- ⚪ CONTINUAÇÃO -->
           <div v-else class="slot-ocupado" />
 
         </div>
       </div>
     </div>
-
     <!-- 🛑 BARBEARIA FECHADA -->
     <div v-else class="agenda-fechada">
       <div class="fechada-overlay">
@@ -72,7 +84,6 @@
         </div>
       </div>
     </div>
-
 
     <!-- Modal de detalhes -->
     <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
@@ -487,7 +498,7 @@ const abrirModalGlobal = () => abrirModal?.()
 }
 
 .slot-bloqueado {
-  height: 100%;
+  width: 100%;
   background: repeating-linear-gradient(45deg,
       #eeeeee,
       #eeeeee 10px,
@@ -499,5 +510,23 @@ const abrirModalGlobal = () => abrirModal?.()
   gap: 6px;
   color: #616161;
   font-weight: 600;
+}
+
+
+.row-bloqueio-parcial .slot-bloqueado {
+  height: 100%;
+}
+
+/* área livre abaixo do bloqueio */
+.row-bloqueio-parcial::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 50%;
+  /* controlado pelo JS se quiser */
+  background: rgba(22, 19, 19, 0.6);
+  pointer-events: none;
 }
 </style>

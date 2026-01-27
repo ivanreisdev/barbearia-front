@@ -278,13 +278,12 @@ export function useAgendamentos(dataSelecionada) {
 
   const horariosDoDia = computed(() => {
     if (!horariosAtendimento.value.length) return []
-
     if (!dataSelecionada.value) return []
 
     const diaSemana = getDiaSemanaBackend(dataSelecionada.value)
 
     const horarioDia = horariosAtendimento.value.find(
-      (h) => h.dia_semana === diaSemana && h.ativo === 1,
+      h => h.dia_semana === diaSemana && h.ativo === 1
     )
 
     if (!horarioDia) return []
@@ -300,23 +299,32 @@ export function useAgendamentos(dataSelecionada) {
       ? horaStringParaInt(horarioDia.almoco_fim)
       : null
 
-    // ⏱ intervalo em minutos (60 = 1h)
+    // ⏱ intervalo em minutos
     const intervalo = 60
 
     let slots = gerarSlots(inicio, fim, intervalo)
 
-    // 🚫 BLOQUEIO (PRIMEIRO)
+    // 🚫 BLOQUEIOS (COM PERCENTUAL)
     slots.forEach(slot => {
-      if (
-        horariosBloqueadosDaAgenda.value.length &&
-        slotEstaBloqueado(slot.inicioMinutos, horariosBloqueadosDaAgenda.value)
-      ) {
+      if (!horariosBloqueadosDaAgenda.value.length) return
+
+      const slotInicio = slot.inicioMinutos
+      const slotFim = slotInicio + intervalo
+
+      const percentual = calcularPercentualBloqueio(
+        slotInicio,
+        slotFim,
+        horariosBloqueadosDaAgenda.value
+      )
+
+      if (percentual > 0) {
         slot.tipo = 'bloqueio'
         slot.ocupado = true
+        slot.bloqueioPercentual = percentual
       }
     })
 
-    // 🍽️ ALMOÇO (SÓ SE NÃO FOR BLOQUEIO)
+    // 🍽️ ALMOÇO (SOMENTE SE NÃO FOR BLOQUEIO)
     slots.forEach(slot => {
       if (slot.tipo === 'bloqueio') return
 
@@ -335,7 +343,7 @@ export function useAgendamentos(dataSelecionada) {
       }
     })
 
-    // 📌 AGENDAMENTOS (SÓ EM SLOT NORMAL)
+    // 📌 AGENDAMENTOS (APENAS EM SLOT NORMAL)
     const slotsNormais = slots.filter(s => s.tipo === 'normal')
 
     const slotsComAgendamento = aplicarAgendamentos(
@@ -344,16 +352,18 @@ export function useAgendamentos(dataSelecionada) {
       intervalo
     )
 
-    // 🔁 REINSERE slots bloqueados e almoço
-    const mapaSlots = new Map(slotsComAgendamento.map(s => [s.inicioMinutos, s]))
+    // 🔁 REINSERE BLOQUEIOS E ALMOÇO
+    const mapa = new Map(
+      slotsComAgendamento.map(s => [s.inicioMinutos, s])
+    )
 
     slots.forEach(slot => {
       if (slot.tipo !== 'normal') {
-        mapaSlots.set(slot.inicioMinutos, slot)
+        mapa.set(slot.inicioMinutos, slot)
       }
     })
 
-    return Array.from(mapaSlots.values()).sort(
+    return Array.from(mapa.values()).sort(
       (a, b) => a.inicioMinutos - b.inicioMinutos
     )
   })
@@ -579,15 +589,19 @@ export function useAgendamentos(dataSelecionada) {
     })
   }
   const horariosProcessados = computed(() => {
-    return horariosDoDia.value.map((slot) => {
+    return horariosDoDia.value.map(slot => {
 
-      // 🚫 BLOQUEIO
+      // 🚫 BLOQUEIO (TOTAL OU PARCIAL)
       if (slot.tipo === 'bloqueio') {
+        const percentual = slot.bloqueioPercentual ?? 1
+
         return {
           ...slot,
           agendamentosProcessados: [],
-          alturaRow: ALTURA_MINIMA * 1.5,
-          ocupado: true
+          // altura proporcional ao bloqueio
+          alturaRow: ALTURA_MINIMA * percentual,
+          ocupado: true,
+          bloqueioParcial: percentual < 1
         }
       }
 
@@ -618,6 +632,26 @@ export function useAgendamentos(dataSelecionada) {
       }
     })
   })
+
+  function calcularPercentualBloqueio(slotInicio, slotFim, bloqueios) {
+    let minutosBloqueados = 0
+
+    bloqueios.forEach(b => {
+      const inicioBloq = horaParaMinutos(b.hora_inicio)
+      const fimBloq = horaParaMinutos(b.hora_fim)
+
+      const interInicio = Math.max(slotInicio, inicioBloq)
+      const interFim = Math.min(slotFim, fimBloq)
+
+      if (interInicio < interFim) {
+        minutosBloqueados += interFim - interInicio
+      }
+    })
+
+    const duracaoSlot = slotFim - slotInicio
+
+    return Math.min(minutosBloqueados / duracaoSlot, 1)
+  }
 
 
 
@@ -705,14 +739,14 @@ export function useAgendamentos(dataSelecionada) {
     const d = new Date(dt)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
-  function slotEstaBloqueado(slotInicioMin, bloqueios) {
-    return bloqueios.some(b => {
-      const inicio = horaParaMinutos(b.hora_inicio)
-      const fim = horaParaMinutos(b.hora_fim)
+  // function slotEstaBloqueado(slotInicioMin, bloqueios) {
+  //   return bloqueios.some(b => {
+  //     const inicio = horaParaMinutos(b.hora_inicio)
+  //     const fim = horaParaMinutos(b.hora_fim)
 
-      return slotInicioMin >= inicio && slotInicioMin < fim
-    })
-  }
+  //     return slotInicioMin >= inicio && slotInicioMin < fim
+  //   })
+  // }
 
 
   function horaParaMinutos(hora) {
