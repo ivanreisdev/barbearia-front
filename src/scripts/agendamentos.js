@@ -126,6 +126,8 @@ export function useAgendamentos(dataSelecionada) {
           message: 'Agendamentos bloqueados com sucesso!',
         })
         modalBloqueiaAgendamentos.value = false
+        loadAgendamentos(),
+          carregarHorariosBloqueadosDaAgenda()
         formBloqueio.value = '';
         swipeX.value = 0;
       } else {
