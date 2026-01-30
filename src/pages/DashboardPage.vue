@@ -3,19 +3,41 @@
 
     <div class="header-dashboard">
       <q-toolbar class="dashboard-toolbar q-mb-sm">
-        <!-- LADO ESQUERDO: Avatar + texto -->
         <div class="row items-center header-left">
-          <q-avatar size="56" style="background: linear-gradient(144deg, #777777, #494949); color: white">
-            {{ auth.user && auth.user.name ? auth.user.name.charAt(0) : 'U' }}
+          <q-avatar size="56" class="cursor-pointer"
+            style="background: linear-gradient(144deg, #777777, #494949); color: white">
+            <!-- LOADING -->
+            <q-skeleton v-if="loadingUser" type="QAvatar" size="56px" />
+
+            <!-- CONTEÚDO REAL -->
+            <template v-else>
+              <!-- FOTO -->
+              <img v-if="fotoBackend" :src="fotoBackend" />
+
+              <!-- FALLBACK -->
+              <span v-else>
+                {{ usuario?.name?.charAt(0) || 'U' }}
+              </span>
+            </template>
           </q-avatar>
 
           <div class="user-info">
-            <div class="text-h6 user-name">
-              Olá,
-              <span class="user-name-bold">
-                {{ auth.user ? auth.user.name : 'Usuário' }}
-              </span>
+            <div class="user-info">
+              <div class="text-h6 user-name">
+                <!-- LOADING -->
+                <q-skeleton v-if="loadingUser" type="text" width="180px" />
+
+                <!-- DADO REAL -->
+                <span v-else>
+                  Olá,
+                  <span class="user-name-bold">
+                    {{ usuario.name || 'Usuário' }}
+                  </span>
+                </span>
+              </div>
             </div>
+
+
             <div class="text-subtitle2 text-grey-6 texto-comun">
               confira seus agendamentos
             </div>
@@ -120,7 +142,6 @@ import { api } from 'boot/axios'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'stores/auth'
 
-const auth = useAuthStore()
 const $q = useQuasar()
 
 const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -253,6 +274,49 @@ async function fetchDiaDaReceita() {
   loadingDay.value = false
 }
 
+//-------------------busca Usuario ------------------
+const loadingUser = ref(true)
+const usuario = ref({
+  name: '',
+  telefone: '',
+  endereco: '',
+  id: null,
+  email: '',
+  foto: null,
+})
+
+const buscarUsuario = async () => {
+  loadingUser.value = true
+  try {
+    const { data } = await api.get('/usuario/buscarDadosUsuario')
+    console.log(data)
+
+    usuario.value = {
+      id: data.id,
+      name: data.name,
+      telefone: data.telefone,
+      email: data.email,
+      endereco: data.endereco,
+      foto: data.foto
+    }
+
+  } catch (error) {
+    console.error(error)
+    $q.notify({
+      type: 'negative',
+      message: 'Erro ao carregar dados do usuário'
+    })
+  } finally {
+    loadingUser.value = false
+  }
+}
+
+const BASE_URL = import.meta.env.VITE_API_URL
+const fotoBackend = computed(() => {
+  if (!usuario.value.foto) return null
+  return `${BASE_URL}/storage/${usuario.value.foto}?t=${Date.now()}`
+})
+
 // ------------------ BUSCA DA RENDA SEMANAL ------------------
 async function fetchReceitaDaSemana() {
   loadingWeek.value = true
@@ -335,6 +399,7 @@ watch(
 
 
 onMounted(() => {
+  buscarUsuario();
   const hojeMid = new Date()
   hojeMid.setHours(0, 0, 0, 0)
 
@@ -629,6 +694,8 @@ function toggleTheme() {
 .texto-comun {
   font-family: 'Inter', sans-serif;
 }
+
+
 
 /* .cards-renda-container {
   margin-top: -24px;

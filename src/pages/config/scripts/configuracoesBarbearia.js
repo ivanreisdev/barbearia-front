@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
@@ -9,6 +9,28 @@ export const useConfiguracoesBarbearia = () => {
 
   const diasSemana = ref([])
   const loading = ref(true)
+  const previewFoto = ref(null)
+  // const fotoBackend = ref(null) // URL vinda do backend
+  const fotoFile = ref(null)
+  const fileInput = ref(null)
+
+  const abrirUpload = () => {
+    fileInput.value.pickFiles()
+  }
+
+  const gerarPreview = (file) => {
+    if (!file) {
+      previewFoto.value = null
+      fotoFile.value = null
+      return
+    }
+
+    const arquivo = Array.isArray(file) ? file[0] : file
+
+    fotoFile.value = arquivo
+    previewFoto.value = URL.createObjectURL(arquivo)
+  }
+
 
   const barbearia = ref({
     nome: '',
@@ -16,6 +38,22 @@ export const useConfiguracoesBarbearia = () => {
     endereco: '',
     id: null
   })
+
+  const usuario = ref({
+    name: '',
+    telefone: '',
+    endereco: '',
+    id: null,
+    email: '',
+    foto: null,
+  })
+  const BASE_URL = import.meta.env.VITE_API_URL
+
+  const fotoBackend = computed(() => {
+    if (!usuario.value.foto) return null
+    return `${BASE_URL}/storage/${usuario.value.foto}?t=${Date.now()}`
+  })
+
 
   const adicionarServico = () => {
     router.push({
@@ -26,12 +64,14 @@ export const useConfiguracoesBarbearia = () => {
     })
   }
 
-const servicos = ref([
-  { id: null,
-    nome: '',
-    preco: '' }
-])
-console.log('servicos ref', servicos);
+  const servicos = ref([
+    {
+      id: null,
+      nome: '',
+      preco: ''
+    }
+  ])
+  console.log('servicos ref', servicos);
   const labels = [
     { key: 'domingo', label: 'Domingo', dia_semana: 1 },
     { key: 'segunda', label: 'Segunda-feira', dia_semana: 2 },
@@ -70,6 +110,31 @@ console.log('servicos ref', servicos);
     }
   }
 
+  const buscarUsuario = async () => {
+    try {
+      const { data } = await api.get('/usuario/buscarDadosUsuario')
+      console.log(data)
+
+      usuario.value = {
+        id: data.id,
+        name: data.name,
+        telefone: data.telefone,
+        email: data.email,
+        endereco: data.endereco,
+        foto: data.foto
+      }
+
+    } catch (error) {
+      console.error(error)
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao carregar dados do usuário'
+      })
+    }
+  }
+
+
+
   const buscarBarbearia = async () => {
     try {
       const { data } = await api.get('/barbearia/info')
@@ -80,26 +145,26 @@ console.log('servicos ref', servicos);
     }
   }
 
-const buscarServicos = async () => {
-  try {
-    const { data } = await api.get('/servicos/buscarServicosPorBarbeariaId')
+  const buscarServicos = async () => {
+    try {
+      const { data } = await api.get('/servicos/buscarServicosPorBarbeariaId')
 
-    servicos.value = data.map(item => ({
-      id: item.id,
-      nome: item.nome,
-      preco: `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}`,
-      duracao: `${item.duracao_minutos} min`
-    }))
-  } catch (error) {
-    console.error('Erro ao buscar serviços', error)
-    $q.notify({
-      type: 'negative',
-      message: 'Erro ao carregar serviços'
-    })
+      servicos.value = data.map(item => ({
+        id: item.id,
+        nome: item.nome,
+        preco: `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}`,
+        duracao: `${item.duracao_minutos} min`
+      }))
+    } catch (error) {
+      console.error('Erro ao buscar serviços', error)
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao carregar serviços'
+      })
+    }
   }
-}
 
-const editarServicos = () => {
+  const editarServicos = () => {
     router.push({
       name: 'servicos-page',
     })
@@ -116,10 +181,32 @@ const editarServicos = () => {
         fim: dia.fim + ':00'
       }))
 
-      await api.post('/horarios-atendimento/atualizarHorariosDeFuncionamento', {
-        horarios,
-        dadosBarbearia: barbearia.value
-      })
+      const formData = new FormData()
+
+      // 👉 horários (array)
+      formData.append('horarios', JSON.stringify(horarios))
+
+      // 👉 dados do usuário
+      formData.append('name', usuario.value.name)
+      formData.append('telefone', usuario.value.telefone)
+      formData.append('email', usuario.value.email)
+      formData.append('endereco', usuario.value.endereco ?? '')
+
+      // 👉 foto (somente se tiver)
+      if (fotoFile.value) {
+        formData.append('foto', fotoFile.value)
+      }
+
+
+      await api.post(
+        '/horarios-atendimento/atualizarHorariosDeFuncionamento',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
 
       $q.notify({
         type: 'positive',
@@ -128,28 +215,34 @@ const editarServicos = () => {
       })
     } catch (error) {
       console.error(error)
-      $q.notify({ type: 'negative', message: 'Erro ao salvar configurações' })
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao salvar configurações'
+      })
     }
   }
 
-onMounted(async () => {
-  loading.value = true
 
-  try {
-    await Promise.all([
-      buscarHorarios(),
-      buscarBarbearia(),
-      buscarServicos()
-    ])
-  } finally {
-    loading.value = false
-  }
-})
+  onMounted(async () => {
+    loading.value = true
+
+    try {
+      await Promise.all([
+        buscarHorarios(),
+        buscarBarbearia(),
+        buscarServicos(),
+        buscarUsuario(),
+      ])
+    } finally {
+      loading.value = false
+    }
+  })
 
 
   return {
     diasSemana,
     barbearia,
+    usuario,
     salvarConfiguracoes,
     // servicosContainer,
     servicos,
@@ -157,6 +250,12 @@ onMounted(async () => {
     buscarServicos,
     editarServicos,
     loading,
+    previewFoto,
+    fotoBackend,
+    fotoFile,
+    fileInput,
+    abrirUpload,
+    gerarPreview,
 
     adicionarServico
   }

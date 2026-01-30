@@ -41,15 +41,38 @@
       </q-card>
 
       <!-- Barbearia -->
+
+
+
       <q-card class="q-mt-xl" flat bordered>
+        <div class="column items-center q-my-xl">
+
+          <q-avatar size="140px" class="avatar-barbearia cursor-pointer" @click="abrirUpload">
+            <!-- PRIORIDADE:
+      1️⃣ preview (foto nova)
+      2️⃣ foto do backend
+      3️⃣ ícone -->
+            <img v-if="previewFoto" :src="previewFoto" />
+            <img v-else-if="fotoBackend" :src="fotoBackend" />
+            <q-icon v-else name="photo_camera" size="42px" color="white" />
+          </q-avatar>
+
+          <div class="text-caption text-grey-6 q-mt-sm">
+            Clique para alterar a foto
+          </div>
+
+          <q-file ref="fileInput" v-model="fotoFile" accept="image/*" class="hidden"
+            @update:model-value="gerarPreview" />
+
+        </div>
         <q-card-section>
-          <div class="text-subtitle1">Informações da Barbearia</div>
+          <div class="text-subtitle1">Informações Do Usuario</div>
         </q-card-section>
 
         <q-card-section class="row q-col-gutter-md">
-          <q-input filled label="Nome da Barbearia" v-model="barbearia.nome" class="col-12 col-md-6" />
-          <q-input filled label="Telefone" v-model="barbearia.telefone" class="col-12 col-md-6" />
-          <q-input filled label="Endereço" v-model="barbearia.endereco" class="col-12" />
+          <q-input filled label="Nome do Usuario" v-model="usuario.name" class="col-12 col-md-6" />
+          <q-input filled label="Telefone" v-model="usuario.telefone" class="col-12 col-md-6" />
+          <q-input filled label="email" v-model="usuario.email" class="col-12" />
         </q-card-section>
       </q-card>
 
@@ -103,11 +126,17 @@ import 'src/css/servicos.css'
 import { useConfiguracoesBarbearia } from '../config/scripts/configuracoesBarbearia.js'
 const {
   diasSemana,
-  barbearia,
+  usuario,
   servicos,
   adicionarServico,
   salvarConfiguracoes,
   editarServicos,
-  loading
+  loading,
+  previewFoto,
+  fotoBackend,
+  fotoFile,
+  fileInput,
+  abrirUpload,
+  gerarPreview,
 } = useConfiguracoesBarbearia()
 </script>
