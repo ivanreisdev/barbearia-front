@@ -43,10 +43,17 @@ export function useAgendamentos(dataSelecionada) {
   const horariosBloqueadosDaAgenda = ref([])
   const modalAgendamento = ref(false)
   const agendamentoSelecionado = ref(null)
+  const bloqueioSelecionado = ref(null)
+  const intervalosLivres = ref([])
+  const intervaloSelecionado = ref(null)
+
+
   const router = useRouter()
 
 
   const modalAberto = ref(false)
+  const modalExclusaoBloqueioAberto = ref(false)
+
   const novoAgendamento = ref({
     cliente: '',
     email: '',
@@ -84,6 +91,11 @@ export function useAgendamentos(dataSelecionada) {
     document.addEventListener('touchend', endSwipe)
   }
 
+  const abrirModalBloqueiaAgendamentos = () => {
+    modalBloqueiaAgendamentos.value = true
+    // buscarIntervalosLivres(toISODate(dataSelecionada.value))
+  }
+
   const moveSwipe = (e) => {
     if (!dragging) return
 
@@ -92,6 +104,31 @@ export function useAgendamentos(dataSelecionada) {
 
     swipeX.value = Math.max(0, Math.min(delta, maxSwipe))
   }
+
+  const buscarIntervalosLivres = async (data) => {
+    intervaloSelecionado.value = null
+    intervalosLivres.value = []
+    try {
+      const response = await api.get(
+        '/horarios-atendimento/buscarIntervalosDisponiveisDoDia',
+        {
+          params: { data }
+        }
+      )
+
+      if (response.data.tipo === 'sucesso') {
+        intervalosLivres.value = response.data.intervalos
+        console.log('intervalosLivres.value')
+        console.log(intervalosLivres.value)
+      } else {
+        intervalosLivres.value = []
+      }
+    } catch (e) {
+      console.error('Erro ao buscar intervalos livres:', e)
+      intervalosLivres.value = []
+    }
+  }
+
 
   const endSwipe = () => {
     dragging = false
@@ -129,11 +166,13 @@ export function useAgendamentos(dataSelecionada) {
         loadAgendamentos(),
           carregarHorariosBloqueadosDaAgenda()
         formBloqueio.value = '';
+        intervaloSelecionado.value = null;
+        intervalosLivres.value = [];
         swipeX.value = 0;
       } else {
         safeNotify({
           type: 'negative',
-          message: 'Erro ao bloquear agendamentos',
+          message: response.data.msg,
         })
       }
 
@@ -205,6 +244,11 @@ export function useAgendamentos(dataSelecionada) {
       }
     },
   )
+
+  const abriModalExclusaoBloqueio = async (ev) => {
+    bloqueioSelecionado.value = ev
+    modalExclusaoBloqueioAberto.value = true
+  }
 
   const abrirModal = async (hora = null) => {
     // abre o modal; se hora for null => não pré-preenche data/hora (usuário deve escolher a data)
@@ -427,10 +471,6 @@ export function useAgendamentos(dataSelecionada) {
       horas.push(`${h}:00`)
     }
 
-    // 👉 adiciona explicitamente o horário final
-    const hFim = String(Math.floor(fim / 60)).padStart(2, '0')
-    horas.push(`${hFim}:00`)
-
     return horas
   })
 
@@ -484,7 +524,8 @@ export function useAgendamentos(dataSelecionada) {
         duracao: fim - inicio,
         hora_inicio: b.hora_inicio,
         hora_fim: b.hora_fim,
-        motivo: b.motivo
+        motivo: b.motivo,
+        id_bloqueio: b.id,
       }
     })
   })
@@ -509,6 +550,14 @@ export function useAgendamentos(dataSelecionada) {
     return horariosAtendimento.value.find(
       h => h.dia_semana === diaSemanaSelecionado.value && h.ativo === 1
     )
+  })
+
+  const horarioFinalExpediente = computed(() => {
+    const h = horarioFuncionamentoDia.value
+    if (!h || h.ativo === 0) {
+      return
+    }
+    return formatarHora(h.fim)
   })
 
   const textoHorarioFuncionamento = computed(() => {
@@ -630,6 +679,13 @@ export function useAgendamentos(dataSelecionada) {
     }
   }
 
+  const opcoesIntervalos = computed(() =>
+    intervalosLivres.value.map(intervalo => ({
+      label: `${intervalo.inicio} às ${intervalo.fim}`,
+      value: intervalo
+    }))
+  )
+
   function toISODate(dt) {
     const d = new Date(dt)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -660,6 +716,47 @@ export function useAgendamentos(dataSelecionada) {
     const [h, m] = hora.split(':').map(Number)
     return h * 60 + m
   }
+  const horaDentroDoIntervalo = (hora) => {
+    if (!hora || !intervaloSelecionado.value) return true
+
+    const toMin = (h) => {
+      const [hh, mm] = h.split(':').map(Number)
+      return hh * 60 + mm
+    }
+
+    const inicio = toMin(intervaloSelecionado.value.inicio)
+    const fim = toMin(intervaloSelecionado.value.fim)
+    const valor = toMin(hora)
+
+    return valor >= inicio && valor <= fim
+  }
+
+  const erroHoraInicio = computed(() => {
+    return !horaDentroDoIntervalo(formBloqueio.value.hora_inicio)
+  })
+
+  const erroHoraFim = computed(() => {
+    return !horaDentroDoIntervalo(formBloqueio.value.hora_fim)
+  })
+
+  const limitesHorario = computed(() => {
+    if (!intervaloSelecionado.value) {
+      return {
+        min: null,
+        max: null
+      }
+    }
+
+    return {
+      min: intervaloSelecionado.value.inicio,
+      max: intervaloSelecionado.value.fim
+    }
+  })
+
+
+  const mensagemErro = 'O horário definido não bate com o intervalo selecionado'
+
+
 
   carregarHorariosAtendimento()
 
@@ -678,6 +775,18 @@ export function useAgendamentos(dataSelecionada) {
       console.log('carregamento bem sucedido')
     }
   })
+
+  watch(
+    () => intervaloSelecionado.value,
+    (intervalo) => {
+      if (intervalo) {
+        formBloqueio.value.hora_inicio = intervalo.inicio
+        formBloqueio.value.hora_fim = intervalo.fim
+      }
+    }
+  )
+
+
 
   return {
     horariosPadrao,
@@ -713,5 +822,18 @@ export function useAgendamentos(dataSelecionada) {
     calcularHorarioFimCancelamento,
     formatarHora,
     textoHorarioFuncionamento,
+    horarioFinalExpediente,
+    abriModalExclusaoBloqueio,
+    modalExclusaoBloqueioAberto,
+    bloqueioSelecionado,
+    carregarHorariosBloqueadosDaAgenda,
+    abrirModalBloqueiaAgendamentos,
+    buscarIntervalosLivres,
+    opcoesIntervalos,
+    intervaloSelecionado,
+    mensagemErro,
+    erroHoraFim,
+    erroHoraInicio,
+    limitesHorario
   }
 }

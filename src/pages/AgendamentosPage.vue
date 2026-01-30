@@ -56,18 +56,28 @@
             <div class="bloqueado-text">
               {{ ev.hora_inicio }}–{{ ev.hora_fim }}
             </div>
+            <div class="btn-excluir-bloqueio_agenda">
+              <q-icon name="delete" @click="abriModalExclusaoBloqueio(ev)" />
+            </div>
             <div class="motivo-bloqueio">
               {{ ev.motivo }}
             </div>
           </template>
         </q-card>
-
       </div>
+    </div>
+
+    <div class="hora-final">
+      {{ horarioFinalExpediente }}
     </div>
 
     <!-- Modal de detalhes -->
     <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
       :formato-moeda="formatoMoeda" :calcular-horario-fim="calcularHorarioFim" @cancelar="cancelarAgendamento" />
+
+    <ModalExcluirBloqueioAgenda v-model="modalExclusaoBloqueioAberto" :bloqueio="bloqueioSelecionado"
+      @excluido="carregarHorariosBloqueadosDaAgenda" />
+
 
     <!-- Modal novo agendamento -->
     <q-dialog v-model="modalAberto" maximized persistent>
@@ -151,38 +161,39 @@
 
               <!-- DATA -->
               <q-input v-model="formBloqueio.data" type="date" label="Data do bloqueio" outlined dense rounded
-                color="primary">
+                color="primary" @update:model-value="buscarIntervalosLivres">
                 <template #prepend>
                   <q-icon name="event" />
                 </template>
               </q-input>
 
+              <q-select v-model="intervaloSelecionado" :options="opcoesIntervalos"
+                label="Selecione um intervalo disponível" outlined dense rounded emit-value map-options
+                :disable="!opcoesIntervalos.length">
+                <template #prepend>
+                  <q-icon name="schedule" />
+                </template>
+              </q-select>
+
               <!-- INTERVALO -->
-              <div class="intervalo-card q-pa-sm q-mt-xs">
+              <div v-if="intervaloSelecionado" class="intervalo-card q-pa-sm q-mt-xs">
                 <div class="text-caption text-grey-7 q-mb-xs">
-                  Intervalo de horário (opcional)
+                  Horário do bloqueio
                 </div>
 
                 <div class="row q-col-gutter-sm">
                   <div class="col-6">
-                    <q-input v-model="formBloqueio.hora_inicio" type="time" label="Das" outlined dense rounded>
-                      <template #prepend>
-                        <q-icon name="schedule" />
-                      </template>
-                    </q-input>
+                    <q-input v-model="formBloqueio.hora_inicio" type="time" label="Das" outlined dense rounded
+                      :min="limitesHorario.min" :max="limitesHorario.max" :disable="!intervaloSelecionado"
+                      :error="erroHoraInicio" error-message="O horário definido não bate com o intervalo selecionado" />
                   </div>
 
                   <div class="col-6">
-                    <q-input v-model="formBloqueio.hora_fim" type="time" label="Até" outlined dense rounded>
-                      <template #prepend>
-                        <q-icon name="schedule" />
-                      </template>
-                    </q-input>
+                    <q-input v-model="formBloqueio.hora_fim" type="time" label="Até" outlined dense rounded
+                      :min="formBloqueio.hora_inicio || limitesHorario.min" :max="limitesHorario.max"
+                      :disable="!intervaloSelecionado" :error="erroHoraFim"
+                      error-message="O horário definido não bate com o intervalo selecionado" />
                   </div>
-                </div>
-
-                <div class="text-caption text-grey-6 q-mt-xs">
-                  Se não informado, o dia inteiro será bloqueado
                 </div>
               </div>
 
@@ -225,7 +236,7 @@
 
     <!-- Botão fixo -->
     <div class="floating-wrapper">
-      <q-btn flat dense icon="lock" class="btn-lock" color="black" @click="modalBloqueiaAgendamentos = true" />
+      <q-btn flat dense icon="lock" class="btn-lock" color="black" @click="abrirModalBloqueiaAgendamentos" />
 
       <q-btn unelevated class="btn-main" @click="abrirModalGlobal">
         <div class="btn-content">
@@ -247,12 +258,15 @@
 
 <script setup>
 import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendamento.vue'
+import ModalExcluirBloqueioAgenda from '../components/modais/ModalExcluirBloqueioAgenda.vue'
+
 import '../css/agendamentos.css'
 import { toRef, defineProps } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
 
 const props = defineProps({ dataSelecionada: { type: Date, required: true } })
 const dataSelecionada = toRef(props, 'dataSelecionada')
+
 
 const {
   horariosPadrao,
@@ -279,6 +293,19 @@ const {
   formatarHorarioInicio,
   formatarHora,
   textoHorarioFuncionamento,
+  horarioFinalExpediente,
+  abriModalExclusaoBloqueio,
+  modalExclusaoBloqueioAberto,
+  bloqueioSelecionado,
+  carregarHorariosBloqueadosDaAgenda,
+  abrirModalBloqueiaAgendamentos,
+  buscarIntervalosLivres,
+  opcoesIntervalos,
+  intervaloSelecionado,
+  limitesHorario,
+  // mensagemErro,
+  erroHoraFim,
+  erroHoraInicio
 } = useAgendamentos(dataSelecionada)
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)
@@ -308,6 +335,7 @@ const abrirModalGlobal = () => abrirModal?.()
 .inter-semibold {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
+  margin-top: 15px;
 }
 
 .agendamento-info {
@@ -551,7 +579,7 @@ const abrirModalGlobal = () => abrirModal?.()
   justify-content: flex-end;
   /* 👈 joga tudo pra baixo */
   padding: 6px;
-  margin-bottom: 6px; 
+  margin-bottom: 6px;
 }
 
 
@@ -699,10 +727,17 @@ const abrirModalGlobal = () => abrirModal?.()
   gap: 6px;
 }
 
-.hour-row:last-child {
-  opacity: 0.6;
-  font-size: 0.8rem;
+.btn-excluir-bloqueio_agenda {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 1.50rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #c0c0c0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+
 }
-
-
 </style>
