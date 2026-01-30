@@ -1,113 +1,154 @@
 <template>
-  <q-page class="q-pa-lg relative-position">
-
+  <q-page class="q-pa-md q-pa-lg q-pa-x">
     <!-- LOADING -->
     <q-inner-loading :showing="loading">
       <q-spinner-dots size="40px" color="primary" />
     </q-inner-loading>
 
-    <!-- CONTEÚDO -->
-    <div v-if="!loading">
+    <div v-if="!loading" class="row justify-center">
 
-      <BotaoVoltar />
+      <!-- CONTAINER RESPONSIVO -->
+      <div class="col-12 col-md-10 col-lg-8 col-xs-6">
 
-      <!-- Cabeçalho -->
-      <div class="q-mb-xl">
-        <div class="text-h5">Configurações da Barbearia</div>
-        <div class="text-caption text-grey-5">
-          Configure os dias e horários de funcionamento da barbearia
+        <!-- HEADER -->
+        <div class="row items-center q-gutter-md q-mb-md">
+          <BotaoVoltar />
+
+          <div class="column">
+            <div class="text-h5 text-weight-bold">
+              Informações da Barbearia
+            </div>
+            <div class="text-caption text-grey-6">
+              Gerencie os dados do seu estabelecimento
+            </div>
+          </div>
         </div>
-      </div>
-
-      <!-- Horários -->
-      <div class="text-subtitle1 q-mb-md">
-        Horário de Funcionamento
-      </div>
-
-      <q-card v-for="dia in diasSemana" :key="dia.key" class="q-mb-md" flat bordered>
-        <q-card-section class="row items-center justify-between">
-          <div class="text-subtitle2">{{ dia.label }}</div>
-          <q-toggle v-model="dia.ativo" color="green" :label="dia.ativo ? 'Atendendo' : 'Não atendendo'" />
-        </q-card-section>
 
         <q-separator />
 
-        <q-card-section v-if="dia.ativo" class="row q-col-gutter-md">
-          <q-input filled type="time" v-model="dia.inicio" label="Início" class="col-12 col-md-3" />
-          <q-input filled type="time" v-model="dia.almocoInicio" label="Almoço início" class="col-12 col-md-3" />
-          <q-input filled type="time" v-model="dia.almocoFim" label="Almoço fim" class="col-12 col-md-3" />
-          <q-input filled type="time" v-model="dia.fim" label="Fim" class="col-12 col-md-3" />
-        </q-card-section>
-      </q-card>
+        <!-- FOTO -->
+        <div class="column items-center q-my-xl">
 
-      <!-- Barbearia -->
-      <q-card class="q-mt-xl" flat bordered>
-        <q-card-section>
-          <div class="text-subtitle1">Informações da Barbearia</div>
-        </q-card-section>
+          <q-avatar size="140px" class="avatar-barbearia cursor-pointer" @click="abrirUpload">
+            <!-- PRIORIDADE:
+    1️⃣ preview (foto nova)
+    2️⃣ foto do backend
+    3️⃣ ícone -->
+            <img v-if="previewFoto" :src="previewFoto" />
+            <img v-else-if="fotoBackend" :src="fotoBackend" />
+            <q-icon v-else name="photo_camera" size="42px" color="white" />
+          </q-avatar>
 
-        <q-card-section class="row q-col-gutter-md">
-          <q-input filled label="Nome da Barbearia" v-model="barbearia.nome" class="col-12 col-md-6" />
-          <q-input filled label="Telefone" v-model="barbearia.telefone" class="col-12 col-md-6" />
-          <q-input filled label="Endereço" v-model="barbearia.endereco" class="col-12" />
-        </q-card-section>
-      </q-card>
 
-      <!-- Serviços -->
-      <div class="q-mt-xl servicos-wrapper">
-        <div class="row items-center justify-between q-mb-md">
-          <div class="text-caption text-grey-5">SERVIÇOS</div>
-          <div class="text-caption text-orange" @click="editarServicos">
-            GERENCIAR
+          <div class="text-caption text-grey-6 q-mt-sm">
+            Clique para alterar a foto
           </div>
+
+          <q-file ref="fileInput" v-model="fotoFile" accept="image/*" class="hidden"
+            @update:model-value="gerarPreview" />
+        </div>
+
+
+        <q-separator spaced />
+
+        <!-- FORM -->
+        <div class="text-subtitle1 text-weight-medium q-mb-sm">
+          Dados básicos
         </div>
 
         <div class="row q-col-gutter-md">
 
-          <!-- Add -->
-          <div class="col-6 col-sm-4 col-md-3">
-            <q-card class="servico-card servico-add" flat clickable @click="adicionarServico">
-              <q-card-section class="servico-add-content">
-                <q-icon name="add" size="32px" />
-                <div class="q-mt-sm text-caption">Adicionar serviço</div>
-              </q-card-section>
-            </q-card>
-          </div>
+          <q-input outlined dense label="Nome da Barbearia" v-model="barbearia.nome" class="col-12 col-sm-6">
+            <template #prepend>
+              <q-icon name="badge" />
+            </template>
+          </q-input>
 
-          <!-- Cards -->
-          <div v-for="servico in servicos" :key="servico.id" class="col-6 col-sm-4 col-md-3">
-            <q-card class="servico-card" flat>
-              <q-card-section>
-                <div class="servico-titulo">{{ servico.nome }}</div>
-                <div class="servico-preco">{{ servico.preco }}</div>
-              </q-card-section>
-            </q-card>
-          </div>
+          <q-input outlined dense label="Telefone" v-model="barbearia.telefone" class="col-12 col-sm-6">
+            <template #prepend>
+              <q-icon name="phone" />
+            </template>
+          </q-input>
 
+          <q-input outlined dense label="Endereço" v-model="barbearia.endereco" class="col-12">
+            <template #prepend>
+              <q-icon name="location_on" />
+            </template>
+          </q-input>
         </div>
-      </div>
 
-      <!-- Salvar -->
-      <div class="row justify-end q-mt-xl">
-        <q-btn color="primary" icon="save" label="Salvar Configurações" @click="salvarConfiguracoes" />
-      </div>
+        <q-separator spaced />
+        <!-- SALVAR -->
+        <SwipeConfirm ref="swipeRef" label="Deslize para salvar as alterações" hint="Deslize para confirmar"
+          :enabled="!loading" @confirm="onConfirmarSwipe" />
 
+      </div>
     </div>
   </q-page>
 </template>
 
-
 <script setup>
+import { ref } from 'vue'
 import BotaoVoltar from 'components/BotaoVoltar.vue'
-import 'src/css/servicos.css'
-import { useConfiguracoesBarbearia } from '../config/scripts/configuracoesBarbearia.js'
+import { useConfiguracoesBarbearia } from './scripts/perfilBarbearia.js'
+import SwipeConfirm from 'components/SwipeConfirm.vue'
+
 const {
-  diasSemana,
   barbearia,
-  servicos,
-  adicionarServico,
-  salvarConfiguracoes,
-  editarServicos,
-  loading
+  // salvarConfiguracoes,
+  salvarPerfilBarbearia,
+  loading,
+  fotoBackend,
+  fotoFile
 } = useConfiguracoesBarbearia()
+
+const swipeRef = ref(null)
+
+const previewFoto = ref(null)
+const fileInput = ref(null)
+
+
+const abrirUpload = () => {
+  fileInput.value.pickFiles()
+}
+
+const gerarPreview = (file) => {
+  if (!file) {
+    previewFoto.value = null
+    return
+  }
+
+  previewFoto.value = URL.createObjectURL(file)
+}
+
+const onConfirmarSwipe = async () => {
+  try {
+    await salvarPerfilBarbearia()
+  } finally {
+    swipeRef.value?.resetSwipe()
+  }
+}
 </script>
+
+
+<style scoped>
+.avatar-barbearia {
+  background: linear-gradient(135deg, #2c2c2c, #3a3a3a);
+  transition: opacity 0.2s;
+}
+
+.avatar-barbearia:hover {
+  opacity: 0.85;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Mobile: botão ocupa tudo */
+@media (max-width: 600px) {
+  .full-width-xs {
+    width: 100%;
+  }
+}
+</style>

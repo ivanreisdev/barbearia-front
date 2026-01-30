@@ -2,7 +2,7 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // URL da sua API Laravel
+  baseURL: `${import.meta.env.VITE_API_URL}/api`
 })
 
 // Adiciona token automaticamente em cada requisição

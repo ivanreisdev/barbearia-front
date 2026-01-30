@@ -54,6 +54,11 @@ const routes = [
         component: () => import('pages/config/ServicosPage.vue')
       },
       {
+        path: 'config/usuario',
+        name: 'usuario-page',
+        component: () => import('pages/config/UsuarioPage.vue')
+      },
+      {
         path: 'servicosCreate/:barbeariaId',
         name: 'servicos-create',
         component: () => import('pages/ServicosCreatePage.vue')
