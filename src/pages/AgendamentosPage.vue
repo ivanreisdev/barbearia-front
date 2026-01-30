@@ -139,7 +139,7 @@
         <!-- HEADER FIXO -->
         <div class="header-agendamento header-bloqueio">
           <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
-            @click="modalBloqueiaAgendamentos = false" />
+            @click="FecharmodalBloqueiaAgendamentos"/>
 
           <div class="header-content text-white">
             <div class="text-h5 titulo-bloqueio text-weight-medium">Fechar Agenda</div>
@@ -223,10 +223,12 @@
                 </span>
 
                 <!-- BOTÃO -->
-                <div class="swipe-thumb" :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="startSwipe"
-                  @touchstart="startSwipe">
+                <div class="swipe-thumb" :class="{ disabled: !swipeHabilitado }"
+                  :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="swipeHabilitado && startSwipe($event)"
+                  @touchstart="swipeHabilitado && startSwipe($event)">
                   <q-icon name="chevron_right" size="26px" color="negative" />
                 </div>
+
               </div>
             </div>
           </div>
@@ -305,7 +307,9 @@ const {
   limitesHorario,
   // mensagemErro,
   erroHoraFim,
-  erroHoraInicio
+  erroHoraInicio,
+  swipeHabilitado,
+  FecharmodalBloqueiaAgendamentos
 } = useAgendamentos(dataSelecionada)
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)

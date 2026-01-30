@@ -686,6 +686,16 @@ export function useAgendamentos(dataSelecionada) {
     }))
   )
 
+  const swipeHabilitado = computed(() => {
+    return (
+      intervaloSelecionado.value &&
+      formBloqueio.value.hora_inicio &&
+      formBloqueio.value.hora_fim &&
+      !erroHoraInicio.value &&
+      !erroHoraFim.value
+    )
+  })
+
   function toISODate(dt) {
     const d = new Date(dt)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -712,6 +722,13 @@ export function useAgendamentos(dataSelecionada) {
     return `${hInicio}:${mInicio} - ${hFim}:${mFim}`
   }
 
+  const FecharmodalBloqueiaAgendamentos = () => {
+    modalBloqueiaAgendamentos.value = false;
+    formBloqueio.value = '';
+    intervaloSelecionado.value = null;
+    intervalosLivres.value = [];
+    swipeX.value = 0;
+  }
   function horaParaMinutos(hora) {
     const [h, m] = hora.split(':').map(Number)
     return h * 60 + m
@@ -834,6 +851,8 @@ export function useAgendamentos(dataSelecionada) {
     mensagemErro,
     erroHoraFim,
     erroHoraInicio,
-    limitesHorario
+    limitesHorario,
+    swipeHabilitado,
+    FecharmodalBloqueiaAgendamentos
   }
 }
