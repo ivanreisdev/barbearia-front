@@ -139,7 +139,7 @@
         <!-- HEADER FIXO -->
         <div class="header-agendamento header-bloqueio">
           <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
-            @click="FecharmodalBloqueiaAgendamentos"/>
+            @click="FecharmodalBloqueiaAgendamentos" />
 
           <div class="header-content text-white">
             <div class="text-h5 titulo-bloqueio text-weight-medium">Fechar Agenda</div>
@@ -743,5 +743,13 @@ const abrirModalGlobal = () => abrirModal?.()
   font-family: 'Inter', sans-serif;
   font-weight: 600;
 
+}
+
+.motivo-bloqueio {
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
