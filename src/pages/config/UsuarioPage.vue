@@ -9,19 +9,49 @@
     <!-- CONTEÚDO -->
     <div v-if="!loading">
 
-      <BotaoVoltar />
+      <div class="row items-center q-mb-md">
+        <BotaoVoltar />
 
-      <!-- Cabeçalho -->
-      <div class="q-mb-xl">
-        <div class="text-h5">Configurações da Barbearia</div>
-        <div class="text-caption text-grey-5">
-          Configure os dias e horários de funcionamento da barbearia
+        <div class="q-ml-md">
+          <div class="text-h5">Configurações do Usuário</div>
+          <div class="text-caption text-grey-5">
+            Configure os dias e horários de funcionamento
+          </div>
         </div>
       </div>
 
+
+      <div class="text-captionn q-mb-sm">
+        Informações Do Usuário
+      </div>
+      <!-- Usuario -->
+      <q-card flat bordered>
+        <div class="column items-center q-pa-lg">
+
+          <q-avatar size="140px" class="avatar-barbearia cursor-pointer" @click="abrirUpload">
+            <img v-if="previewFoto" :src="previewFoto" />
+            <img v-else-if="fotoBackend" :src="fotoBackend" />
+            <q-icon v-else name="photo_camera" size="42px" color="white" />
+          </q-avatar>
+
+          <div class="text-captionn text-grey-6 q-mt-sm">
+            Clique para alterar a foto
+          </div>
+
+          <q-file ref="fileInput" v-model="fotoFile" accept="image/*" class="hidden"
+            @update:model-value="gerarPreview" />
+
+        </div>
+        <q-card-section class="row q-col-gutter-md">
+          <q-input filled label="Nome do Usuario" v-model="usuario.name" class="col-12 col-md-6" />
+          <q-input filled label="Telefone" v-model="usuario.telefone" class="col-12 col-md-6" />
+          <q-input filled label="email" v-model="usuario.email" class="col-12" />
+        </q-card-section>
+      </q-card>
+
       <!-- Horários -->
-      <div class="text-subtitle1 q-mb-md">
-        Horário de Funcionamento
+      <div class="q-mt-lg text-subtitle1">
+         Horário de Funcionamento
       </div>
 
       <q-card v-for="dia in diasSemana" :key="dia.key" class="q-mb-md" flat bordered>
@@ -37,42 +67,6 @@
           <q-input filled type="time" v-model="dia.almocoInicio" label="Almoço início" class="col-12 col-md-3" />
           <q-input filled type="time" v-model="dia.almocoFim" label="Almoço fim" class="col-12 col-md-3" />
           <q-input filled type="time" v-model="dia.fim" label="Fim" class="col-12 col-md-3" />
-        </q-card-section>
-      </q-card>
-
-      <!-- Barbearia -->
-
-
-
-      <q-card class="q-mt-xl" flat bordered>
-        <div class="column items-center q-my-xl">
-
-          <q-avatar size="140px" class="avatar-barbearia cursor-pointer" @click="abrirUpload">
-            <!-- PRIORIDADE:
-      1️⃣ preview (foto nova)
-      2️⃣ foto do backend
-      3️⃣ ícone -->
-            <img v-if="previewFoto" :src="previewFoto" />
-            <img v-else-if="fotoBackend" :src="fotoBackend" />
-            <q-icon v-else name="photo_camera" size="42px" color="white" />
-          </q-avatar>
-
-          <div class="text-caption text-grey-6 q-mt-sm">
-            Clique para alterar a foto
-          </div>
-
-          <q-file ref="fileInput" v-model="fotoFile" accept="image/*" class="hidden"
-            @update:model-value="gerarPreview" />
-
-        </div>
-        <q-card-section>
-          <div class="text-subtitle1">Informações Do Usuario</div>
-        </q-card-section>
-
-        <q-card-section class="row q-col-gutter-md">
-          <q-input filled label="Nome do Usuario" v-model="usuario.name" class="col-12 col-md-6" />
-          <q-input filled label="Telefone" v-model="usuario.telefone" class="col-12 col-md-6" />
-          <q-input filled label="email" v-model="usuario.email" class="col-12" />
         </q-card-section>
       </q-card>
 
@@ -116,6 +110,28 @@
       </div>
 
     </div>
+
+    <q-dialog v-model="modalCrop" persistent>
+      <q-card style="width: 90vw; max-width: 400px">
+        <q-card-section class="text-h6">
+          Ajuste e posicione sua imagem
+        </q-card-section>
+
+        <q-card-section>
+          <Cropper v-if="imagemParaCrop" ref="cropper" :src="imagemParaCrop" :stencil-props="{ aspectRatio: 1 }"
+            class="cropper" @ready="cropperReady = true" />
+
+
+
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn color="primary" label="Salvar" :disable="!cropperReady" @click="confirmarCrop" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
   </q-page>
 </template>
 
@@ -138,5 +154,11 @@ const {
   fileInput,
   abrirUpload,
   gerarPreview,
+  confirmarCrop,
+  Cropper,
+  imagemParaCrop,
+  modalCrop,
+  cropperReady,
+  cropper
 } = useConfiguracoesBarbearia()
 </script>

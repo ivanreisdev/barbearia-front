@@ -2,6 +2,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
+import { Cropper } from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
+
 
 export const useConfiguracoesBarbearia = () => {
   const $q = useQuasar()
@@ -14,22 +17,57 @@ export const useConfiguracoesBarbearia = () => {
   const fotoFile = ref(null)
   const fileInput = ref(null)
 
+  const modalCrop = ref(false)
+  const imagemParaCrop = ref(null)
+  const cropper = ref(null)
+  const cropperReady = ref(false)
+
+
   const abrirUpload = () => {
     fileInput.value.pickFiles()
   }
 
+  // const gerarPreview = (file) => {
+  //   if (!file) {
+  //     previewFoto.value = null
+  //     fotoFile.value = null
+  //     return
+  //   }
+
+  // const arquivo = Array.isArray(file) ? file[0] : file
+
+  // fotoFile.value = arquivo
+  // previewFoto.value = URL.createObjectURL(arquivo)
+  // }
+
   const gerarPreview = (file) => {
-    if (!file) {
-      previewFoto.value = null
-      fotoFile.value = null
-      return
-    }
-
     const arquivo = Array.isArray(file) ? file[0] : file
-
-    fotoFile.value = arquivo
-    previewFoto.value = URL.createObjectURL(arquivo)
+    imagemParaCrop.value = URL.createObjectURL(arquivo)
+    modalCrop.value = true
   }
+
+  const confirmarCrop = () => {
+    if (!cropper.value) return
+
+    const { canvas } = cropper.value.getResult()
+    if (!canvas) return
+
+    canvas.toBlob((blob) => {
+      const arquivoFinal = new File([blob], 'avatar.jpg', {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      })
+
+      fotoFile.value = arquivoFinal
+      previewFoto.value = URL.createObjectURL(blob)
+
+      modalCrop.value = false
+      cropperReady.value = false
+    }, 'image/jpeg', 0.95)
+  }
+
+
+
 
 
   const barbearia = ref({
@@ -256,7 +294,12 @@ export const useConfiguracoesBarbearia = () => {
     fileInput,
     abrirUpload,
     gerarPreview,
-
-    adicionarServico
+    confirmarCrop,
+    Cropper,
+    imagemParaCrop,
+    adicionarServico,
+    modalCrop,
+    cropperReady,
+    cropper
   }
 }
