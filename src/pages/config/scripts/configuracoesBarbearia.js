@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 
-
 export const useConfiguracoesBarbearia = () => {
   const $q = useQuasar()
   const router = useRouter()
@@ -13,7 +12,6 @@ export const useConfiguracoesBarbearia = () => {
   const diasSemana = ref([])
   const loading = ref(true)
   const previewFoto = ref(null)
-  // const fotoBackend = ref(null) // URL vinda do backend
   const fotoFile = ref(null)
   const fileInput = ref(null)
 
@@ -22,23 +20,9 @@ export const useConfiguracoesBarbearia = () => {
   const cropper = ref(null)
   const cropperReady = ref(false)
 
-
   const abrirUpload = () => {
     fileInput.value.pickFiles()
   }
-
-  // const gerarPreview = (file) => {
-  //   if (!file) {
-  //     previewFoto.value = null
-  //     fotoFile.value = null
-  //     return
-  //   }
-
-  // const arquivo = Array.isArray(file) ? file[0] : file
-
-  // fotoFile.value = arquivo
-  // previewFoto.value = URL.createObjectURL(arquivo)
-  // }
 
   const gerarPreview = (file) => {
     const arquivo = Array.isArray(file) ? file[0] : file
@@ -65,10 +49,6 @@ export const useConfiguracoesBarbearia = () => {
       cropperReady.value = false
     }, 'image/jpeg', 0.95)
   }
-
-
-
-
 
   const barbearia = ref({
     nome: '',
@@ -207,6 +187,12 @@ export const useConfiguracoesBarbearia = () => {
       name: 'servicos-page',
     })
   }
+  const swipeSalvar = ref(null)
+  const onConfirmSalvar = async () => {
+    await salvarConfiguracoes()
+    swipeSalvar.value?.resetSwipe()
+  }
+
 
   const salvarConfiguracoes = async () => {
     try {
@@ -281,7 +267,7 @@ export const useConfiguracoesBarbearia = () => {
     diasSemana,
     barbearia,
     usuario,
-    salvarConfiguracoes,
+    onConfirmSalvar,
     // servicosContainer,
     servicos,
     // scrollServicos,
@@ -300,6 +286,7 @@ export const useConfiguracoesBarbearia = () => {
     adicionarServico,
     modalCrop,
     cropperReady,
-    cropper
+    cropper,
+    swipeSalvar
   }
 }

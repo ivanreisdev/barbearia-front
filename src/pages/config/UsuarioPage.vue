@@ -1,6 +1,5 @@
 <template>
   <q-page class="q-pa-lg relative-position">
-
     <!-- LOADING -->
     <q-inner-loading :showing="loading">
       <q-spinner-dots size="40px" color="primary" />
@@ -9,17 +8,19 @@
     <!-- CONTEÚDO -->
     <div v-if="!loading">
 
-      <div class="row items-center q-mb-md">
+      <div class="row items-center no-wrap q-mb-md q-gutter-sm">
         <BotaoVoltar />
 
-        <div class="q-ml-md">
-          <div class="text-h5">Configurações do Usuário</div>
+        <div class="column">
+          <div class="text-weight-bold" :class="$q.screen.lt.sm ? 'text-subtitle1' : 'text-h5'">
+            Configurações do Usuário
+          </div>
+
           <div class="text-caption text-grey-5">
             Configure os dias e horários de funcionamento
           </div>
         </div>
       </div>
-
 
       <div class="text-captionn q-mb-sm">
         Informações Do Usuário
@@ -51,7 +52,7 @@
 
       <!-- Horários -->
       <div class="q-mt-lg text-subtitle1">
-         Horário de Funcionamento
+        Horário de Funcionamento
       </div>
 
       <q-card v-for="dia in diasSemana" :key="dia.key" class="q-mb-md" flat bordered>
@@ -100,38 +101,43 @@
               </q-card-section>
             </q-card>
           </div>
-
         </div>
       </div>
 
       <!-- Salvar -->
-      <div class="row justify-end q-mt-xl">
-        <q-btn color="primary" icon="save" label="Salvar Configurações" @click="salvarConfiguracoes" />
-      </div>
+      <div class="row justify-center q-mt-lg">
+        <SwipeConfirm ref="swipeSalvar" label="Deslize para salvar alterações" @confirm="onConfirmSalvar" />
 
+      </div>
     </div>
 
-    <q-dialog v-model="modalCrop" persistent>
-      <q-card style="width: 90vw; max-width: 400px">
-        <q-card-section class="text-h6">
-          Ajuste e posicione sua imagem
+    <q-dialog v-model="modalCrop" persistent maximized>
+      <q-card class="column no-wrap">
+
+        <!-- HEADER -->
+        <q-card-section class="row items-center q-py-sm">
+          <div class="text-h6">Ajuste sua imagem</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
-        <q-card-section>
+        <q-separator />
+
+        <!-- CORPO (cropper ocupa tudo) -->
+        <q-card-section class="col q-pa-none flex flex-center">
           <Cropper v-if="imagemParaCrop" ref="cropper" :src="imagemParaCrop" :stencil-props="{ aspectRatio: 1 }"
-            class="cropper" @ready="cropperReady = true" />
-
-
-
+            class="cropper-full" @ready="cropperReady = true" />
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn color="primary" label="Salvar" :disable="!cropperReady" @click="confirmarCrop" />
+        <q-separator />
+
+        <!-- AÇÕES -->
+        <q-card-actions class="q-pa-md">
+          <q-btn flat label="Cancelar" class="full-width q-mb-sm" v-close-popup />
+          <q-btn color="primary" label="Salvar" class="full-width" :disable="!cropperReady" @click="confirmarCrop" />
         </q-card-actions>
       </q-card>
     </q-dialog>
-
   </q-page>
 </template>
 
@@ -140,12 +146,15 @@
 import BotaoVoltar from 'components/BotaoVoltar.vue'
 import 'src/css/servicos.css'
 import { useConfiguracoesBarbearia } from '../config/scripts/configuracoesBarbearia.js'
+import SwipeConfirm from 'components/SwipeConfirm.vue'
+
 const {
   diasSemana,
   usuario,
   servicos,
   adicionarServico,
-  salvarConfiguracoes,
+  onConfirmSalvar,
+  swipeSalvar,
   editarServicos,
   loading,
   previewFoto,

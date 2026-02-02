@@ -14,6 +14,11 @@ export const useConfiguracoesBarbearia = () => {
     foto: null,
   })
 
+  const previewFoto = ref(null)
+  const fileInput = ref(null)
+  const modalCrop = ref(false)
+  const imagemParaCrop = ref(null)
+
   const buscarBarbearia = async () => {
     try {
       const { data } = await api.get('/barbearia/info')
@@ -24,6 +29,21 @@ export const useConfiguracoesBarbearia = () => {
     }
   }
 
+  function gerarPreview(file) {
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = e => {
+      imagemParaCrop.value = e.target.result
+      modalCrop.value = true
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // const abrirUpload = () => {
+  //   fileInput.value.pickFiles()
+  // }
+
   const BASE_URL = import.meta.env.VITE_API_URL
   const fotoFile = ref(null)
 
@@ -33,6 +53,10 @@ export const useConfiguracoesBarbearia = () => {
     return `${BASE_URL}/storage/${barbearia.value.foto}?t=${Date.now()}`
   })
 
+  function onImagemCortada({ file, preview }) {
+    fotoFile.value = file
+    previewFoto.value = preview
+  }
   const salvarPerfilBarbearia = async () => {
     try {
       const formData = new FormData()
@@ -54,7 +78,6 @@ export const useConfiguracoesBarbearia = () => {
           }
         }
       )
-
       // atualiza estado com retorno do backend
       barbearia.value = data.barbearia
 
@@ -70,8 +93,6 @@ export const useConfiguracoesBarbearia = () => {
       })
     }
   }
-
-
 
   onMounted(async () => {
     loading.value = true
@@ -90,6 +111,12 @@ export const useConfiguracoesBarbearia = () => {
     loading,
     salvarPerfilBarbearia,
     fotoBackend,
-    fotoFile
+    fotoFile,
+    gerarPreview,
+    modalCrop,
+    imagemParaCrop,
+    onImagemCortada,
+    fileInput,
+    previewFoto,
   }
 }

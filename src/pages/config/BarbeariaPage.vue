@@ -11,43 +11,41 @@
       <div class="col-12 col-md-10 col-lg-8 col-xs-6">
 
         <!-- HEADER -->
-        <div class="row items-center q-gutter-md q-mb-md">
+        <div class="row items-center no-wrap q-gutter-sm q-mb-md">
           <BotaoVoltar />
 
           <div class="column">
-            <div class="text-h5 text-weight-bold">
+            <div class="text-weight-bold" :class="$q.screen.lt.sm ? 'text-subtitle1' : 'text-h5'">
               Informações da Barbearia
             </div>
+
             <div class="text-caption text-grey-6">
               Gerencie os dados do seu estabelecimento
             </div>
           </div>
         </div>
 
+
         <q-separator />
 
+        <!-- FOTO -->
         <!-- FOTO -->
         <div class="column items-center q-my-xl">
 
           <q-avatar size="140px" class="avatar-barbearia cursor-pointer" @click="abrirUpload">
-            <!-- PRIORIDADE:
-    1️⃣ preview (foto nova)
-    2️⃣ foto do backend
-    3️⃣ ícone -->
             <img v-if="previewFoto" :src="previewFoto" />
             <img v-else-if="fotoBackend" :src="fotoBackend" />
             <q-icon v-else name="photo_camera" size="42px" color="white" />
           </q-avatar>
 
-
           <div class="text-caption text-grey-6 q-mt-sm">
             Clique para alterar a foto
           </div>
 
-          <q-file ref="fileInput" v-model="fotoFile" accept="image/*" class="hidden"
-            @update:model-value="gerarPreview" />
-        </div>
+          <q-file ref="fileInput" accept="image/*" class="hidden" @update:model-value="gerarPreview" />
 
+          <ModalAjusteFotos v-model="modalCrop" :src="imagemParaCrop" @confirm="onImagemCortada" />
+        </div>
 
         <q-separator spaced />
 
@@ -92,6 +90,8 @@ import { ref } from 'vue'
 import BotaoVoltar from 'components/BotaoVoltar.vue'
 import { useConfiguracoesBarbearia } from './scripts/perfilBarbearia.js'
 import SwipeConfirm from 'components/SwipeConfirm.vue'
+import ModalAjusteFotos from 'components/modais/ModalAjusteFotos.vue'
+
 
 const {
   barbearia,
@@ -99,27 +99,23 @@ const {
   salvarPerfilBarbearia,
   loading,
   fotoBackend,
-  fotoFile
+  // fotoFile,
+  modalCrop,
+  gerarPreview,
+  imagemParaCrop,
+  onImagemCortada,
+  fileInput,
+  previewFoto,
+
 } = useConfiguracoesBarbearia()
-
-const swipeRef = ref(null)
-
-const previewFoto = ref(null)
-const fileInput = ref(null)
 
 
 const abrirUpload = () => {
-  fileInput.value.pickFiles()
+  fileInput.value?.pickFiles()
 }
 
-const gerarPreview = (file) => {
-  if (!file) {
-    previewFoto.value = null
-    return
-  }
 
-  previewFoto.value = URL.createObjectURL(file)
-}
+const swipeRef = ref(null)
 
 const onConfirmarSwipe = async () => {
   try {
