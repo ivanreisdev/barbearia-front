@@ -9,7 +9,7 @@
       </div>
 
       <!-- GRID -->
-      <div class="agenda-grid">
+      <div class="agenda-grid" v-if="horasDoDia.length">
 
         <div v-for="h in horasDoDia" :key="h" class="grid-hour" />
 
