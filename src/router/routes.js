@@ -39,6 +39,10 @@ const routes = [
         component: () => import('pages/AgendamentosPage.vue')
       },
       {
+        path: 'clientes',
+        component: () => import('pages/ClientesPage.vue')
+      },
+      {
         path: 'agendamentos/:id',
         name: 'agendamento-detalhe',
         component: () => import('pages/AgendamentoDetalhePage.vue'),

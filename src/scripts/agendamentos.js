@@ -752,6 +752,22 @@ export function useAgendamentos(dataSelecionada) {
     return !horaDentroDoIntervalo(formBloqueio.value.hora_inicio)
   })
 
+  const formatarCelular = (celular) =>{
+    if (!celular) return ''
+
+    const numero = celular.replace(/\D/g, '')
+
+    if (numero.length === 11) {
+      return `(${numero.slice(0, 2)}) ${numero.slice(2, 7)}-${numero.slice(7)}`
+    }
+
+    if (numero.length === 10) {
+      return `(${numero.slice(0, 2)}) ${numero.slice(2, 6)}-${numero.slice(6)}`
+    }
+
+    return celular
+  }
+
   const erroHoraFim = computed(() => {
     return !horaDentroDoIntervalo(formBloqueio.value.hora_fim)
   })
@@ -769,6 +785,12 @@ export function useAgendamentos(dataSelecionada) {
       max: intervaloSelecionado.value.fim
     }
   })
+
+  const abrirWhatsapp =  (celular) => {
+    const numero = celular.replace(/\D/g, '') // remove () - espaços etc
+    const url = `https://wa.me/55${numero}`
+    window.open(url, '_blank')
+  }
 
 
   const mensagemErro = 'O horário definido não bate com o intervalo selecionado'
@@ -853,6 +875,8 @@ export function useAgendamentos(dataSelecionada) {
     erroHoraInicio,
     limitesHorario,
     swipeHabilitado,
-    FecharmodalBloqueiaAgendamentos
+    FecharmodalBloqueiaAgendamentos,
+    abrirWhatsapp,
+    formatarCelular
   }
 }

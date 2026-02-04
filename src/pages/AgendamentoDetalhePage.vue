@@ -28,13 +28,21 @@
           <div class="col-12 col-md-7">
 
             <div class="q-mb-xl">
-              <div class="text-caption text-grey-6 inter-semibold">CLIENTE</div>
-              <div class="text-subtitle1 text-weight-bold inter-semibold">
+              <div class="text-caption text-grey-6 inter-semibold q-mb-sm">CLIENTE</div>
+              <div class="text-subtitle1 text-weight-bold nome-cliente">
                 {{ agendamento.cliente?.nome || '—' }}
               </div>
-              <div class="text-caption text-grey-6 inter-semibold">
-                {{ agendamento.cliente?.celular || '—' }}
+              <div class="row items-center">
+                <div class="col text-caption text-grey-6 inter-semibold">
+                  {{ formatarCelular(agendamento.cliente?.celular) || '—' }}
+                </div>
+
+                <q-space />
+
+                <q-btn v-if="agendamento.cliente?.celular" icon="mdi-whatsapp" flat round size="md" color="green-6"
+                  text-color="green-6" @click="abrirWhatsapp(agendamento.cliente.celular)" />
               </div>
+
             </div>
 
             <div class="q-mb-xl">
@@ -58,12 +66,8 @@
                 {{ formatoMoeda(agendamento.servico.preco) }}
               </div>
             </div>
-
           </div>
-
           <!-- COLUNA DIREITA -->
-
-
 
         </div>
 
@@ -71,9 +75,8 @@
         <div class="ticket-divider q-my-xl" />
 
         <!-- AÇÃO SEMPRE EMBAIXO -->
-        <q-btn outline color="dark" class="full-width" label="Cancelar agendamento" @click="modalCancelar = true" />
-
-
+        <q-btn class="full-width q-mt-md" label="Cancelar agendamento" icon="mdi-cancel" outline color="grey-4"
+          text-color="grey-8" no-caps @click="modalCancelar = true" />
 
       </template>
 
@@ -225,7 +228,9 @@ const {
   buscarAgendamentoPorId,
   cancelarAgendamento,
   formatoMoeda,
-  calcularHorarioFimCancelamento
+  calcularHorarioFimCancelamento,
+  abrirWhatsapp,
+  formatarCelular
 } = useAgendamentos()
 
 /* =========================
@@ -344,6 +349,13 @@ const cancelar = async () => {
 .inter-semibold {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
+  font-size: 18px;
+}
+
+.nome-cliente {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
 }
 
 .agendamento-info {
