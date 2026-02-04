@@ -391,6 +391,18 @@
   align-items: center;
 }
 
+@media (min-width: 1024px) {
+  .q-layout.drawer-open .floating-wrapper {
+    left: calc(16px + var(--drawer-width, 300px));
+    right: 16px;
+  }
+
+  .q-layout:not(.drawer-open) .floating-wrapper {
+    left: 16px;
+    right: 16px;
+  }
+}
+
 /* Cadeado */
 .btn-lock {
   background: #e2dada;

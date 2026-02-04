@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh LpR fFf">
+  <q-layout view="hHh LpR fFf" :class="{ 'drawer-open': drawer }">
 
     <!-- DRAWER -->
     <q-drawer v-model="drawer" side="left" show-if-above class="drawer-bg text-white">
@@ -169,6 +169,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
+:root {
+  --drawer-width: 300px;
+}
+
 .drawer-header {
   padding: 20px 16px;
   font-family: 'Inter', sans-serif;
@@ -182,6 +186,7 @@ onBeforeUnmount(() => {
 
 .drawer-bg {
   background-color: #121212;
+  width: var(--drawer-width);
 }
 
 .lista-acoes-menu {
