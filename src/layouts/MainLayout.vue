@@ -17,7 +17,7 @@
           PRINCIPAL
         </q-item-label>
 
-        <q-item clickable v-ripple to="/dashboard" active-class="menu-active" @click="fecharDrawerNoMobile">
+        <q-item clickable v-ripple to="/dashboard" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="dashboard" size="20px" />
           </q-item-section>
@@ -26,7 +26,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple to="/agendamentos" active-class="menu-active" @click="fecharDrawerNoMobile">
+        <q-item clickable v-ripple to="/agendamentos" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="event" size="20px" />
           </q-item-section>
@@ -35,7 +35,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple to="/clientes" active-class="menu-active" @click="fecharDrawerNoMobile">
+        <q-item clickable v-ripple to="/clientes" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="group" size="20px" />
           </q-item-section>
@@ -44,7 +44,7 @@
           </q-item-section>
         </q-item>
 
-        <!-- <q-item clickable v-ripple to="/financeiro" active-class="menu-active" @click="fecharDrawerNoMobile">
+        <!-- <q-item clickable v-ripple to="/financeiro" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="attach_money" size="20px" />
           </q-item-section>
@@ -61,21 +61,21 @@
         <q-expansion-item icon="settings" label="Configurações" expand-separator header-class="text-grey-4">
           <q-list class="bg-grey-9 q-pl-sm">
 
-            <q-item clickable v-ripple to="/config/usuario" active-class="menu-active" @click="fecharDrawerNoMobile">
+            <q-item clickable v-ripple to="/config/usuario" active-class="menu-active" @click="fecharDrawer">
               <q-item-section avatar>
                 <q-icon name="person" size="18px" />
               </q-item-section>
               <q-item-section>Usuário</q-item-section>
             </q-item>
 
-            <q-item clickable v-ripple to="/config/barbearia" active-class="menu-active" @click="fecharDrawerNoMobile">
+            <q-item clickable v-ripple to="/config/barbearia" active-class="menu-active" @click="fecharDrawer">
               <q-item-section avatar>
                 <q-icon name="content_cut" size="18px" />
               </q-item-section>
               <q-item-section>Minha Barbearia</q-item-section>
             </q-item>
 
-            <q-item clickable v-ripple to="/config/servicos" active-class="menu-active" @click="fecharDrawerNoMobile">
+            <q-item clickable v-ripple to="/config/servicos" active-class="menu-active" @click="fecharDrawer">
               <q-item-section avatar>
                 <q-icon name="build" size="18px" />
               </q-item-section>
@@ -86,7 +86,7 @@
         </q-expansion-item>
 
         <!-- OUTROS -->
-        <q-item clickable v-ripple to="/meu-link" active-class="menu-active" @click="fecharDrawerNoMobile">
+        <q-item clickable v-ripple to="/meu-link" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="link" size="20px" />
           </q-item-section>
@@ -135,12 +135,12 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
-import { useQuasar } from 'quasar'
+// import { useQuasar } from 'quasar'
 
 const drawer = ref(false)
 const router = useRouter()
 const auth = useAuthStore()
-const $q = useQuasar()
+// const $q = useQuasar()
 
 // function avaliarApp() {
 //   window.open('https://google.com', '_blank')
@@ -151,10 +151,8 @@ function logout() {
   router.push('/login')
 }
 
-function fecharDrawerNoMobile() {
-  if ($q.screen.lt.md) {
-    drawer.value = false
-  }
+function fecharDrawer() {
+  drawer.value = false
 }
 
 function handleToggleDrawer() {
