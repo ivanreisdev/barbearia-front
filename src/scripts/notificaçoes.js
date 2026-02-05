@@ -1,9 +1,10 @@
 import { Notify } from 'quasar'
 
 const baseOptions = {
-    position: 'top-right',
+    position: 'top',
     timeout: 3000,
 }
+
 
 const notify = (options) => {
     Notify.create({

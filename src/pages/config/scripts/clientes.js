@@ -1,6 +1,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
+import { useRouter } from 'vue-router'
+
 
 export const useClientes = () => {
   const $q = useQuasar()
@@ -8,12 +10,21 @@ export const useClientes = () => {
     nome: ''
   })
 
+  const modalEditarClienteAberto = ref(false)
+
+
   const clientes = ref([])
+  const clienteSelecionado = ref(null)
   const clientesFiltrados = computed(() => {
     const termo = filtros.value.nome.trim().toLowerCase()
     if (!termo) return clientes.value
     return clientes.value.filter((cliente) => (cliente.nome || '').toLowerCase().includes(termo))
   })
+
+  const abriModalEditarCliente = async (cliente) => {
+    clienteSelecionado.value = cliente
+    modalEditarClienteAberto.value = true
+  }
 
   const buscarClientes = async () => {
     try {
@@ -26,12 +37,15 @@ export const useClientes = () => {
     }
   }
 
+  const router = useRouter()
+
+
   const novoCliente = () => {
     console.log('Novo cliente')
   }
 
   const verCliente = (cliente) => {
-    console.log('Ver cliente', cliente)
+    router.push(`/clientes/${cliente.id}`)
   }
 
   const abrirWhatsapp = (celular) => {
@@ -63,6 +77,9 @@ export const useClientes = () => {
     verCliente,
     novoCliente,
     filtros,
-    buscarClientes
+    buscarClientes,
+    modalEditarClienteAberto,
+    abriModalEditarCliente,
+    clienteSelecionado
   }
 }

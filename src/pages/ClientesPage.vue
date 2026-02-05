@@ -14,11 +14,8 @@
           </div>
         </div>
       </div>
-
       <q-space />
-
     </div>
-
 
     <!-- FILTROS -->
     <q-card-section class="row items-center q-col-gutter-md filtros-section q-mb-md">
@@ -56,7 +53,7 @@
                   <q-btn flat icon="mdi-chart-line
 " color="grey-5" @click.stop="verCliente(cliente)" />
 
-                  <q-btn flat icon="mdi-pencil" color="grey-4" />
+                  <q-btn flat icon="mdi-pencil" color="grey-4" @click="abriModalEditarCliente(cliente)" />
 
                 </q-btn-group>
               </div>
@@ -65,6 +62,12 @@
         </q-card>
       </div>
     </div>
+
+
+    <ModalEditarCliente v-model="modalEditarClienteAberto" :cliente="clienteSelecionado"
+      @atualizado="buscarClientes" />
+
+
   </q-page>
 
   <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -75,6 +78,8 @@
 <script setup>
 
 import { useClientes } from './config/scripts/clientes.js'
+import ModalEditarCliente from '../components/modais/clientes/modalEditarCliente.vue'
+
 
 const {
   clientesFiltrados,
@@ -83,6 +88,10 @@ const {
   verCliente,
   novoCliente,
   filtros,
+  modalEditarClienteAberto,
+  abriModalEditarCliente,
+  clienteSelecionado,
+  buscarClientes,
 } = useClientes()
 </script>
 

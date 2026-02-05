@@ -48,6 +48,13 @@ const routes = [
         component: () => import('pages/AgendamentoDetalhePage.vue'),
         props: true
       },
+
+      {
+        path: 'clientes/:id',
+        name: 'clientes-detalhe',
+        component: () => import('pages/DetalhesClientesPage.vue'),
+        props: true
+      },
       {
         path: 'config/barbearia',
         component: () => import('pages/config/BarbeariaPage.vue')
