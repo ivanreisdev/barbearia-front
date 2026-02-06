@@ -31,7 +31,7 @@
                 <span v-else>
                   Olá,
                   <span class="user-name-bold">
-                    {{ usuario.name || 'Usuário' }}
+                    {{ formatarNomeInicial(usuario.name || 'Usuário') }}
                   </span>
                 </span>
               </div>
@@ -350,6 +350,10 @@ function voltarUmaSemana() {
   fimDeSemana.value = new Date(fimDeSemana.value.getTime() - 7 * 86400000)
 }
 
+const formatarNomeInicial = (nome) =>{
+  return nome.trim().split(" ")[0]
+}
+
 // const carregarHorariosBloqueadosDaAgenda = async () => {
 //   if (!dataSelecionada.value) return
 //   try {
@@ -424,7 +428,7 @@ onMounted(async () => {
     dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
 
     // ⏱️ opcional: tempo mínimo pra você ajustar o layout
-    await new Promise(resolve => setTimeout(resolve, 1200))
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
   } catch (error) {
     console.error(error)
