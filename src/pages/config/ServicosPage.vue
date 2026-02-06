@@ -545,6 +545,14 @@ onMounted(async () => {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+@media (max-width: 600px) {
+  .servicos-page {
+    width: calc(100% - 20px);
+    margin: 0 auto;
+    border-radius: 16px;
+  }
+}
+
 .inter-semibold {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
