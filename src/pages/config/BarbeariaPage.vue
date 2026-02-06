@@ -189,10 +189,15 @@ const onConfirmarSwipe = async () => {
   display: none;
 }
 
-/* Mobile: botão ocupa tudo */
 @media (max-width: 600px) {
   .full-width-xs {
     width: 100%;
+  }
+
+  .barbearia-page {
+    width: calc(100% - 20px);
+    margin: 0 auto;
+    border-radius: 16px;
   }
 }
 </style>
