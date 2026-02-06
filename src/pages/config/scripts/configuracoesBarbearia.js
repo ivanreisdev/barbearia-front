@@ -1,16 +1,18 @@
 import { ref, onMounted, computed } from 'vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 export const useConfiguracoesBarbearia = () => {
   const $q = useQuasar()
   const router = useRouter()
 
   const diasSemana = ref([])
-  const loading = ref(true)
+  // const loading = ref(true)
   const previewFoto = ref(null)
   const fotoFile = ref(null)
   const fileInput = ref(null)
@@ -29,6 +31,8 @@ export const useConfiguracoesBarbearia = () => {
     imagemParaCrop.value = URL.createObjectURL(arquivo)
     modalCrop.value = true
   }
+
+  const carregamento = ref([true])
 
   const confirmarCrop = () => {
     if (!cropper.value) return
@@ -248,7 +252,10 @@ export const useConfiguracoesBarbearia = () => {
 
 
   onMounted(async () => {
-    loading.value = true
+    Loading.show({
+      spinner: LoadingLogo,
+      backgroundColor: '#0c0d10'
+    })
 
     try {
       await Promise.all([
@@ -258,7 +265,8 @@ export const useConfiguracoesBarbearia = () => {
         buscarUsuario(),
       ])
     } finally {
-      loading.value = false
+      carregamento.value = false
+      Loading.hide()
     }
   })
 
@@ -273,7 +281,7 @@ export const useConfiguracoesBarbearia = () => {
     // scrollServicos,
     buscarServicos,
     editarServicos,
-    loading,
+    // loading,
     previewFoto,
     fotoBackend,
     fotoFile,
@@ -287,6 +295,8 @@ export const useConfiguracoesBarbearia = () => {
     modalCrop,
     cropperReady,
     cropper,
-    swipeSalvar
+    swipeSalvar,
+    LoadingLogo,
+    carregamento,
   }
 }

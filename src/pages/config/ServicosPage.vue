@@ -1,6 +1,8 @@
 <!-- Cabeçalho -->
 <template>
-  <q-page class="q-pa-lg bg-dark relative-position">
+  <LoadingLogo v-if="carregando" class="loading-overlay" />
+
+  <q-page v-else class="q-pa-lg bg-dark relative-position">
 
     <!-- LOADING -->
     <q-inner-loading :showing="loading">
@@ -240,13 +242,15 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 import 'src/css/servicos.css'
 
 const $q = useQuasar()
-const loading = ref(true)
+const carregando = ref(true)
 
 const servicos = ref([
   {
@@ -434,12 +438,15 @@ const atualizar = async () => {
 }
 
 onMounted(async () => {
-  loading.value = true
+  Loading.show({
+    spinner: LoadingLogo,
+    backgroundColor: '#0c0d10'
+  })
 
   try {
     await buscarServicos()
   } finally {
-    loading.value = false
+    carregando.value = false
   }
 })
 
@@ -696,11 +703,11 @@ header-subtitulo {
 .modal-content {
   padding: 24px;
 }
+
 .info-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
-
 </style>

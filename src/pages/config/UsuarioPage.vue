@@ -1,13 +1,8 @@
 <template>
-  <q-page class="q-pa-lg relative-position">
-    <!-- LOADING -->
-    <q-inner-loading :showing="loading">
-      <q-spinner-dots size="40px" color="primary" />
-    </q-inner-loading>
+  <LoadingLogo v-if="carregamento" class="loading-overlay" />
 
+  <q-page  v-else class="q-pa-lg relative-position">
     <!-- CONTEÚDO -->
-    <div v-if="!loading">
-
       <div class="row items-center no-wrap q-mb-md q-gutter-sm">
         <BotaoVoltar />
 
@@ -109,7 +104,7 @@
         <SwipeConfirm ref="swipeSalvar" label="Deslize para salvar alterações" @confirm="onConfirmSalvar" />
 
       </div>
-    </div>
+    <!-- </div> -->
 
     <q-dialog v-model="modalCrop" persistent maximized>
       <q-card class="column no-wrap">
@@ -156,7 +151,6 @@ const {
   onConfirmSalvar,
   swipeSalvar,
   editarServicos,
-  loading,
   previewFoto,
   fotoBackend,
   fotoFile,
@@ -168,6 +162,8 @@ const {
   imagemParaCrop,
   modalCrop,
   cropperReady,
-  cropper
+  cropper,
+  carregamento,
+  LoadingLogo
 } = useConfiguracoesBarbearia()
 </script>
