@@ -1,7 +1,9 @@
 import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 
 export const useClientes = () => {
@@ -12,6 +14,7 @@ export const useClientes = () => {
 
   const modalEditarClienteAberto = ref(false)
 
+  const carregando = ref(true)
 
   const clientes = ref([])
   const clienteSelecionado = ref(null)
@@ -60,12 +63,17 @@ export const useClientes = () => {
   }
 
   onMounted(async () => {
+    Loading.show({
+      spinner: LoadingLogo,
+      backgroundColor: '#0c0d10'
+    })
     try {
       await Promise.all([
         buscarClientes(),
       ])
     } finally {
-      console.log('123')
+      carregando.value = false
+      Loading.hide()
     }
   })
 
@@ -80,6 +88,8 @@ export const useClientes = () => {
     buscarClientes,
     modalEditarClienteAberto,
     abriModalEditarCliente,
-    clienteSelecionado
+    clienteSelecionado,
+    LoadingLogo,
+    carregando
   }
 }

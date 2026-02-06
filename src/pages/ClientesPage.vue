@@ -1,5 +1,7 @@
 <template>
-  <q-page class="q-pa-md text-white">
+  <LoadingLogo v-if="carregando" class="loading-overlay" />
+
+  <q-page v-else class="q-pa-md text-white">
     <!-- HEADER -->
     <div class="row items-center justify-between q-mb-lg">
 
@@ -64,8 +66,7 @@
     </div>
 
 
-    <ModalEditarCliente v-model="modalEditarClienteAberto" :cliente="clienteSelecionado"
-      @atualizado="buscarClientes" />
+    <ModalEditarCliente v-model="modalEditarClienteAberto" :cliente="clienteSelecionado" @atualizado="buscarClientes" />
 
 
   </q-page>
@@ -92,6 +93,8 @@ const {
   abriModalEditarCliente,
   clienteSelecionado,
   buscarClientes,
+  LoadingLogo,
+  carregando
 } = useClientes()
 </script>
 

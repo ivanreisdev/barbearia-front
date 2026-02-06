@@ -1,6 +1,6 @@
 <template>
-  <q-page>
-
+  <LoadingLogo v-if="carregando" class="loading-overlay" />
+  <q-page v-else>
     <div class="header-dashboard">
       <q-toolbar class="dashboard-toolbar q-mb-sm">
         <div class="row items-center header-left">
@@ -135,6 +135,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import AgendamentosPage from 'pages/AgendamentosPage.vue'
+import { Loading } from 'quasar'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
+const carregando = ref([true])
 
 // auth store imported below for toolbar and data fetching
 
@@ -398,19 +402,36 @@ watch(
 
 
 
-onMounted(() => {
-  buscarUsuario();
-  const hojeMid = new Date()
-  hojeMid.setHours(0, 0, 0, 0)
-
-  const idx = diasDaSemana.value.findIndex((d) => {
-    const fd = new Date(d.full)
-    fd.setHours(0, 0, 0, 0)
-    return fd.getTime() === hojeMid.getTime()
+onMounted(async () => {
+  Loading.show({
+    spinner: LoadingLogo, // seu logo JetBarber
+    backgroundColor: '#0c0d10'
   })
 
-  diaSelecionado.value = idx >= 0 ? idx : 0
-  dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
+  try {
+    await buscarUsuario()
+
+    const hojeMid = new Date()
+    hojeMid.setHours(0, 0, 0, 0)
+
+    const idx = diasDaSemana.value.findIndex((d) => {
+      const fd = new Date(d.full)
+      fd.setHours(0, 0, 0, 0)
+      return fd.getTime() === hojeMid.getTime()
+    })
+
+    diaSelecionado.value = idx >= 0 ? idx : 0
+    dataSelecionada.value = diasDaSemana.value[diaSelecionado.value].full
+
+    // ⏱️ opcional: tempo mínimo pra você ajustar o layout
+    await new Promise(resolve => setTimeout(resolve, 1200))
+
+  } catch (error) {
+    console.error(error)
+  } finally {
+    carregando.value = false
+    Loading.hide()
+  }
 })
 
 
