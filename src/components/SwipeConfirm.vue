@@ -1,13 +1,13 @@
 <template>
-    <div class="column items-center">
+    <div class="column items-center swipe-root">
 
         <div class="q-mt-xl text-caption inter-semibold">
             {{ label }}
         </div>
 
-        <div class="row justify-center q-mt-md">
+        <div class="row justify-center q-mt-md swipe-row">
 
-            <div class="swipe-container">
+            <div class="swipe-container" ref="swipeContainer">
 
                 <!-- FILL -->
                 <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
@@ -32,7 +32,7 @@
 
 
 <script setup>
-import { ref, computed, onBeforeUnmount, defineExpose } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineExpose, nextTick } from 'vue'
 
 defineProps({
     label: {
@@ -61,12 +61,15 @@ defineProps({
 const emit = defineEmits(['confirm'])
 
 const swipeX = ref(0)
-const maxSwipe = 260
+const maxSwipe = ref(260)
+const swipeContainer = ref(null)
+const THUMB_SIZE = 44
+const PADDING_X = 8
 let startX = 0
 let dragging = false
 
 const fillPercent = computed(() =>
-    Math.min((swipeX.value / maxSwipe) * 100, 100)
+    Math.min((swipeX.value / maxSwipe.value) * 100, 100)
 )
 
 const startSwipe = (e) => {
@@ -85,14 +88,14 @@ const moveSwipe = (e) => {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const delta = clientX - startX
 
-    swipeX.value = Math.max(0, Math.min(delta, maxSwipe))
+    swipeX.value = Math.max(0, Math.min(delta, maxSwipe.value))
 }
 
 const endSwipe = () => {
     dragging = false
 
-    if (swipeX.value >= maxSwipe * 0.9) {
-        swipeX.value = maxSwipe
+    if (swipeX.value >= maxSwipe.value * 0.9) {
+        swipeX.value = maxSwipe.value
         emit('confirm')
     } else {
         swipeX.value = 0
@@ -112,21 +115,54 @@ const resetSwipe = () => {
     swipeX.value = 0
 }
 
+const updateMaxSwipe = () => {
+    const el = swipeContainer.value
+    if (!el) return
+    const width = el.clientWidth || 0
+    const newMax = Math.max(0, width - THUMB_SIZE - PADDING_X)
+    maxSwipe.value = newMax > 0 ? newMax : 260
+    swipeX.value = Math.min(swipeX.value, maxSwipe.value)
+}
+
+const onResize = () => {
+    updateMaxSwipe()
+}
+
 defineExpose({
     resetSwipe
 })
 
-onBeforeUnmount(removeListeners)
+onMounted(async () => {
+    await nextTick()
+    requestAnimationFrame(() => updateMaxSwipe())
+    window.addEventListener('resize', onResize)
+})
+
+onBeforeUnmount(() => {
+    removeListeners()
+    window.removeEventListener('resize', onResize)
+})
 </script>
 
 <style scoped>
 .swipe-container {
     position: relative;
-    width: 320px;
+    width: 100%;
+    min-width: 260px;
+    max-width: 320px;
     height: 52px;
     background: #4b4f56;
     border-radius: 30px;
     overflow: hidden;
+}
+
+.swipe-root {
+    width: 100%;
+    align-items: center;
+}
+
+.swipe-row {
+    width: 100%;
 }
 
 .swipe-fill {
