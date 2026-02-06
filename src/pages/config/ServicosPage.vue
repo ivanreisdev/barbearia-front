@@ -2,7 +2,7 @@
 <template>
   <LoadingLogo v-if="carregando" class="loading-overlay" />
 
-  <q-page v-else class="q-pa-lg bg-dark relative-position">
+  <q-page v-else class="q-pa-lg bg-dark relative-position servicos-page">
 
     <!-- LOADING -->
     <q-inner-loading :showing="loading">
@@ -11,23 +11,25 @@
     <div v-if="!loading">
       <!-- Header -->
 
-      <div class="row items-center q-mb-md">
-        <q-btn flat round icon="arrow_back" @click="$router.back()" />
-      </div>
+      <div class="row items-center q-mb-lg page-header header-inline no-wrap">
+        <q-btn flat round icon="arrow_back" class="back-btn" @click="$router.back()" />
 
-      <div class="text-h6 text-white q-mb-xs text-center">
-        Serviços
-      </div>
+        <div class="header-text">
+          <div class="text-h6 text-white q-mb-xs title-gradient">
+            Serviços
+          </div>
 
-      <div class="text-caption text-grey-5 q-mb-lg text-center">
-        Cadastre e edite os serviços fornecidos pela empresa
+          <div class="text-caption text-grey-5 subtitle-soft">
+            Cadastre e edite os serviços fornecidos pela empresa
+          </div>
+        </div>
       </div>
 
       <!-- INSERIR NOVO SERVIÇO -->
       <div class="text-caption text-grey-6 q-mb-sm">
         INSERIR UM NOVO SERVIÇO
       </div>
-      <q-card class="q-mb-xl novo-servico-card">
+      <q-card class="q-mb-xl novo-servico-card card-dark">
         <q-card-section>
 
           <div class="text-caption text-grey-6 q-mb-sm">
@@ -54,7 +56,8 @@
           </div>
 
           <!-- Botão -->
-          <q-btn label="ADICIONAR À LISTA" unelevated class="full-width btn-add-servico" size="md" @click="salvar" />
+          <q-btn label="ADICIONAR À LISTA" unelevated class="full-width btn-add-servico ghost-btn" size="md"
+            @click="salvar" />
 
         </q-card-section>
       </q-card>
@@ -65,7 +68,7 @@
 
       <q-list class="servicos-list">
 
-        <q-item v-for="servico in servicos" :key="servico.id" clickable class="servico-card q-mb-sm">
+        <q-item v-for="servico in servicos" :key="servico.id" clickable class="servico-card q-mb-sm item-hover">
 
           <!-- Ícone -->
           <q-item-section avatar>
@@ -452,6 +455,96 @@ onMounted(async () => {
 
 </script>
 <style scoped>
+.servicos-page {
+  color: #f3f4f6;
+  font-family: 'Inter', sans-serif;
+  background:
+    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(180deg, #0f1115 0%, #0c0d10 100%);
+  border-radius: 16px;
+}
+
+.page-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(39, 39, 39, 0.06);
+}
+
+.header-inline {
+  gap: 12px;
+}
+
+.header-text {
+  min-width: 0;
+}
+
+.header-text .text-h6,
+.header-text .text-caption {
+  text-align: left;
+}
+
+.title-gradient {
+  background: linear-gradient(90deg, #e5e7eb 0%, #9ca3af 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle-soft {
+  letter-spacing: 0.2px;
+}
+
+.back-btn {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.card-dark {
+  background: linear-gradient(180deg, #12151b 0%, #0f1116 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.ghost-btn {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.item-hover {
+  transition: background 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+
+.item-hover:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateX(2px);
+}
+
+.servico-card {
+  background: #12151b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.servico-nome {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.servico-info {
+  color: #9ca3af;
+}
+
+.icon-wrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .inter-semibold {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
@@ -678,7 +771,8 @@ header-subtitulo {
   align-items: center;
   gap: 12px;
   padding: 20px;
-  background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+  /* background: linear-gradient(135deg, #2c2c2c, #1a1a1a); */
+  background-color: black;
 }
 
 .header-editar-servico {
