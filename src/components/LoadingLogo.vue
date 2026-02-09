@@ -37,16 +37,18 @@ onMounted(() => {
 <style scoped>
 .loading-container {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   transform: translateY(-24px);
+  overflow: hidden;
 }
 
 .logo {
   width: 280px;
+  max-width: 80vw;
 }
 
 .loading-dots {

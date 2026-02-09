@@ -42,7 +42,7 @@
             </div>
             <div class="row items-center info-row">
               <q-icon name="phone" size="18px" class="text-grey-5 q-mr-sm" />
-              <div class="text-body2">{{ clientes.celular }}</div>
+              <div class="text-body2">{{ formatarTelefone(clientes.celular) }}</div>
             </div>
             <!-- <div class="row items-center">
               <q-icon name="place" size="18px" class="text-grey-5 q-mr-sm" />
@@ -358,6 +358,19 @@ const formatarPreco = (valor) => {
     style: 'currency',
     currency: 'BRL'
   }).format(Number(valor))
+}
+
+const formatarTelefone = (telefone) => {
+  const digits = String(telefone || '').replace(/\D/g, '')
+  if (!digits) return '-'
+
+  if (digits.length === 11) {
+    return digits.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')
+  }
+  if (digits.length === 10) {
+    return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3')
+  }
+  return digits
 }
 
 
