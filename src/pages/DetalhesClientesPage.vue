@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <LoadingLogo v-if="carregando" class="loading-overlay" />
 
   <q-page v-else class="q-pa-md detalhes-page">
@@ -55,25 +55,25 @@
           <q-card-section class="row q-col-gutter-sm">
             <div class="col-6">
               <div class="stat-card">
-                <div class="text-caption text-grey-5">Agendamentos</div>
+                <div class="text-caption text-grey-5 tituloDash">Agendamentos</div>
                 <div class="text-h6 text-weight-bold stat-value">{{ stats.totalAgendamentos }}</div>
               </div>
             </div>
             <div class="col-6">
               <div class="stat-card">
-                <div class="text-caption text-grey-5">Serviços</div>
+                <div class="text-caption text-grey-5 tituloDash">Serviços</div>
                 <div class="text-h6 text-weight-bold stat-value">{{ stats.totalServicos }}</div>
               </div>
             </div>
             <div class="col-6">
               <div class="stat-card">
-                <div class="text-caption text-grey-5">Ticket Médio</div>
+                <div class="text-caption text-grey-5 tituloDash">Ticket Médio</div>
                 <div class="text-h6 text-weight-bold stat-value">{{ stats.ticketMedio }}</div>
               </div>
             </div>
             <div class="col-6">
               <div class="stat-card">
-                <div class="text-caption text-grey-5">Última visita</div>
+                <div class="text-caption text-grey-5 tituloDash">Última visita</div>
                 <div class="text-h6 text-weight-bold stat-value">{{ stats.ultimaVisita }}</div>
               </div>
             </div>
@@ -92,13 +92,21 @@
                   <div class="text-subtitle1 text-weight-bold texto-comun">Agendamentos</div>
                   <div class="text-caption text-grey-5">Histórico recente</div>
                 </div>
-                <q-btn flat dense color="grey-4" label="Ver todos" class="ghost-btn" />
+                <q-btn
+                  flat
+                  dense
+                  color="grey-4"
+                  label="Ver todos"
+                  class="ghost-btn"
+                  :disable="!podeVerTodos"
+                  @click="modalAgendamentos = true"
+                />
               </q-card-section>
 
               <q-separator dark class="separator-soft" />
 
-              <q-list v-if="agendamentos.length > 0" separator dark>
-                <q-item v-for="ag in agendamentos" :key="ag.id" class="item-dark item-hover">
+              <q-list v-if="agendamentosVisiveis.length > 0" separator dark>
+                <q-item v-for="ag in agendamentosVisiveis" :key="ag.id" class="item-dark item-hover">
                   <q-item-section avatar>
                     <q-avatar size="36px" color="grey-8" text-color="white">
                       <q-icon name="event" />
@@ -108,13 +116,24 @@
                   <q-item-section>
                     <q-item-label class="text-weight-medium">{{ ag.data }} • {{ ag.hora }}</q-item-label>
                     <q-item-label caption class="text-grey-5">
-                      {{ ag.barbeiro.nome }} · {{ ag.status }}
+                      {{ ag.servico.nome }}
                     </q-item-label>
                   </q-item-section>
 
                   <q-item-section side>
-                    <q-chip outline color="green-5" text-color="white" size="sm" class="price-chip">
-                      {{ formatarPreco(ag.servico.preco) }}
+                    <div class="price-text">
+                      {{ formatarPreco(ag.servico.preco)  }}
+                    </div>
+                    <q-chip
+                      v-if="ag.status === 'cancelado'"
+                      dense
+                      outline
+                      color="red-5"
+                      text-color="white"
+                      size="sm"
+                      class="status-chip"
+                    >
+                      Cancelado
                     </q-chip>
                   </q-item-section>
                 </q-item>
@@ -122,35 +141,133 @@
               <div v-else class="text-grey text-center q-pa-md empty-state">
                 Não há agendamentos
               </div>
+
+              <q-dialog v-model="modalAgendamentos" maximized>
+                <q-card flat bordered class="card-dark modal-fullscreen">
+                  <q-card-section class="row items-center justify-between">
+                    <div>
+                      <div class="text-subtitle1 text-weight-bold texto-comun">Todos os agendamentos</div>
+                      <div class="text-caption text-grey-5">Histórico completo</div>
+                    </div>
+                    <q-btn flat round icon="close" color="grey-4" @click="modalAgendamentos = false" />
+                  </q-card-section>
+
+                  <q-separator dark class="separator-soft" />
+
+                  <q-card-section class="modal-toolbar q-pa-md">
+                    <div class="toolbar-left">
+                      <div class="text-caption text-grey-5">Filtrar a partir de</div>
+                      <q-input
+                        v-model="filtroDataInicio"
+                        dense
+                        outlined
+                        color="grey-4"
+                        class="input-dark input-date"
+                        placeholder="dd/mm/aaaa"
+                      >
+                        <template #prepend>
+                          <q-icon name="event" />
+                        </template>
+                        <template #append>
+                          <q-icon name="keyboard_arrow_down" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date v-model="filtroDataInicio" mask="DD/MM/YYYY" color="grey-9" />
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
+                    <div class="toolbar-right">
+                      <q-btn
+                        outline
+                        color="grey-4"
+                        label="Limpar"
+                        class="ghost-btn"
+                        @click="limparFiltros"
+                      />
+                    </div>
+                  </q-card-section>
+
+                  <q-separator dark class="separator-soft" />
+
+                  <q-card-section class="q-pa-none">
+                    <q-list v-if="agendamentosFiltrados.length > 0" separator dark>
+                      <q-item v-for="ag in agendamentosFiltrados" :key="ag.id" class="item-dark item-hover">
+                        <q-item-section avatar>
+                          <q-avatar size="36px" color="grey-8" text-color="white">
+                            <q-icon name="event" />
+                          </q-avatar>
+                        </q-item-section>
+
+                        <q-item-section>
+                          <q-item-label class="text-weight-medium">{{ ag.data }} • {{ ag.hora }}</q-item-label>
+                          <q-item-label caption class="text-grey-5">
+                            {{ ag.barbeiro.nome }} · {{ ag.status }}
+                          </q-item-label>
+                        </q-item-section>
+
+                        <q-item-section side>
+                          <q-chip outline color="green-5" text-color="white" size="sm" class="price-chip">
+                            {{ formatarPreco(ag.servico.preco) }}
+                          </q-chip>
+                          <q-chip
+                            v-if="ag.status === 'cancelado'"
+                            dense
+                            outline
+                            color="red-5"
+                            text-color="white"
+                            size="sm"
+                            class="status-chip"
+                          >
+                            Cancelado
+                          </q-chip>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                    <div v-else class="text-grey text-center q-pa-md empty-state">
+                      Não há agendamentos no período
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </q-dialog>
             </q-card>
           </div>
 
-          <!-- Serviços realizados -->
+          <!-- Top serviços -->
           <div class="col-12">
             <q-card flat bordered class="card-dark">
               <q-card-section class="row items-center justify-between section-header">
                 <div>
-                  <div class="text-subtitle1 text-weight-bold">Serviços Realizados</div>
-                  <div class="text-caption text-grey-5">Últimos serviços executados</div>
+                  <div class="text-subtitle1 text-weight-bold">Top Serviços Realizados</div>
+                  <div class="text-caption text-grey-5">Ranking dos mais frequentes</div>
                 </div>
-                <q-btn flat dense color="grey-4" label="Relatório" class="ghost-btn" />
               </q-card-section>
 
               <q-separator dark class="separator-soft" />
 
-              <div v-if="servicos.length > 0" class="row q-col-gutter-md q-pa-md">
-                <div v-for="srv in servicos" :key="srv.id" class="col-12 col-sm-6">
-                  <q-card flat bordered class="card-dark card-service">
-                    <q-card-section class="row items-center justify-between">
-                      <div>
-                        <div class="text-weight-bold">{{ srv.nome }}</div>
-                        <div class="text-caption text-grey-5">{{ srv.data }} · {{ srv.hora }}</div>
-                      </div>
-                      <q-chip color="grey-9" text-color="white" size="sm" class="price-chip">
-                        {{ srv.valor }}
-                      </q-chip>
-                    </q-card-section>
-                  </q-card>
+              <div v-if="topServicos.length > 0" class="podium-wrap q-pa-md">
+                <div class="podium-grid">
+                  <div class="podium-col" :class="podiumColClass(topServicos[1]?.nome)">
+                    <div class="podium-card podium-2">
+                      <div class="podium-rank">2</div>
+                      <div class="podium-name">{{ topServicos[1]?.nome}}</div>
+                      <div class="podium-count">{{ topServicos[1]?.quantidade ?? 0 }}x</div>
+                    </div>
+                  </div>
+                  <div class="podium-col" :class="podiumColClass(topServicos[0]?.nome)">
+                    <div class="podium-card podium-1">
+                      <div class="podium-rank">1</div>
+                      <div class="podium-name">{{ topServicos[0]?.nome}}</div>
+                      <div class="podium-count">{{ topServicos[0]?.quantidade ?? 0 }}x</div>
+                    </div>
+                  </div>
+                  <div class="podium-col" :class="podiumColClass(topServicos[2]?.nome)">
+                    <div class="podium-card podium-3">
+                      <div class="podium-rank">3</div>
+                      <div class="podium-name">{{ topServicos[2]?.nome}}</div>
+                      <div class="podium-count">{{ topServicos[2]?.quantidade ?? 0 }}x</div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div v-else class="text-grey text-center q-pa-md empty-state">
@@ -169,10 +286,11 @@ import { api } from 'src/boot/axios';
 import { ref, onMounted, computed } from 'vue'
 import { notifyError } from '../scripts/notificaçoes'
 import { useRoute } from 'vue-router'
-import { Loading } from 'quasar'
+import { Loading, useQuasar } from 'quasar'
 import LoadingLogo from 'components/LoadingLogo.vue'
 
 const route = useRoute()
+const $q = useQuasar()
 
 const clientes = ref({
   nome: '',
@@ -182,6 +300,8 @@ const clientes = ref({
 
 const agendamentos = ref([])
 const carregando = ref(true)
+const modalAgendamentos = ref(false)
+const filtroDataInicio = ref('')
 
 
 const buscarClientes = async (id) => {
@@ -214,15 +334,68 @@ const formatarPreco = (valor) => {
   }).format(Number(valor))
 }
 
-const servicos = computed(() => {
-  return agendamentos.value.map(ag => ({
-    id: ag.id,
-    nome: ag.servico?.nome ?? 'Serviço',
-    data: ag.data,
-    hora: ag.hora, // já formatada
-    profissional: ag.barbeiro?.name ?? '-',
-    valor: formatarPreco(ag.servico?.preco ?? 0),
-  }))
+
+const topServicos = computed(() => {
+  const contagem = agendamentos.value
+    .filter(ag => ag.status === 'agendado')
+    .reduce((acc, ag) => {
+    const nome = ag.servico?.nome ?? 'Serviço'
+    acc[nome] = (acc[nome] || 0) + 1
+    return acc
+  }, {})
+
+  return Object.entries(contagem)
+    .map(([nome, quantidade]) => ({ nome, quantidade }))
+    .sort((a, b) => b.quantidade - a.quantidade)
+    .slice(0, 3)
+})
+
+const podiumColClass = (nome) => {
+  if (!nome) return ''
+  const soUmaPalavra = !String(nome).trim().includes(' ')
+  return soUmaPalavra ? 'podium-col-wide' : ''
+}
+
+const agendamentosOrdenados = computed(() => {
+  return [...agendamentos.value].sort((a, b) => {
+    const dataA = new Date(a.data_horario.replace(' ', 'T'))
+    const dataB = new Date(b.data_horario.replace(' ', 'T'))
+    return dataB - dataA
+  })
+})
+
+const limiteAgendamentos = computed(() => {
+  return $q.screen.lt.md ? 3 : 10
+})
+
+const agendamentosVisiveis = computed(() => {
+  return agendamentosOrdenados.value.slice(0, limiteAgendamentos.value)
+})
+
+const podeVerTodos = computed(() => {
+  return agendamentosOrdenados.value.length > limiteAgendamentos.value
+})
+
+const limparFiltros = () => {
+  filtroDataInicio.value = ''
+}
+
+const parseDataFiltro = (dataStr) => {
+  if (!dataStr) return null
+  const [dia, mes, ano] = dataStr.split('/').map(Number)
+  if (!dia || !mes || !ano) return null
+  return new Date(ano, mes - 1, dia)
+}
+
+const agendamentosFiltrados = computed(() => {
+  const inicio = parseDataFiltro(filtroDataInicio.value)
+  const inicioNorm = inicio ? new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate(), 0, 0, 0) : null
+
+  return agendamentosOrdenados.value.filter((ag) => {
+    const dataAg = new Date(ag.data_horario.replace(' ', 'T'))
+    if (inicioNorm && dataAg < inicioNorm) return false
+    return true
+  })
 })
 const formatarAgendamentos = (agendamentosApi) => {
   return agendamentosApi.map(ag => {
@@ -243,19 +416,20 @@ const formatarAgendamentos = (agendamentosApi) => {
 const stats = computed(() => {
   const ags = agendamentos.value || []
 
-  const totalAgendamentos = ags.length
+  const agendamentosValidos = ags.filter(ag => ag.status !== 'cancelado')
+  const totalAgendamentos = agendamentosValidos.length
 
   // serviços realizados (normalmente = agendamentos)
   const totalServicos = ags.filter(ag => ag.status === 'agendado').length
   // se não tiver status, pode ser: ags.length
 
-  // soma dos valores
-  const totalFaturado = ags.reduce((total, ag) => {
+  // soma dos valores (ignora cancelados)
+  const totalFaturado = agendamentosValidos.reduce((total, ag) => {
     return total + Number(ag.servico?.preco ?? 0)
   }, 0)
 
   const ticketMedio =
-    totalServicos > 0 ? totalFaturado / totalServicos : 0
+    totalAgendamentos > 0 ? totalFaturado / totalAgendamentos : 0
 
   // última visita (data mais recente)
   const ultimaData = ags
@@ -380,6 +554,133 @@ onMounted(async () => {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+.podium-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.podium-grid {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  align-items: flex-end;
+}
+
+.podium-col {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.podium-card {
+  width: 100%;
+  border-radius: 16px;
+  padding: 14px 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: visible;
+}
+
+.podium-1 {
+  min-height: 180px;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.22), rgba(15, 17, 22, 0.95));
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.podium-2 {
+  min-height: 150px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.22), rgba(15, 17, 22, 0.95));
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.podium-3 {
+  min-height: 130px;
+  background: linear-gradient(180deg, rgba(202, 138, 4, 0.18), rgba(15, 17, 22, 0.95));
+  border-color: rgba(202, 138, 4, 0.3);
+}
+
+.podium-1::after,
+.podium-2::after,
+.podium-3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.22);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.podium-1::after {
+  height: 34px;
+}
+
+.podium-2::after {
+  height: 26px;
+}
+
+.podium-3::after {
+  height: 20px;
+}
+
+.podium-rank {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.podium-name {
+  margin-top: 10px;
+  font-weight: 700;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.podium-count {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: #9ca3af;
+}
+
+@media (max-width: 599px) {
+  .podium-wrap {
+    padding: 10px;
+  }
+  .podium-grid {
+    gap: 10px;
+  }
+  .podium-card {
+    padding: 12px 4px;
+  }
+  .podium-rank {
+    font-size: 1rem;
+  }
+  .podium-name {
+    font-size: 0.8rem;
+  }
+  .podium-count {
+    font-size: 0.72rem;
+  }
+  .podium-1,
+  .podium-2,
+  .podium-3 {
+    min-height: 105px;
+  }
+  .podium-1 {
+    min-height: 140px;
+  }
+  .podium-2 {
+    min-height: 120px;
+  }
+  .podium-3 {
+    min-height: 110px;
+  }
+}
+
 .btn-dark {
   border-radius: 12px;
 }
@@ -402,12 +703,57 @@ onMounted(async () => {
 
 .stat-value {
   color: #e5e7eb;
+  text-align: center;
 }
 
 .ghost-btn {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   padding: 0 10px;
+}
+
+.modal-fullscreen {
+  min-width: 100%;
+  min-height: 100%;
+  border-radius: 0;
+}
+
+.modal-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(180deg, rgba(18, 21, 27, 0.9), rgba(15, 17, 22, 0.9));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.toolbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.input-date {
+  min-width: 220px;
+}
+
+.input-dark :deep(.q-field__control) {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.input-dark :deep(.q-field__control:before) {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.input-dark :deep(.q-field__append),
+.input-dark :deep(.q-field__prepend) {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .price-chip {
@@ -417,6 +763,17 @@ onMounted(async () => {
   padding: 2px 8px;
   line-height: 1.1;
   font-weight: 600;
+}
+
+.price-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  letter-spacing: 0.2px;
+}
+
+.status-chip {
+  margin-top: 6px;
 }
 
 .empty-state {
@@ -431,5 +788,8 @@ onMounted(async () => {
 
 .texto-comun {
   font-family: 'Inter', sans-serif;
+}
+.tituloDash{
+  text-align: center;
 }
 </style>
