@@ -106,7 +106,12 @@
               <q-separator dark class="separator-soft" />
 
               <q-list v-if="agendamentosVisiveis.length > 0" separator dark>
-                <q-item v-for="ag in agendamentosVisiveis" :key="ag.id" class="item-dark item-hover">
+                <q-item
+                  v-for="ag in agendamentosVisiveis"
+                  :key="ag.id"
+                  class="item-dark item-hover"
+                  :class="ag.status === 'cancelado' ? 'item-cancelado' : ''"
+                >
                   <q-item-section avatar>
                     <q-avatar size="36px" color="grey-8" text-color="white">
                       <q-icon name="event" />
@@ -114,24 +119,26 @@
                   </q-item-section>
 
                   <q-item-section>
-                    <q-item-label class="text-weight-medium">{{ ag.data }} • {{ ag.hora }}</q-item-label>
-                    <q-item-label caption class="text-grey-5">
+                    <q-item-label class="text-weight-medium" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
+                      {{ ag.data }} • {{ ag.hora }}
+                    </q-item-label>
+                    <q-item-label caption class="text-grey-5" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
                       {{ ag.servico.nome }}
                     </q-item-label>
                   </q-item-section>
 
                   <q-item-section side>
-                    <div class="price-text">
+                    <div class="price-text" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
                       {{ formatarPreco(ag.servico.preco)  }}
                     </div>
                     <q-chip
                       v-if="ag.status === 'cancelado'"
                       dense
-                      outline
                       color="red-5"
                       text-color="white"
                       size="sm"
-                      class="status-chip"
+                      class="status-chip status-chip-cancelado"
+                      icon="cancel"
                     >
                       Cancelado
                     </q-chip>
@@ -177,12 +184,23 @@
                         </template>
                       </q-input>
                     </div>
+                    <div class="toolbar-center">
+                      <div class="text-caption text-grey-5">Status</div>
+                      <q-select
+                        v-model="filtroStatus"
+                        dense
+                        outlined
+                        color="grey-4"
+                        class="input-dark input-status"
+                        :options="['todos', 'agendado', 'cancelado']"
+                      />
+                    </div>
                     <div class="toolbar-right">
                       <q-btn
                         outline
                         color="grey-4"
                         label="Limpar"
-                        class="ghost-btn"
+                        class="ghost-btn btn-compact"
                         @click="limparFiltros"
                       />
                     </div>
@@ -192,7 +210,12 @@
 
                   <q-card-section class="q-pa-none">
                     <q-list v-if="agendamentosFiltrados.length > 0" separator dark>
-                      <q-item v-for="ag in agendamentosFiltrados" :key="ag.id" class="item-dark item-hover">
+                      <q-item
+                        v-for="ag in agendamentosFiltrados"
+                        :key="ag.id"
+                        class="item-dark item-hover"
+                        :class="ag.status === 'cancelado' ? 'item-cancelado' : ''"
+                      >
                         <q-item-section avatar>
                           <q-avatar size="36px" color="grey-8" text-color="white">
                             <q-icon name="event" />
@@ -200,8 +223,10 @@
                         </q-item-section>
 
                         <q-item-section>
-                          <q-item-label class="text-weight-medium">{{ ag.data }} • {{ ag.hora }}</q-item-label>
-                          <q-item-label caption class="text-grey-5">
+                          <q-item-label class="text-weight-medium" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
+                            {{ ag.data }} • {{ ag.hora }}
+                          </q-item-label>
+                          <q-item-label caption class="text-grey-5" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
                             {{ ag.barbeiro.nome }} · {{ ag.status }}
                           </q-item-label>
                         </q-item-section>
@@ -213,11 +238,11 @@
                           <q-chip
                             v-if="ag.status === 'cancelado'"
                             dense
-                            outline
                             color="red-5"
                             text-color="white"
                             size="sm"
-                            class="status-chip"
+                            class="status-chip status-chip-cancelado"
+                            icon="cancel"
                           >
                             Cancelado
                           </q-chip>
@@ -302,6 +327,7 @@ const agendamentos = ref([])
 const carregando = ref(true)
 const modalAgendamentos = ref(false)
 const filtroDataInicio = ref('')
+const filtroStatus = ref('todos')
 
 
 const buscarClientes = async (id) => {
@@ -378,6 +404,7 @@ const podeVerTodos = computed(() => {
 
 const limparFiltros = () => {
   filtroDataInicio.value = ''
+  filtroStatus.value = 'todos'
 }
 
 const parseDataFiltro = (dataStr) => {
@@ -394,6 +421,7 @@ const agendamentosFiltrados = computed(() => {
   return agendamentosOrdenados.value.filter((ag) => {
     const dataAg = new Date(ag.data_horario.replace(' ', 'T'))
     if (inicioNorm && dataAg < inicioNorm) return false
+    if (filtroStatus.value !== 'todos' && ag.status !== filtroStatus.value) return false
     return true
   })
 })
@@ -432,7 +460,7 @@ const stats = computed(() => {
     totalAgendamentos > 0 ? totalFaturado / totalAgendamentos : 0
 
   // última visita (data mais recente)
-  const ultimaData = ags
+  const ultimaData = ags.filter(ag => ag.status === 'agendado')
     .map(ag => new Date(ag.data_horario.replace(' ', 'T')))
     .sort((a, b) => b - a)[0]
 
@@ -716,6 +744,7 @@ onMounted(async () => {
   min-width: 100%;
   min-height: 100%;
   border-radius: 0;
+  overflow-x: hidden;
 }
 
 .modal-toolbar {
@@ -725,12 +754,24 @@ onMounted(async () => {
   gap: 16px;
   background: linear-gradient(180deg, rgba(18, 21, 27, 0.9), rgba(15, 17, 22, 0.9));
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: nowrap;
+  overflow-x: hidden;
 }
 
 .toolbar-left {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.toolbar-center {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .toolbar-right {
@@ -739,7 +780,21 @@ onMounted(async () => {
 }
 
 .input-date {
-  min-width: 220px;
+  min-width: 0;
+}
+
+.input-status {
+  min-width: 0;
+}
+
+.input-date,
+.input-status {
+  width: 100%;
+}
+
+.btn-compact {
+  min-width: 84px;
+  padding: 0 8px;
 }
 
 .input-dark :deep(.q-field__control) {
@@ -774,6 +829,21 @@ onMounted(async () => {
 
 .status-chip {
   margin-top: 6px;
+}
+
+.status-chip-cancelado {
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
+}
+
+.item-cancelado {
+  opacity: 0.65;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.text-cancelado {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(239, 68, 68, 0.6);
 }
 
 .empty-state {
