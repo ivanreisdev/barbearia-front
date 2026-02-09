@@ -583,12 +583,22 @@ export function useAgendamentos(dataSelecionada) {
     if (!horasDoDia.value.length) return {}
 
     const inicioDia = horaParaMinutos(horasDoDia.value[0])
+    const fimDia =
+      horaParaMinutos(horasDoDia.value[horasDoDia.value.length - 1]) + 60
+
+    const eventoFim = evento.inicioMinutos + evento.duracao
+    const inicioVisivel = Math.max(evento.inicioMinutos, inicioDia)
+    const fimVisivel = Math.min(eventoFim, fimDia)
+
+    if (fimVisivel <= inicioDia || inicioVisivel >= fimDia || fimVisivel <= inicioVisivel) {
+      return { display: 'none' }
+    }
 
     const top =
-      (evento.inicioMinutos - inicioDia) * PIXELS_PER_MINUTE
+      (inicioVisivel - inicioDia) * PIXELS_PER_MINUTE
 
     const height =
-      evento.duracao * PIXELS_PER_MINUTE - GAP
+      (fimVisivel - inicioVisivel) * PIXELS_PER_MINUTE - GAP
 
     return {
       top: `${top}px`,
@@ -798,7 +808,9 @@ export function useAgendamentos(dataSelecionada) {
 
 
   carregarHorariosAtendimento()
-  loadAgendamentos(dataSelecionada.value)
+  if(dataSelecionada?.value){
+    loadAgendamentos(dataSelecionada?.value);
+  }
   carregarHorariosBloqueadosDaAgenda()
 
   // Recarrega agendamentos quando a data selecionada muda
