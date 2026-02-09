@@ -1,6 +1,13 @@
 <template>
   <div class="loading-container">
-    <img :src="loadingImg" alt="JetBarber" class="logo" />
+    <img
+      v-show="logoReady"
+      :src="loadingImg"
+      alt="JetBarber"
+      class="logo"
+      loading="eager"
+      decoding="async"
+    />
     <div class="loading-dots" aria-label="Carregando">
       <span></span>
       <span></span>
@@ -11,6 +18,20 @@
 
 <script setup>
 import loadingImg from 'assets/loadinggImg.png'
+import { ref, onMounted } from 'vue'
+
+const logoReady = ref(false)
+
+onMounted(() => {
+  const img = new Image()
+  img.src = loadingImg
+  img.onload = () => {
+    logoReady.value = true
+  }
+  img.onerror = () => {
+    logoReady.value = true
+  }
+})
 </script>
 
 <style scoped>
