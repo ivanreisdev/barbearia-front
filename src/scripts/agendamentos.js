@@ -798,6 +798,8 @@ export function useAgendamentos(dataSelecionada) {
 
 
   carregarHorariosAtendimento()
+  loadAgendamentos(dataSelecionada.value)
+  carregarHorariosBloqueadosDaAgenda()
 
   // Recarrega agendamentos quando a data selecionada muda
   watch(dataSelecionada, async (nova) => {
