@@ -542,6 +542,9 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 50px;
+  text-align: center;
+  font-size: 20px;
 }
 
 :deep(.profile-avatar .q-avatar__content) {
@@ -549,6 +552,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   line-height: 1;
+  width: 100%;
+  height: 100%;
+  transform: translate(-4px, -2px);
 }
 
 .stat-card {
