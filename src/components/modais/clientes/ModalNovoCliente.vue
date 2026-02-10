@@ -9,12 +9,9 @@
                 <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md" @click="fechar" />
 
                 <div class="header-content text-white">
-                    <div class="text-h5 text-weight-medium texto-secundario">Excluir Horario</div>
+                    <div class="text-h5 text-weight-medium texto-secundario">Novo Cliente</div>
                     <div class="text-caption opacity-8 texto-secundario">
-                        Ao confirmar , esse Horario Podera ser Preenchido Por
-                    </div>
-                    <div class="text-caption opacity-8 texto-secundario">
-                        agendamentos de seus Clientes
+                        Adicione um novo cliente para gerenciar seus agendamentos e informações de contato
                     </div>
                 </div>
             </div>
@@ -23,26 +20,43 @@
             <div class="modal-body">
 
                 <div class="agendamento-info text-center q-gutter-md">
-                    <q-input outlined dense label="Nome do Cliente" v-model="form.nome"
-                        class="col-12 col-sm-6 input-dark">
+                    <div class="inputs-wrap">
+                        <q-input
+                            outlined
+                            dense
+                            label="Nome do Cliente"
+                            v-model="form.nome"
+                            class="input-centered"
+                        >
                         <template #prepend>
                             <q-icon name="badge" />
                         </template>
                     </q-input>
 
-                    <q-input outlined dense label="Email do Cliente" v-model="form.email"
-                        class="col-12 col-sm-6 input-dark">
+                        <q-input
+                            outlined
+                            dense
+                            label="Email do Cliente"
+                            v-model="form.email"
+                            class="input-centered"
+                        >
                         <template #prepend>
                             <q-icon name="email" />
                         </template>
                     </q-input>
 
-                    <q-input outlined dense label="Celular do Cliente" v-model="form.celular"
-                        class="col-12 col-sm-6 input-dark">
+                        <q-input
+                            outlined
+                            dense
+                            label="Celular do Cliente"
+                            v-model="form.celular"
+                            class="input-centered"
+                        >
                         <template #prepend>
                             <q-icon name="phone" />
                         </template>
                     </q-input>
+                    </div>
 
                     <div class="q-mt-xl text-caption inter-semibold texto-secundario">
                         Deslize para confirmar o cancelamento
@@ -262,12 +276,48 @@ const criarNovoCliente = async () => {
     background: #201a1a;
 }
 
+.inputs-wrap {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 68px;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+
+.input-centered {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-centered :deep(.q-field__control) {
+    border-radius: 12px;
+}
+
+.input-centered :deep(.q-field__control:before),
+.input-centered :deep(.q-field__control:after) {
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .inputs-wrap {
+        max-width: 330px;
+    }
+    .input-centered {
+        font-size: 0.92rem;
+    }
+    
+}
+
 .header-agendamento {
     position: relative;
 
     background-image:
         linear-gradient(135deg, rgba(90, 90, 90, 0.65), rgba(139, 110, 110, 0.75)),
-        url('../imgs/Barbearia-background.jpg');
+        url('../imgs/novoCliente.webp');
 
     background-repeat: no-repeat;
     background-position: center;
