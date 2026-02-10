@@ -68,11 +68,12 @@
 
     <ModalEditarCliente v-model="modalEditarClienteAberto" :cliente="clienteSelecionado" @atualizado="buscarClientes" />
 
+    <modalNovoCliente v-model="modalNovoClienteAberto" @clienteCriado="buscarClientes" />
 
   </q-page>
 
   <q-page-sticky position="bottom-right" :offset="[18, 18]">
-    <q-btn fab color="green" icon="add" @click="novoCliente" />
+    <q-btn fab color="green" icon="add" @click="abriModalNovoCliente" />
   </q-page-sticky>
 </template>
 
@@ -80,21 +81,22 @@
 
 import { useClientes } from './config/scripts/clientes.js'
 import ModalEditarCliente from '../components/modais/clientes/modalEditarCliente.vue'
-
+import ModalNovoCliente from '../components/modais/clientes/ModalNovoCliente.vue'
 
 const {
   clientesFiltrados,
   formatarCelular,
   abrirWhatsapp,
   verCliente,
-  novoCliente,
   filtros,
   modalEditarClienteAberto,
   abriModalEditarCliente,
   clienteSelecionado,
   buscarClientes,
   LoadingLogo,
-  carregando
+  carregando,
+  modalNovoClienteAberto,
+  abriModalNovoCliente
 } = useClientes()
 </script>
 

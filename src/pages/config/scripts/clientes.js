@@ -13,6 +13,8 @@ export const useClientes = () => {
   })
 
   const modalEditarClienteAberto = ref(false)
+  
+  const modalNovoClienteAberto = ref(false)
 
   const carregando = ref(true)
 
@@ -29,6 +31,10 @@ export const useClientes = () => {
     modalEditarClienteAberto.value = true
   }
 
+    const abriModalNovoCliente = async () => {
+    modalNovoClienteAberto.value = true
+  }
+
   const buscarClientes = async () => {
     try {
       const { data } = await api.get('/clientes/buscarClientes')
@@ -42,10 +48,6 @@ export const useClientes = () => {
 
   const router = useRouter()
 
-
-  const novoCliente = () => {
-    console.log('Novo cliente')
-  }
 
   const verCliente = (cliente) => {
     router.push(`/clientes/${cliente.id}`)
@@ -83,13 +85,14 @@ export const useClientes = () => {
     formatarCelular,
     abrirWhatsapp,
     verCliente,
-    novoCliente,
     filtros,
     buscarClientes,
     modalEditarClienteAberto,
     abriModalEditarCliente,
     clienteSelecionado,
     LoadingLogo,
-    carregando
+    carregando,
+    modalNovoClienteAberto,
+    abriModalNovoCliente
   }
 }
