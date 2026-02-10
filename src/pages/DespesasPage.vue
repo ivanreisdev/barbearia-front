@@ -74,22 +74,10 @@
                 <q-item-section side class="items-end">
                   <div class="price-text text-negative">{{ formatarMoeda(despesa.valor) }}</div>
                   <div class="action-icons q-mt-xs">
-                    <q-btn
-                      dense
-                      flat
-                      round
-                      class="action-icon action-icon-edit"
-                      icon="edit"
-                      @click="abrirEdicao(despesa)"
-                    />
-                    <q-btn
-                      dense
-                      flat
-                      round
-                      class="action-icon action-icon-delete"
-                      icon="delete"
-                      @click="excluirDespesa(despesa.id)"
-                    />
+                    <q-btn dense flat round class="action-icon action-icon-edit" icon="edit"
+                      @click="abrirEdicao(despesa)" />
+                    <q-btn dense flat round class="action-icon action-icon-delete" icon="delete"
+                      @click="excluirDespesa(despesa.id)" />
                   </div>
                 </q-item-section>
               </q-item>
@@ -102,64 +90,24 @@
       </div>
     </div>
 
-    <q-btn fab icon="add" color="green-6" class="fab-add" @click="abrirCriacao" />
+    <q-btn fab icon="add" color="green-6" class="fab-add" @click="abrirModalNovaDespesa" />
 
-    <q-dialog v-model="dialogAberto">
-      <q-card class="card-dark dialog-card">
-        <q-card-section class="row items-center justify-between">
-          <div class="text-subtitle1 text-weight-bold">
-            {{ modoEdicao ? 'Editar Despesa' : 'Nova Despesa' }}
-          </div>
-          <q-btn flat round icon="close" color="grey-4" @click="dialogAberto = false" />
-        </q-card-section>
-        <q-separator dark class="separator-soft" />
-        <q-card-section class="q-gutter-md">
-          <q-input v-model="form.titulo" dense outlined color="grey-4" class="input-dark" label="Titulo" />
-          <q-input v-model="form.categoria" dense outlined color="grey-4" class="input-dark" label="Categoria" />
-          <q-input v-model.number="form.valor" dense outlined color="grey-4" class="input-dark" label="Valor"
-            type="number" />
-          <q-input v-model="form.data" dense outlined color="grey-4" class="input-dark" label="Data"
-            placeholder="YYYY-MM-DD">
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date v-model="form.data" mask="YYYY-MM-DD" color="grey-9" />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat color="grey-4" label="Cancelar" @click="dialogAberto = false" />
-          <q-btn color="green-6" label="Salvar" @click="salvarDespesa" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <ModalNovaDespesa v-model="modalNovaDespesaAberto" @clienteCriado="buscarDespesas" />
+
   </q-page>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { api } from 'src/boot/axios'
+import { computed, onMounted, ref } from 'vue'
+import ModalNovaDespesa from '../components/modais/financeiro/ModalNovaDespesa.vue'
 
-const despesas = ref([
-  { id: 1, titulo: 'Conta de Energia', categoria: 'Despesas Fixas', valor: 320, data: '2026-02-05' },
-  { id: 2, titulo: 'Reposicao de Produtos', categoria: 'Estoque', valor: 680, data: '2026-02-02' },
-  { id: 3, titulo: 'Internet', categoria: 'Despesas Fixas', valor: 150, data: '2026-01-28' },
-  { id: 4, titulo: 'Marketing Digital', categoria: 'Marketing', valor: 420, data: '2026-01-15' },
-  { id: 5, titulo: 'Manutencao de Equipamentos', categoria: 'Manutencao', valor: 560, data: '2026-01-08' },
-])
+
+const despesas = ref([])
 
 const filtroMes = ref('todos')
 const filtroNome = ref('')
-const dialogAberto = ref(false)
-const modoEdicao = ref(false)
-const form = ref({
-  id: null,
-  titulo: '',
-  categoria: '',
-  valor: null,
-  data: ''
-})
+const modalNovaDespesaAberto = ref(false)
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -171,6 +119,27 @@ const formatarData = (dataStr) => {
   const data = new Date(`${dataStr}T00:00:00`)
   if (Number.isNaN(data.getTime())) return dataStr
   return data.toLocaleDateString('pt-BR')
+}
+
+const mapearDespesasApi = (lista = []) => lista.map((item, index) => ({
+  id: item.id ?? index + 1,
+  titulo: item.descricao ?? 'Despesa',
+  categoria: item.categoria ?? '-',
+  valor: Number(item.valor ?? 0),
+  data: item.data ?? ''
+}))
+
+const abrirModalNovaDespesa = () => {
+  modalNovaDespesaAberto.value = true
+}
+
+const buscarDespesas = async () => {
+  try {
+    const response = await api.get('despesas/buscarDespesas')
+    despesas.value = mapearDespesasApi(response.data?.despesas || [])
+  } catch (error) {
+    console.error('Erro ao buscar despesas:', error)
+  }
 }
 
 const getMesChave = (dataStr) => {
@@ -220,40 +189,19 @@ const categoriaPrincipal = computed(() => {
   return ordenado[0]?.[0] || '-'
 })
 
-const abrirCriacao = () => {
-  modoEdicao.value = false
-  form.value = { id: null, titulo: '', categoria: '', valor: null, data: '' }
-  dialogAberto.value = true
-}
-
-const abrirEdicao = (despesa) => {
-  modoEdicao.value = true
-  form.value = { ...despesa }
-  dialogAberto.value = true
-}
-
-const salvarDespesa = () => {
-  if (!form.value.titulo || !form.value.data) return
-  if (modoEdicao.value) {
-    const index = despesas.value.findIndex(item => item.id === form.value.id)
-    if (index !== -1) {
-      despesas.value[index] = { ...form.value }
-    }
-  } else {
-    const novoId = Math.max(0, ...despesas.value.map(item => item.id)) + 1
-    despesas.value.unshift({ ...form.value, id: novoId })
-  }
-  dialogAberto.value = false
-}
-
 const excluirDespesa = (id) => {
   despesas.value = despesas.value.filter(item => item.id !== id)
 }
+
+onMounted(() => {
+  buscarDespesas()
+})
 </script>
 
 <style scoped>
 .despesas-page {
   color: #f3f4f6;
+  font-family: 'Inter', sans-serif;
   background:
     radial-gradient(1200px 600px at 10% -20%, rgba(239, 68, 68, 0.12), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, rgba(59, 130, 246, 0.10), transparent 55%),
@@ -274,6 +222,8 @@ const excluirDespesa = (id) => {
 
 .header-title {
   min-width: 0;
+  font-family: 'Inter', sans-serif;
+
 }
 
 .header-filters {
@@ -361,7 +311,7 @@ const excluirDespesa = (id) => {
 }
 
 .action-icon {
-  width: 30px; 
+  width: 30px;
   height: 30px;
   border-radius: 10px;
   color: #e5e7eb;
