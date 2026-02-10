@@ -38,6 +38,17 @@ const routes = [
         path: 'agendamentos',
         component: () => import('pages/AgendamentosPage.vue')
       },
+
+       {
+        path: 'despesas',
+        component: () => import('pages/DespesasPage.vue')
+      },
+
+      {
+        path: 'financeiro',
+        component: () => import('pages/FinanceiroPage.vue')
+      },
+
       {
         path: 'clientes',
         component: () => import('pages/ClientesPage.vue')
