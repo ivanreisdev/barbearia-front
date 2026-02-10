@@ -33,7 +33,7 @@
                         </q-input>
 
                         <q-input outlined dense label="Celular do Cliente" v-model="form.celular"
-                            class="input-centered">
+                            class="input-centered" mask="(##) #####-####" fill-mask>
                             <template #prepend>
                                 <q-icon name="phone" />
                             </template>
@@ -136,15 +136,21 @@ const endSwipe = () => {
 const criarNovoCliente = async () => {
     swipeX.value = 0
     try {
+        const celularNumeros = (form.value.celular || '').replace(/\D/g, '')
         const response = await api.post(
             '/clientes/criarNovoCliente',
             {
                 nome: form.value.nome,
                 email: form.value.email,
-                celular: form.value.celular,
+                celular: celularNumeros,
             }
         )
         if (response.data.tipo == 'sucesso') {
+            form.value = {
+                nome: '',
+                email: '',
+                celular: '',
+            }
             fechar()
             emit('clienteCriado')
             notifySuccess(response.data.msg)
