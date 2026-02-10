@@ -29,14 +29,14 @@
             <q-input v-model="clienteEditavel.email" label="Email do cliente" outlined dense rounded color="primary"
               :class="corInputErroEmail">
               <template #prepend>
-                <q-icon name="person" />
+                <q-icon name="email" />
               </template>
             </q-input>
 
             <q-input v-model="celularFormatado" label="Contato do cliente" outlined dense rounded color="primary"
               :class="corInputErroCelular">
               <template #prepend>
-                <q-icon name="person" />
+                <q-icon name="phone" />
               </template>
             </q-input>
 
@@ -378,10 +378,10 @@ const confirmarEdicaoDoCliente = async () => {
 
 /* DESKTOP */
 @media (min-width: 1024px) {
-  .header-agendamento {
-    background-size: contain;
-    background-position: center top;
-  }
+    .header-agendamento {
+        background-size: cover;
+        background-position: center 65%;
+    }
 }
 
 .motivo-bloqueio {

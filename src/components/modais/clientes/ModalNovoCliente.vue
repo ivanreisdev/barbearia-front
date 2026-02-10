@@ -22,7 +22,7 @@
                     <div class="inputs-wrap">
                         <q-input outlined dense label="Nome do Cliente" v-model="form.nome" class="input-centered">
                             <template #prepend>
-                                <q-icon name="badge" />
+                                <q-icon name="person" />
                             </template>
                         </q-input>
 
@@ -132,9 +132,35 @@ const endSwipe = () => {
     document.removeEventListener('touchmove', moveSwipe)
     document.removeEventListener('touchend', endSwipe)
 }
+const aplicarValidacoes = () => {
+    if (!form.value.nome || form.value.nome.trim().length < 1) {
+        notifyError('O nome do cliente é obrigatório.')
+        return false
+    }
+
+    if (form.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
+        notifyError('O email fornecido não é válido.')
+        return false
+    }
+
+    if (form.value.celular) {
+        const celularNumeros = form.value.celular.replace(/\D/g, '')
+        if (celularNumeros.length < 10) {
+            notifyError('O número de celular fornecido não é válido.')
+            return false
+        }
+    }
+
+    return true
+}
 
 const criarNovoCliente = async () => {
     swipeX.value = 0
+
+    if(!aplicarValidacoes()){
+        return
+    }
+
     try {
         const celularNumeros = (form.value.celular || '').replace(/\D/g, '')
         const response = await api.post(
@@ -320,13 +346,20 @@ const criarNovoCliente = async () => {
     min-height: 180px;
 }
 
-/* DESKTOP */
 @media (min-width: 1024px) {
+    .header-agendamento {
+        background-size: cover;
+        background-position: center 20%;
+    }
+}
+
+/* DESKTOP */
+/* @media (min-width: 1024px) {
     .header-agendamento {
         background-size: contain;
         background-position: center top;
     }
-}
+} */
 
 .texto-secundario {
     font-family: 'Inter', sans-serif;
