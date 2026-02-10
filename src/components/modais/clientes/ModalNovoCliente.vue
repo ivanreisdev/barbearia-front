@@ -1,6 +1,5 @@
 <template>
-    <q-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" maximized
-        persistent>
+    <q-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" maximized persistent>
         <div class="modal-cancelamento">
 
 
@@ -21,41 +20,24 @@
 
                 <div class="agendamento-info text-center q-gutter-md">
                     <div class="inputs-wrap">
-                        <q-input
-                            outlined
-                            dense
-                            label="Nome do Cliente"
-                            v-model="form.nome"
-                            class="input-centered"
-                        >
-                        <template #prepend>
-                            <q-icon name="badge" />
-                        </template>
-                    </q-input>
+                        <q-input outlined dense label="Nome do Cliente" v-model="form.nome" class="input-centered">
+                            <template #prepend>
+                                <q-icon name="badge" />
+                            </template>
+                        </q-input>
 
-                        <q-input
-                            outlined
-                            dense
-                            label="Email do Cliente"
-                            v-model="form.email"
-                            class="input-centered"
-                        >
-                        <template #prepend>
-                            <q-icon name="email" />
-                        </template>
-                    </q-input>
+                        <q-input outlined dense label="Email do Cliente" v-model="form.email" class="input-centered">
+                            <template #prepend>
+                                <q-icon name="email" />
+                            </template>
+                        </q-input>
 
-                        <q-input
-                            outlined
-                            dense
-                            label="Celular do Cliente"
-                            v-model="form.celular"
-                            class="input-centered"
-                        >
-                        <template #prepend>
-                            <q-icon name="phone" />
-                        </template>
-                    </q-input>
+                        <q-input outlined dense label="Celular do Cliente" v-model="form.celular"
+                            class="input-centered">
+                            <template #prepend>
+                                <q-icon name="phone" />
+                            </template>
+                        </q-input>
                     </div>
 
                     <div class="q-mt-xl text-caption inter-semibold texto-secundario">
@@ -235,7 +217,9 @@ const criarNovoCliente = async () => {
     left: 0;
     top: 0;
     height: 100%;
-    background: linear-gradient(90deg, #d32f2f, #ff5252);
+    background: linear-gradient(135deg,
+            rgba(46, 204, 113, 0.85),
+            rgba(39, 174, 96, 0.9));
     border-radius: 26px;
     transition: width 0.1s linear;
 }
@@ -305,18 +289,21 @@ const criarNovoCliente = async () => {
 @media (max-width: 600px) {
     .inputs-wrap {
         max-width: 330px;
+        padding-left: 25px;
+        padding-right: 8px;
     }
+
     .input-centered {
         font-size: 0.92rem;
     }
-    
+
 }
 
 .header-agendamento {
     position: relative;
 
     background-image:
-        linear-gradient(135deg, rgba(90, 90, 90, 0.65), rgba(139, 110, 110, 0.75)),
+        linear-gradient(135deg, rgba(168, 156, 156, 0.65), rgba(133, 138, 125, 0.75)),
         url('../imgs/novoCliente.webp');
 
     background-repeat: no-repeat;
@@ -333,25 +320,6 @@ const criarNovoCliente = async () => {
         background-size: contain;
         background-position: center top;
     }
-}
-
-.motivo-bloqueio {
-    font-size: 1.20rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-}
-
-.horario_bloqueio {
-    padding: 30px;
-    font-size: 1.55rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
 }
 
 .texto-secundario {
