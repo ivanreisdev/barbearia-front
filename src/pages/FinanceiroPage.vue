@@ -1,5 +1,7 @@
 <template>
-  <q-page class="finance-page q-pa-md">
+  <LoadingLogo v-if="carregando" class="loading-overlay" />
+
+  <q-page v-else class="finance-page q-pa-md">
     <div class="row items-center q-mb-lg finance-header no-wrap">
       <div class="header-title row items-center no-wrap">
         <q-btn flat round icon="arrow_back" class="back-btn q-mr-md" @click="$router.back()" />
@@ -71,14 +73,6 @@
           </q-card-section>
           <q-separator dark class="separator-soft" />
           <q-card-section class="q-gutter-md">
-            <div>
-              <div class="row items-center justify-between">
-                <div class="text-caption text-grey-5">Meta de Faturamento</div>
-                <div class="text-caption text-grey-4">{{ metaFaturamento }}</div>
-              </div>
-              <q-linear-progress dark color="green-5" :value="progressoFaturamento" rounded />
-              <div class="text-caption text-grey-5 q-mt-xs">{{ progressoLabel }}</div>
-            </div>
             <div>
               <div class="row items-center justify-between">
                 <div class="text-caption text-grey-5">Taxa de Ocupacao</div>
@@ -174,6 +168,8 @@
 import { api } from 'src/boot/axios'
 import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 
 const agendamentos = ref([])
@@ -181,6 +177,10 @@ const despesas = ref([])
 const $q = useQuasar()
 const mostrarTodasMovimentacoes = ref(false)
 const filtroPeriodoServico = ref('3m')
+const ticketMedio = ref('')
+const taxaOcupacao = ref('')
+const carregando = ref(true)
+
 
 const periodosServico = [
   { value: '1m', label: 'Ultimo mes' },
@@ -338,6 +338,17 @@ const buscarDespesas = async () => {
     console.error('Erro ao buscar dados de despesas:', error)
   }
 }
+
+const buscarOcupacaoMesAtual = async () => {
+  try {
+    const response = await api.get('/financeiro/ocupacaoMesAtual')
+    const data = response.data
+    taxaOcupacao.value = `${data?.ocupacao_percentual || 0}`
+    console.log('Dados de ocupação:', data)
+  } catch (error) {
+    console.error('Erro ao buscar dados de ocupação:', error)
+  }
+}
 const formatarValorMes = (valor) => formatarMoedaCompacta(valor)
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', {
@@ -391,11 +402,22 @@ const totalServicoPeriodo = computed(() => {
   }, 0)
   return formatarMoeda(totalBruto)
 })
-const metaFaturamento = 'R$ 45.000,00'
-const progressoFaturamento = 0.78
-const progressoLabel = '78% da meta atingida'
-const taxaOcupacao = 84
-const ticketMedio = 'R$ 82,50'
+// const metaFaturamento = 'R$ 45.000,00'
+// const progressoFaturamento = 0.78
+// const progressoLabel = '78% da meta atingida'
+
+
+const buscarTicketMedioMesAtual = async () => {
+  try {
+    const response = await api.get('/financeiro/ticketMedio')
+    const data = response.data
+    console.log('Dados de ticket medio:', data)
+    ticketMedio.value = formatarMoeda(data?.ticket_medio || 0)
+  } catch (error) {
+    console.error('Erro ao buscar ticket medio:', error)
+    ticketMedio.value = formatarMoeda(0)
+  }
+}
 
 const coresCategorias = ['#22c55e', '#3b82f6', '#f59e0b']
 const corOutros = '#a855f7'
@@ -504,9 +526,18 @@ const movimentacoesExibidas = computed(() => {
     : movimentacoes.value.slice(0, limiteMovimentacoes.value)
 })
 
-onMounted(() => {
-  buscarDadosFaturamento()
-  buscarDespesas()
+onMounted(async () => {
+  carregando.value = true
+  try {
+    await Promise.all([
+      buscarDadosFaturamento(),
+      buscarDespesas(),
+      buscarTicketMedioMesAtual(),
+      buscarOcupacaoMesAtual()
+    ])
+  } finally {
+    carregando.value = false
+  }
 })
 </script>
 
@@ -555,7 +586,7 @@ onMounted(() => {
 
 .summary-card {
   min-height: 110px;
-  
+
 }
 
 .summary-content {
@@ -563,7 +594,7 @@ onMounted(() => {
   justify-content: center;
 }
 
-.summary-content > div {
+.summary-content>div {
   display: flex;
   flex-direction: column;
   align-items: center;
