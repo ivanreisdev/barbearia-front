@@ -370,12 +370,41 @@ const progressoLabel = '78% da meta atingida'
 const taxaOcupacao = 84
 const ticketMedio = 'R$ 82,50'
 
-const categorias = [
-  { nome: 'Cortes', percentual: 46, cor: '#22c55e' },
-  { nome: 'Barba', percentual: 28, cor: '#3b82f6' },
-  { nome: 'Produtos', percentual: 16, cor: '#f59e0b' },
-  { nome: 'Outros', percentual: 10, cor: '#a855f7' },
-]
+const coresCategorias = ['#22c55e', '#3b82f6', '#f59e0b']
+const corOutros = '#a855f7'
+
+const categorias = computed(() => {
+  const mapa = new Map()
+  agendamentos.value.forEach((ag) => {
+    if (ag?.status && ag.status !== 'agendado') return
+    const nome = ag.servico?.nome || 'Servico'
+    const preco = Number(ag.servico?.preco ?? 0)
+    if (!Number.isNaN(preco)) {
+      mapa.set(nome, (mapa.get(nome) || 0) + preco)
+    }
+  })
+
+  const ordenado = Array.from(mapa.entries()).sort((a, b) => b[1] - a[1])
+  const top3 = ordenado.slice(0, 3)
+  const outrosValor = ordenado.slice(3).reduce((acc, item) => acc + item[1], 0)
+  const total = [...top3.map(i => i[1]), outrosValor].reduce((acc, v) => acc + v, 0) || 1
+
+  const lista = top3.map((item, idx) => ({
+    nome: item[0],
+    percentual: Math.round((item[1] / total) * 100),
+    cor: coresCategorias[idx] || '#22c55e'
+  }))
+
+  if (outrosValor > 0) {
+    lista.push({
+      nome: 'Outros',
+      percentual: Math.round((outrosValor / total) * 100),
+      cor: corOutros
+    })
+  }
+
+  return lista
+})
 
 const movimentacoes = computed(() => {
   const saidas = despesas.value
