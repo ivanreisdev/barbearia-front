@@ -1,5 +1,7 @@
 <template>
-  <q-page class="despesas-page q-pa-md">
+  <LoadingLogo v-if="carregando" class="loading-overlay" />
+  
+  <q-page v-else class="despesas-page q-pa-md">
     <div class="row items-center q-mb-sm despesas-header no-wrap">
       <div class="header-title row items-center no-wrap">
         <q-btn flat round icon="arrow_back" class="back-btn q-mr-md" @click="$router.back()" />
@@ -13,7 +15,7 @@
     <div class="filters-row q-mb-lg">
       <div class="header-filters">
         <q-input v-model="filtroNome" dense outlined color="grey-4" class="input-dark input-nome"
-          placeholder="Buscar por nome">
+          placeholder="Buscar por categoria">
           <template #prepend>
             <q-icon name="search" />
           </template>
@@ -66,7 +68,7 @@
                   </q-avatar>
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-medium">{{ despesa.titulo }}</q-item-label>
+                  <q-item-label class="text-weight-medium">{{ despesa.categoria }}</q-item-label>
                   <q-item-label caption class="text-grey-5">
                     {{ formatarData(despesa.data) }} • {{ despesa.categoria }}
                   </q-item-label>
@@ -75,9 +77,9 @@
                   <div class="price-text text-negative">{{ formatarMoeda(despesa.valor) }}</div>
                   <div class="action-icons q-mt-xs">
                     <q-btn dense flat round class="action-icon action-icon-edit" icon="edit"
-                      @click="abrirEdicao(despesa)" />
+                      @click="abrirModalEditarDespesa(despesa)" />
                     <q-btn dense flat round class="action-icon action-icon-delete" icon="delete"
-                      @click="excluirDespesa(despesa.id)" />
+                      @click="excluirDespesa(despesa)" />
                   </div>
                 </q-item-section>
               </q-item>
@@ -92,7 +94,14 @@
 
     <q-btn fab icon="add" color="green-6" class="fab-add" @click="abrirModalNovaDespesa" />
 
-    <ModalNovaDespesa v-model="modalNovaDespesaAberto" @clienteCriado="buscarDespesas" />
+    <ModalNovaDespesa v-model="modalNovaDespesaAberto" @despesaCriada="buscarDespesas" />
+
+    <ModalExcluirDespesa v-model="modalExcluirDespesaAberto" :exclusaoInfo="despesaSelecionada"
+      @despesaExcluida="buscarDespesas" />
+
+    <ModalEditarDespesa v-model="modalEditarDespesaAberto" :despesaInfo="despesaSelecionada"
+      @despesaEditada="buscarDespesas" />
+
 
   </q-page>
 </template>
@@ -100,7 +109,12 @@
 <script setup>
 import { api } from 'src/boot/axios'
 import { computed, onMounted, ref } from 'vue'
+
 import ModalNovaDespesa from '../components/modais/financeiro/ModalNovaDespesa.vue'
+import ModalExcluirDespesa from '../components/modais/financeiro/ModalExcluirDespesa.vue'
+import ModalEditarDespesa from '../components/modais/financeiro/ModalEditarDespesa.vue'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 
 const despesas = ref([])
@@ -108,6 +122,12 @@ const despesas = ref([])
 const filtroMes = ref('todos')
 const filtroNome = ref('')
 const modalNovaDespesaAberto = ref(false)
+const modalExcluirDespesaAberto = ref(false)
+const despesaSelecionada = ref(null)
+const modalEditarDespesaAberto = ref(false)
+const carregando = ref(true)
+
+
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -131,6 +151,12 @@ const mapearDespesasApi = (lista = []) => lista.map((item, index) => ({
 
 const abrirModalNovaDespesa = () => {
   modalNovaDespesaAberto.value = true
+}
+
+const abrirModalEditarDespesa = (despesa) => {
+  console.log('Editar despesa:', despesa)
+  despesaSelecionada.value = despesa
+  modalEditarDespesaAberto.value = true
 }
 
 const buscarDespesas = async () => {
@@ -170,8 +196,8 @@ const despesasFiltradas = computed(() => {
   const termo = filtroNome.value.trim().toLowerCase()
   return despesas.value.filter((d) => {
     const mesOk = filtroMes.value === 'todos' || getMesChave(d.data) === filtroMes.value
-    const nomeOk = !termo || d.titulo.toLowerCase().includes(termo)
-    return mesOk && nomeOk
+    const categoriaOk = !termo || d.categoria.toLowerCase().includes(termo)
+    return mesOk && categoriaOk
   })
 })
 
@@ -189,12 +215,19 @@ const categoriaPrincipal = computed(() => {
   return ordenado[0]?.[0] || '-'
 })
 
-const excluirDespesa = (id) => {
-  despesas.value = despesas.value.filter(item => item.id !== id)
+const excluirDespesa = (despesa) => {
+  console.log('Excluir despesa:', despesa)
+  despesaSelecionada.value = despesa
+  modalExcluirDespesaAberto.value = true
 }
 
-onMounted(() => {
-  buscarDespesas()
+onMounted(async () => {
+  carregando.value = true
+  try {
+    await buscarDespesas()
+  } finally {
+    carregando.value = false
+  }
 })
 </script>
 

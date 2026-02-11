@@ -4,7 +4,7 @@
       <div class="header-title row items-center no-wrap">
         <q-btn flat round icon="arrow_back" class="back-btn q-mr-md" @click="$router.back()" />
         <div>
-          <div class="text-h5 text-weight-bold page-title">Financeiro</div>
+          <div class="text-h5 text-weight-bold page-title">Faturamento</div>
           <div class="text-caption text-grey-5">Visao geral do faturamento da barbearia</div>
         </div>
       </div>
@@ -137,12 +137,20 @@
               <div class="text-subtitle1 text-weight-bold">Ultimas Movimentacoes</div>
               <div class="text-caption text-grey-5">Entradas e saidas recentes</div>
             </div>
-            <q-btn flat dense color="grey-4" label="Ver tudo" class="ghost-btn" />
+            <q-btn
+              v-if="movimentacoes.length > limiteMovimentacoes"
+              flat
+              dense
+              color="grey-4"
+              :label="mostrarTodasMovimentacoes ? 'Ver menos' : 'Ver tudo'"
+              class="ghost-btn"
+              @click="mostrarTodasMovimentacoes = !mostrarTodasMovimentacoes"
+            />
           </q-card-section>
           <q-separator dark class="separator-soft" />
           <q-card-section class="q-pa-none">
             <q-list separator dark>
-              <q-item v-for="mov in movimentacoes" :key="mov.id" class="item-dark item-hover">
+              <q-item v-for="mov in movimentacoesExibidas" :key="mov.id" class="item-dark item-hover">
                 <q-item-section avatar>
                   <q-avatar size="36px" :color="mov.tipo === 'entrada' ? 'green-7' : 'red-7'" text-color="white">
                     <q-icon :name="mov.tipo === 'entrada' ? 'trending_up' : 'trending_down'" />
@@ -169,6 +177,13 @@
 <script setup>
 import { api } from 'src/boot/axios'
 import { computed, onMounted, ref } from 'vue'
+import { useQuasar } from 'quasar'
+
+
+const agendamentos = ref([])
+const despesas = ref([])
+const $q = useQuasar()
+const mostrarTodasMovimentacoes = ref(false)
 
 const calcularTotalMes = (dataBase) => {
   const ano = dataBase.getFullYear()
@@ -185,10 +200,28 @@ const calcularTotalMes = (dataBase) => {
   }, 0)
 }
 
+const calcularTotalDespesasMes = (dataBase) => {
+  const ano = dataBase.getFullYear()
+  const mes = dataBase.getMonth()
+  return despesas.value.reduce((acc, desp) => {
+    if (!desp?.data) return acc
+    const data = new Date(`${desp.data}T00:00:00`)
+    if (Number.isNaN(data.getTime())) return acc
+    if (data.getFullYear() !== ano || data.getMonth() !== mes) return acc
+    const valor = Number(desp.valor ?? 0)
+    if (Number.isNaN(valor)) return acc
+    return acc + valor
+  }, 0)
+}
+
 const resumoCards = computed(() => {
   const agora = new Date()
   const totalMesAtual = calcularTotalMes(agora)
   const totalMesAnterior = calcularTotalMes(new Date(agora.getFullYear(), agora.getMonth() - 1, 1))
+  const totalDespesasAtual = calcularTotalDespesasMes(agora)
+  const totalDespesasAnterior = calcularTotalDespesasMes(new Date(agora.getFullYear(), agora.getMonth() - 1, 1))
+  const lucroAtual = totalMesAtual - totalDespesasAtual
+  const lucroAnterior = totalMesAnterior - totalDespesasAnterior
   const delta = totalMesAnterior > 0
     ? ((totalMesAtual - totalMesAnterior) / totalMesAnterior) * 100
     : 0
@@ -196,6 +229,21 @@ const resumoCards = computed(() => {
     ? `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}% vs mes anterior`
     : 'Sem base anterior'
   const deltaClass = delta >= 0 ? 'text-positive' : 'text-negative'
+
+  const deltaDespesas = totalDespesasAnterior > 0
+    ? ((totalDespesasAtual - totalDespesasAnterior) / totalDespesasAnterior) * 100
+    : 0
+  const deltaDespesasLabel = totalDespesasAnterior > 0
+    ? `${deltaDespesas >= 0 ? '+' : ''}${deltaDespesas.toFixed(1)}% vs mes anterior`
+    : 'Sem base anterior'
+  const deltaDespesasClass = deltaDespesas >= 0 ? 'text-negative' : 'text-positive'
+  const deltaLucro = lucroAnterior !== 0
+    ? ((lucroAtual - lucroAnterior) / Math.abs(lucroAnterior)) * 100
+    : 0
+  const deltaLucroLabel = lucroAnterior !== 0
+    ? `${deltaLucro >= 0 ? '+' : ''}${deltaLucro.toFixed(1)}% vs mes anterior`
+    : 'Sem base anterior'
+  const deltaLucroClass = deltaLucro >= 0 ? 'text-positive' : 'text-negative'
 
   return [
     {
@@ -205,13 +253,24 @@ const resumoCards = computed(() => {
       deltaClass: totalMesAnterior > 0 ? deltaClass : 'text-grey-5',
       icon: 'paid'
     },
-    { label: 'Lucro Liquido', valor: 'R$ 16.420,00', delta: '+8% no periodo', deltaClass: 'text-positive', icon: 'savings' },
-    { label: 'Despesas', valor: 'R$ 12.310,00', delta: '-4% no periodo', deltaClass: 'text-negative', icon: 'receipt_long' },
+    {
+      label: 'Lucro Liquido',
+      valor: formatarMoeda(lucroAtual),
+      delta: deltaLucroLabel,
+      deltaClass: lucroAnterior !== 0 ? deltaLucroClass : 'text-grey-5',
+      icon: 'savings'
+    },
+    {
+      label: 'Despesas',
+      valor: formatarMoeda(totalDespesasAtual),
+      delta: deltaDespesasLabel,
+      deltaClass: totalDespesasAnterior > 0 ? deltaDespesasClass : 'text-grey-5',
+      icon: 'receipt_long'
+    },
     { label: 'Caixa Atual', valor: 'R$ 22.180,00', delta: 'Atualizado hoje', deltaClass: 'text-grey-5', icon: 'account_balance_wallet' },
   ]
 })
 
-const agendamentos = ref([])
 
 const receitaMensalRaw = computed(() => {
   const agora = new Date()
@@ -262,6 +321,17 @@ const buscarDadosFaturamento = async () => {
     console.error('Erro ao buscar dados de faturamento:', error)
   }
 }
+
+const buscarDespesas = async () => {
+  try {
+    const response = await api.get('/despesas/buscarDespesas')
+    const data = response.data
+    despesas.value = data?.despesas || []
+    console.log('Dados de despesas:', data)
+  } catch (error) {
+    console.error('Erro ao buscar dados de despesas:', error)
+  }
+}
 const formatarValorMes = (valor) => formatarMoedaCompacta(valor)
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', {
@@ -275,6 +345,20 @@ const formatarMoedaCompacta = (valor) => new Intl.NumberFormat('pt-BR', {
   notation: 'compact',
   maximumFractionDigits: 1
 }).format(Number(valor) || 0)
+
+const formatarData = (dataStr) => {
+  if (!dataStr) return '-'
+  const data = new Date(`${dataStr}T00:00:00`)
+  if (Number.isNaN(data.getTime())) return dataStr
+  return data.toLocaleDateString('pt-BR')
+}
+
+const formatarDataHora = (dataHoraStr) => {
+  if (!dataHoraStr) return '-'
+  const data = new Date(String(dataHoraStr).replace(' ', 'T'))
+  if (Number.isNaN(data.getTime())) return dataHoraStr
+  return data.toLocaleDateString('pt-BR')
+}
 
 const totalReceita = computed(() => {
   const total = receitaMensalRaw.value.reduce((acc, item) => acc + item.valor, 0)
@@ -293,16 +377,55 @@ const categorias = [
   { nome: 'Outros', percentual: 10, cor: '#a855f7' },
 ]
 
-const movimentacoes = [
-  { id: 1, titulo: 'Corte + Barba', data: '10/02/2026', categoria: 'Servico', valor: 'R$ 120,00', tipo: 'entrada' },
-  { id: 2, titulo: 'Compra de Produtos', data: '09/02/2026', categoria: 'Estoque', valor: '- R$ 680,00', tipo: 'saida' },
-  { id: 3, titulo: 'Pacote Mensal', data: '08/02/2026', categoria: 'Servicos', valor: 'R$ 480,00', tipo: 'entrada' },
-  { id: 4, titulo: 'Conta de Energia', data: '07/02/2026', categoria: 'Despesas Fixas', valor: '- R$ 320,00', tipo: 'saida' },
-  { id: 5, titulo: 'Corte Social', data: '06/02/2026', categoria: 'Servico', valor: 'R$ 60,00', tipo: 'entrada' },
-]
+const movimentacoes = computed(() => {
+  const saidas = despesas.value
+    .filter(d => d?.data)
+    .map((d) => ({
+      id: `despesa-${d.id ?? `${d.data}-${d.categoria}`}`,
+      titulo: d.descricao || 'Despesa',
+      data: formatarData(d.data),
+      categoria: d.categoria || '-',
+      valor: `- ${formatarMoeda(d.valor)}`,
+      tipo: 'saida',
+      _ordenacao: new Date(`${d.data}T00:00:00`).getTime()
+    }))
+
+  const entradas = agendamentos.value
+    .filter(ag => ag?.data_horario)
+    .map((ag, idx) => {
+      const preco = Number(ag.servico?.preco ?? 0)
+      return {
+        id: `ag-${ag.id ?? idx}`,
+        titulo: ag.servico?.nome || 'Servico',
+        data: formatarDataHora(ag.data_horario),
+        categoria: 'Servico',
+        valor: formatarMoeda(preco),
+        tipo: 'entrada',
+        _ordenacao: new Date(String(ag.data_horario).replace(' ', 'T')).getTime()
+      }
+    })
+
+  return [...entradas, ...saidas]
+    .filter(m => !Number.isNaN(m._ordenacao))
+    .sort((a, b) => b._ordenacao - a._ordenacao)
+    .map((item) => {
+      const rest = { ...item }
+      delete rest._ordenacao
+      return rest
+    })
+})
+
+const limiteMovimentacoes = computed(() => ($q.screen.lt.md ? 5 : 10))
+
+const movimentacoesExibidas = computed(() => {
+  return mostrarTodasMovimentacoes.value
+    ? movimentacoes.value
+    : movimentacoes.value.slice(0, limiteMovimentacoes.value)
+})
 
 onMounted(() => {
   buscarDadosFaturamento()
+  buscarDespesas()
 })
 </script>
 

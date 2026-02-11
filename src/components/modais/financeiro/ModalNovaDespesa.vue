@@ -26,22 +26,23 @@
                             </template>
                         </q-input>
 
-                        <q-input outlined dense label="Data da Despesa" v-model="form.data" class="input-centered"
-                            placeholder="YYYY-MM-DD">
+                        <q-input outlined dense label="Data de Pagamento" v-model="form.dataDisplay"
+                            class="input-centered" placeholder="dd/mm/aaaa" mask="##/##/####">
                             <template #prepend>
                                 <q-icon name="calendar_today" />
                             </template>
                             <template #append>
                                 <q-icon name="event" class="cursor-pointer">
-                                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                                        <q-date v-model="form.data" mask="YYYY-MM-DD" color="grey-9" />
+                                    <q-popup-proxy ref="dataPopup" cover transition-show="scale" transition-hide="scale">
+                                        <q-date v-model="form.dataDisplay" mask="DD/MM/YYYY" color="grey-9"
+                                            @update:model-value="() => dataPopup?.hide()" />
                                     </q-popup-proxy>
                                 </q-icon>
                             </template>
                         </q-input>
 
-                        <q-input outlined dense label="Valor" v-model.number="form.valor" class="input-centered"
-                            type="number" inputmode="decimal" step="0.01">
+                        <q-input outlined dense label="Valor" v-model="form.valor" class="input-centered input-valor"
+                            type="text" inputmode="decimal" mask="###,##" reverse-fill-mask unmasked-value>
                             <template #prepend>
                                 <q-icon name="payments" />
                             </template>
@@ -95,6 +96,7 @@ import { ref, computed } from 'vue'
 import { notifySuccess, notifyError } from '../../../scripts/notificaçoes'
 
 const emit = defineEmits(['update:modelValue'])
+const dataPopup = ref(null)
 
 const fechar = () => {
     emit('update:modelValue', false)
@@ -102,9 +104,9 @@ const fechar = () => {
 
 const form = ref({
     titulo: '',
-    data: '',
+    dataDisplay: '',
     descricao: '',
-    valor: null,
+    valor: '',
 })
 
 const swipeX = ref(0)
@@ -155,12 +157,12 @@ const aplicarValidacoes = () => {
         return false
     }
 
-    if (!form.value.data) {
+    if (!form.value.dataDisplay || !converterParaIso(form.value.dataDisplay)) {
         notifyError('A data da despesa é obrigatória.')
         return false
     }
 
-    const valor = Number(form.value.valor)
+    const valor = normalizarValor(form.value.valor)
     if (!valor || valor <= 0) {
         notifyError('O valor da despesa deve ser maior que zero.')
         return false
@@ -177,31 +179,50 @@ const criarNovaDespesa = async () => {
     }
 
     try {
-        const celularNumeros = (form.value.celular || '').replace(/\D/g, '')
+        const dataIso = converterParaIso(form.value.dataDisplay)
+        const valorDecimal = normalizarValor(form.value.valor)
         const response = await api.post(
-            '/clientes/criarNovoCliente',
+            '/despesas/criarNovaDespesa',
             {
-                nome: form.value.nome,
-                email: form.value.email,
-                celular: celularNumeros,
+                categoria: form.value.titulo,
+                data: dataIso,
+                descricao: form.value.descricao,
+                valor: valorDecimal.toFixed(2),
+                recorrente: false
             }
         )
         if (response.data.tipo == 'sucesso') {
             form.value = {
-                nome: '',
-                email: '',
-                celular: '',
+                titulo: '',
+                dataDisplay: '',
+                descricao: '',
+                valor: null,
             }
             fechar()
-            emit('clienteCriado')
+            emit('despesaCriada')
             notifySuccess(response.data.msg)
         } else {
-            notifyError(response.data.msg || 'Erro ao criar o Cliente')
+            notifyError(response.data.msg || 'Erro ao criar a Despesa')
         }
     } catch (e) {
-        console.error('Erro ao criar o Cliente:', e.response?.data || e)
-        notifyError(e.response?.data?.message || 'Erro ao criar o Cliente')
+        console.error('Erro ao criar a Despesa:', e.response?.data || e)
+        notifyError(e.response?.data?.message || 'Erro ao criar a Despesa')
     }
+}
+
+const converterParaIso = (dataBr) => {
+    if (!dataBr) return ''
+    const [dia, mes, ano] = dataBr.split('/').map(Number)
+    if (!dia || !mes || !ano) return ''
+    const data = new Date(ano, mes - 1, dia)
+    if (Number.isNaN(data.getTime())) return ''
+    return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+}
+
+const normalizarValor = (valorBr) => {
+    const numeros = String(valorBr || '').replace(/\D/g, '')
+    if (!numeros) return 0
+    return Number(numeros) / 100
 }
 </script>
 
@@ -265,7 +286,7 @@ const criarNovaDespesa = async () => {
     top: 0;
     height: 100%;
     background: linear-gradient(135deg,
-            rgba(46, 204, 113, 0.85),
+            rgba(197, 71, 54, 0.85),
             rgba(39, 174, 96, 0.9));
     border-radius: 26px;
     transition: width 0.1s linear;
@@ -337,6 +358,16 @@ const criarNovaDespesa = async () => {
     min-height: 120px;
 }
 
+.input-valor :deep(input[type="number"]) {
+    -moz-appearance: textfield;
+}
+
+.input-valor :deep(input[type="number"]::-webkit-outer-spin-button),
+.input-valor :deep(input[type="number"]::-webkit-inner-spin-button) {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 @media (max-width: 600px) {
     .inputs-wrap {
         max-width: 330px;
@@ -354,8 +385,8 @@ const criarNovaDespesa = async () => {
     position: relative;
 
     background-image:
-        linear-gradient(135deg, rgba(168, 156, 156, 0.65), rgba(133, 138, 125, 0.75)),
-        url('../imgs/novoCliente.webp');
+        linear-gradient(135deg, rgba(180, 85, 85, 0.65), rgba(101, 102, 100, 0.75)),
+        url('../imgs/despesa.jpg');
 
     background-repeat: no-repeat;
     background-position: center;
@@ -384,7 +415,7 @@ const criarNovaDespesa = async () => {
 @media (min-width: 1024px) {
     .header-despesa {
         background-size: cover;
-        background-position: center 20%;
+        background-position: center 75%;
     }
 }
 
@@ -399,6 +430,7 @@ const criarNovaDespesa = async () => {
 .texto-secundario {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
+    color: #dfd1d1;
 }
 </style>
 
