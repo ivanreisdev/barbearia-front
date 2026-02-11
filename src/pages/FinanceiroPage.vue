@@ -24,10 +24,10 @@
       </div>
     </div>
 
-    <div class="row q-col-gutter-md q-mb-lg">
+    <div class="row q-col-gutter-md q-mb-lg justify-center">
       <div class="col-12 col-sm-6 col-lg-3" v-for="card in resumoCards" :key="card.label">
         <q-card flat bordered class="card-dark summary-card">
-          <q-card-section class="row items-center justify-between">
+          <q-card-section class="row items-center justify-between summary-content">
             <div>
               <div class="text-caption text-grey-5">{{ card.label }}</div>
               <div class="text-h6 text-weight-bold">{{ card.valor }}</div>
@@ -54,11 +54,7 @@
           <q-separator dark class="separator-soft" />
           <q-card-section class="chart-wrapper">
             <div class="chart-grid">
-              <div
-                v-for="mes in receitaMensal"
-                :key="mes.nome"
-                class="chart-bar-wrap"
-              >
+              <div v-for="mes in receitaMensal" :key="mes.nome" class="chart-bar-wrap">
                 <div class="chart-value">{{ formatarValorMes(mes.valor) }}</div>
                 <div class="chart-bar" :style="{ height: mes.altura + '%' }"></div>
                 <div class="chart-label">{{ mes.nome }}</div>
@@ -106,15 +102,21 @@
       <div class="col-12 col-lg-4">
         <q-card flat bordered class="card-dark card-stack">
           <q-card-section>
-            <div class="text-subtitle1 text-weight-bold">Distribuicao por Servico</div>
-            <div class="text-caption text-grey-5">Participacao no faturamento</div>
+            <div class="row items-center justify-between no-wrap distribuicao-header">
+              <div>
+                <div class="text-subtitle1 text-weight-bold">Distribuicao por Servico</div>
+                <div class="text-caption text-grey-5">Participacao no faturamento</div>
+              </div>
+              <q-select v-model="filtroPeriodoServico" dense outlined color="grey-4" class="input-dark input-periodo"
+                :options="periodosServico" option-label="label" option-value="value" emit-value map-options />
+            </div>
           </q-card-section>
           <q-separator dark class="separator-soft" />
           <q-card-section>
-            <div class="donut">
+            <div class="donut" :style="donutStyle">
               <div class="donut-center">
                 <div class="text-caption text-grey-5">Total</div>
-                <div class="text-subtitle1 text-weight-bold">{{ totalReceita }}</div>
+                <div class="text-subtitle1 text-weight-bold">{{ totalServicoPeriodo }}</div>
               </div>
             </div>
             <div class="q-mt-md">
@@ -137,15 +139,9 @@
               <div class="text-subtitle1 text-weight-bold">Ultimas Movimentacoes</div>
               <div class="text-caption text-grey-5">Entradas e saidas recentes</div>
             </div>
-            <q-btn
-              v-if="movimentacoes.length > limiteMovimentacoes"
-              flat
-              dense
-              color="grey-4"
-              :label="mostrarTodasMovimentacoes ? 'Ver menos' : 'Ver tudo'"
-              class="ghost-btn"
-              @click="mostrarTodasMovimentacoes = !mostrarTodasMovimentacoes"
-            />
+            <q-btn v-if="movimentacoes.length > limiteMovimentacoes" flat dense color="grey-4"
+              :label="mostrarTodasMovimentacoes ? 'Ver menos' : 'Ver tudo'" class="ghost-btn"
+              @click="mostrarTodasMovimentacoes = !mostrarTodasMovimentacoes" />
           </q-card-section>
           <q-separator dark class="separator-soft" />
           <q-card-section class="q-pa-none">
@@ -184,6 +180,14 @@ const agendamentos = ref([])
 const despesas = ref([])
 const $q = useQuasar()
 const mostrarTodasMovimentacoes = ref(false)
+const filtroPeriodoServico = ref('3m')
+
+const periodosServico = [
+  { value: '1m', label: 'Ultimo mes' },
+  { value: '3m', label: 'Ultimos 3 meses' },
+  { value: '6m', label: 'Ultimos 6 meses' },
+  { value: '12m', label: 'Ultimos 12 meses' }
+]
 
 const calcularTotalMes = (dataBase) => {
   const ano = dataBase.getFullYear()
@@ -253,13 +257,7 @@ const resumoCards = computed(() => {
       deltaClass: totalMesAnterior > 0 ? deltaClass : 'text-grey-5',
       icon: 'paid'
     },
-    {
-      label: 'Lucro Liquido',
-      valor: formatarMoeda(lucroAtual),
-      delta: deltaLucroLabel,
-      deltaClass: lucroAnterior !== 0 ? deltaLucroClass : 'text-grey-5',
-      icon: 'savings'
-    },
+
     {
       label: 'Despesas',
       valor: formatarMoeda(totalDespesasAtual),
@@ -267,7 +265,15 @@ const resumoCards = computed(() => {
       deltaClass: totalDespesasAnterior > 0 ? deltaDespesasClass : 'text-grey-5',
       icon: 'receipt_long'
     },
-    { label: 'Caixa Atual', valor: 'R$ 22.180,00', delta: 'Atualizado hoje', deltaClass: 'text-grey-5', icon: 'account_balance_wallet' },
+
+    {
+      label: 'Lucro Liquido',
+      valor: formatarMoeda(lucroAtual),
+      delta: deltaLucroLabel,
+      deltaClass: lucroAnterior !== 0 ? deltaLucroClass : 'text-grey-5',
+      icon: 'savings'
+    },
+    // { label: 'Caixa Atual', valor: 'R$ 22.180,00', delta: 'Atualizado hoje', deltaClass: 'text-grey-5', icon: 'account_balance_wallet' },
   ]
 })
 
@@ -364,6 +370,27 @@ const totalReceita = computed(() => {
   const total = receitaMensalRaw.value.reduce((acc, item) => acc + item.valor, 0)
   return formatarMoeda(total)
 })
+
+const totalServicoPeriodo = computed(() => {
+  const total = categorias.value.reduce((acc, item) => {
+    return acc + Number(item.percentual || 0)
+  }, 0)
+  if (!categorias.value.length || total === 0) return formatarMoeda(0)
+  const totalBruto = agendamentos.value.reduce((acc, ag) => {
+    if (ag?.status && ag.status !== 'agendado') return acc
+    if (!ag?.data_horario) return acc
+    const data = new Date(String(ag.data_horario).replace(' ', 'T'))
+    if (Number.isNaN(data.getTime())) return acc
+    const meses = Number(filtroPeriodoServico.value.replace('m', '')) || 3
+    const agora = new Date()
+    const limite = new Date(agora.getFullYear(), agora.getMonth() - (meses - 1), 1)
+    if (data < limite) return acc
+    const preco = Number(ag.servico?.preco ?? 0)
+    if (Number.isNaN(preco)) return acc
+    return acc + preco
+  }, 0)
+  return formatarMoeda(totalBruto)
+})
 const metaFaturamento = 'R$ 45.000,00'
 const progressoFaturamento = 0.78
 const progressoLabel = '78% da meta atingida'
@@ -374,9 +401,16 @@ const coresCategorias = ['#22c55e', '#3b82f6', '#f59e0b']
 const corOutros = '#a855f7'
 
 const categorias = computed(() => {
+  const agora = new Date()
+  const meses = Number(filtroPeriodoServico.value.replace('m', '')) || 3
+  const limite = new Date(agora.getFullYear(), agora.getMonth() - (meses - 1), 1)
+
   const mapa = new Map()
   agendamentos.value.forEach((ag) => {
     if (ag?.status && ag.status !== 'agendado') return
+    if (!ag?.data_horario) return
+    const data = new Date(String(ag.data_horario).replace(' ', 'T'))
+    if (Number.isNaN(data.getTime()) || data < limite) return
     const nome = ag.servico?.nome || 'Servico'
     const preco = Number(ag.servico?.preco ?? 0)
     if (!Number.isNaN(preco)) {
@@ -403,7 +437,25 @@ const categorias = computed(() => {
     })
   }
 
+  const soma = lista.reduce((acc, item) => acc + item.percentual, 0)
+  if (lista.length && soma !== 100) {
+    lista[lista.length - 1].percentual = Math.max(0, lista[lista.length - 1].percentual + (100 - soma))
+  }
+
   return lista
+})
+
+const donutStyle = computed(() => {
+  if (!categorias.value.length) {
+    return { background: 'conic-gradient(#1f2937 0 100%)' }
+  }
+  let acumulado = 0
+  const partes = categorias.value.map((cat) => {
+    const inicio = acumulado
+    acumulado += cat.percentual
+    return `${cat.cor} ${inicio}% ${acumulado}%`
+  })
+  return { background: `conic-gradient(${partes.join(', ')})` }
 })
 
 const movimentacoes = computed(() => {
@@ -503,6 +555,18 @@ onMounted(() => {
 
 .summary-card {
   min-height: 110px;
+  
+}
+
+.summary-content {
+  text-align: center;
+  justify-content: center;
+}
+
+.summary-content > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .ghost-btn {
@@ -566,18 +630,24 @@ onMounted(() => {
   min-height: 320px;
 }
 
+.distribuicao-header {
+  gap: 12px;
+}
+
+.input-periodo {
+  min-width: 160px;
+}
+
 .donut {
   width: 180px;
   height: 180px;
   border-radius: 50%;
   margin: 0 auto;
   background:
-    conic-gradient(
-      #22c55e 0 46%,
+    conic-gradient(#22c55e 0 46%,
       #3b82f6 46% 74%,
       #f59e0b 74% 90%,
-      #a855f7 90% 100%
-    );
+      #a855f7 90% 100%);
   display: grid;
   place-items: center;
 }
@@ -631,10 +701,12 @@ onMounted(() => {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     height: 180px;
   }
+
   .donut {
     width: 150px;
     height: 150px;
   }
+
   .donut-center {
     width: 90px;
     height: 90px;
