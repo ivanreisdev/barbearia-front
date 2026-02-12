@@ -4,10 +4,7 @@
     <!-- DRAWER -->
     <q-drawer v-model="drawer" side="left" show-if-above class="drawer-bg text-white">
       <div class="drawer-header">
-        <div class="text-h6 text-weight-bold title-menu">JetBarber</div>
-        <div class="text-caption text-grey-5 subTitle-menu">
-          Gestão da Barbearia
-        </div>
+        <img src="/imgs/logoMenu2.png" alt="JetBarber" class="logo-menu" />
       </div>
 
       <q-list padding class="lista-acoes-menu">
@@ -183,36 +180,146 @@ onBeforeUnmount(() => {
 
 <style>
 :root {
-  --drawer-width: 300px;
+  --drawer-width: 302px;
 }
 
 .drawer-header {
-  padding: 20px 16px;
+  padding: 24px 18px 18px;
   font-family: 'Inter', sans-serif;
-
+  background: transparent;
+  /* border-bottom: 1px solid rgba(255, 255, 255, 0.14); */
 }
 
 .menu-active {
-  background: rgba(255, 255, 255, 0.08);
-  border-left: 3px solid #fff;
+  background: transparent !important;
+  border-left: 3px solid #d9e2f2;
+  color: #f8fbff;
+  box-shadow: inset 0 0 0 1px rgba(217, 226, 242, 0.12);
 }
 
 .drawer-bg {
-  background-color: #121212;
+  background: rgba(10, 14, 22, 0.18);
   width: var(--drawer-width);
+  color: #eaf0fa;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
 }
 
 .lista-acoes-menu {
   font-family: 'Inter', sans-serif;
+  padding-top: 8px;
 }
-.title-menu{
-  color:#aeafb1;
+
+.title-menu {
+  color: #edf2fc;
   text-align: center;
-  font-size: 25px;
-  
+  font-size: 24px;
+  letter-spacing: 0.4px;
 }
-.subTitle-menu{
+
+.logo-menu {
+  display: block;
+  width: min(184px, 74%);
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.subTitle-menu {
   text-align: center;
+  color: #a5b0c2 !important;
+  letter-spacing: 0.3px;
+}
+
+.drawer-bg .q-item {
+  border-radius: 12px;
+  margin: 4px 8px;
+  min-height: 46px;
+  padding-left: 8px;
+  padding-right: 8px;
+  color: #dce4f2;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  background: transparent;
+}
+
+.drawer-bg .q-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(2px);
+}
+
+.drawer-bg .q-item .q-icon {
+  color: #c1cbdd;
+}
+
+.drawer-bg .q-item__section--avatar {
+  min-width: 36px;
+}
+
+.drawer-bg .q-item__label--header {
+  color: #7f8a9e !important;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 16px 14px 8px;
+}
+
+.drawer-bg .q-expansion-item {
+  margin: 2px 8px 6px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.drawer-bg .q-expansion-item__container > .q-item {
+  margin: 0;
+  border-radius: 0;
+}
+
+.drawer-bg .q-expansion-item .q-list {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.drawer-bg .q-expansion-item .q-item {
+  margin: 2px 8px;
+}
+
+.drawer-bg .q-expansion-item .q-item .q-icon {
+  color: #b2bdd0;
+}
+
+.drawer-bg .text-grey-5,
+.drawer-bg .text-grey-4,
+.drawer-bg .text-grey-6 {
+  color: inherit !important;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --drawer-width: 286px;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --drawer-width: min(86vw, 320px);
+  }
+
+  .drawer-header {
+    padding-top: 20px;
+    padding-bottom: 14px;
+  }
+
+  .title-menu {
+    font-size: 22px;
+  }
+
+  .drawer-bg .q-item {
+    min-height: 44px;
+  }
 }
 
 </style>
