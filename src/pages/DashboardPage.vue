@@ -676,16 +676,18 @@ function toggleTheme() {
 
 
 .header-dashboard {
-  background: #0c0c0c;
-  /* um pouco mais claro que o fundo */
-  margin-left: -16px;
-  margin-right: -16px;
-  margin-top: -16px;
-  margin-bottom: -96px;
-  padding: 16px;
-  border-bottom-left-radius: 50px;
-  border-bottom-right-radius: 50px;
+  background:
+    radial-gradient(circle at 8% 10%, rgba(255, 255, 255, 0.06), transparent 26%),
+    radial-gradient(circle at 88% 2%, rgba(164, 180, 212, 0.16), transparent 30%),
+    linear-gradient(165deg, #090b0f, #121722);
+  margin: -16px -16px -92px;
+  padding: 16px 16px 92px;
+  border-bottom-left-radius: 42px;
+  border-bottom-right-radius: 42px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 -18px 30px rgba(0, 0, 0, 0.2);
 }
+
 
 .header-dashboard {
   padding-bottom: 92px;
