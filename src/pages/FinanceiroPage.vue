@@ -14,7 +14,7 @@
         <q-btn flat round icon="more_vert" color="grey-4" class="ghost-btn menu-btn">
           <q-menu anchor="bottom right" self="top right">
             <q-list dense>
-              <q-item clickable v-close-popup>
+              <q-item clickable v-close-popup @click="exportarPdf">
                 <q-item-section avatar>
                   <q-icon name="download" />
                 </q-item-section>
@@ -336,6 +336,23 @@ const buscarDespesas = async () => {
     console.log('Dados de despesas:', data)
   } catch (error) {
     console.error('Erro ao buscar dados de despesas:', error)
+  }
+}
+
+const exportarPdf = async () => {
+  try {
+    const response = await api.get('/financeiro/exportar-pdf', { responseType: 'blob' })
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `financeiro-${new Date().toISOString().slice(0, 10)}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Erro ao exportar PDF:', error)
   }
 }
 

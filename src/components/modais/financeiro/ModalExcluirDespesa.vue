@@ -20,8 +20,7 @@
 
         <div class="agendamento-info text-center q-gutter-md">
           <div class="text-h8 text-grey-6 inter-semibold horario_bloqueio">
-            {{ exclusaoInfo.data }}
-            - {{ exclusaoInfo.data }}
+            {{formatarData(exclusaoInfo.data ) }}
           </div>
 
           <div class="text-h5 text-grey-6 inter-semibold cliente-nome q-mt-md motivo-bloqueio">
@@ -147,6 +146,14 @@ const confirmarExcluasao = async () => {
     notifyError('Erro ao excluir despesa')
   }
 }
+
+const formatarData = (dataStr) => {
+  if (!dataStr) return '-'
+  const data = new Date(`${dataStr}T00:00:00`)
+  if (Number.isNaN(data.getTime())) return dataStr
+  return data.toLocaleDateString('pt-BR')
+}
+
 </script>
 
 
