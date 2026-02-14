@@ -1,9 +1,11 @@
 <template>
-  <q-page class="q-pa-md q-pa-lg q-pa-x barbearia-page">
+  <LoadingLogo v-if="carregamento" class="loading-overlay" />
+
+  <q-page v-else class="q-pa-md q-pa-lg q-pa-x barbearia-page">
     <!-- LOADING -->
-    <q-inner-loading :showing="loading">
+    <!-- <q-inner-loading :showing="loading">
       <q-spinner-dots size="40px" color="primary" />
-    </q-inner-loading>
+    </q-inner-loading> -->
 
     <div v-if="!loading" class="row justify-center">
 
@@ -56,14 +58,14 @@
 
         <div class="row q-col-gutter-md">
 
-          <q-input outlined dense label="Nome da Barbearia" v-model="barbearia.nome"
-            class="col-12 col-sm-6 input-dark">
+          <q-input outlined dense label="Nome da Barbearia" v-model="barbearia.nome" class="col-12 col-sm-6 input-dark">
             <template #prepend>
               <q-icon name="badge" />
             </template>
           </q-input>
 
-          <q-input outlined dense label="Telefone" v-model="barbearia.telefone" class="col-12 col-sm-6 input-dark">
+          <q-input outlined dense label="Telefone" v-model="barbearia.telefone" class="col-12 col-sm-6 input-dark"
+            mask="(##) #####-####" maxlength="15">
             <template #prepend>
               <q-icon name="phone" />
             </template>
@@ -98,7 +100,6 @@ const {
   barbearia,
   // salvarConfiguracoes,
   salvarPerfilBarbearia,
-  loading,
   fotoBackend,
   // fotoFile,
   modalCrop,
@@ -107,6 +108,8 @@ const {
   onImagemCortada,
   fileInput,
   previewFoto,
+  carregamento,
+  LoadingLogo
 
 } = useConfiguracoesBarbearia()
 

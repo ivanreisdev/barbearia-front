@@ -65,6 +65,13 @@
       </div>
     </div>
 
+    <q-card v-if="clientesFiltrados.length === 0" flat bordered class="empty-state-card q-mt-md">
+      <q-card-section class="text-center q-py-xl">
+        <q-icon name="group_off" size="34px" class="q-mb-sm" />
+        <div class="text-subtitle1 text-weight-medium">Você ainda não possui nenhum cliente.</div>
+      </q-card-section>
+    </q-card>
+
 
     <ModalEditarCliente v-model="modalEditarClienteAberto" :cliente="clienteSelecionado" @atualizado="buscarClientes" />
 
@@ -189,5 +196,12 @@ const {
 
 .acoes-cliente .q-btn:not(:last-child) {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.empty-state-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  border-radius: 18px;
 }
 </style>

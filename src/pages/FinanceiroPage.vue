@@ -129,7 +129,7 @@
       <div class="col-12 col-lg-8">
         <q-card flat bordered class="card-dark card-stack">
           <q-card-section class="row items-center justify-between">
-            <div>
+          <div>
               <div class="text-subtitle1 text-weight-bold">Ultimas Movimentacoes</div>
               <div class="text-caption text-grey-5">Entradas e saidas recentes</div>
             </div>
@@ -153,6 +153,15 @@
                 <q-item-section side>
                   <div class="price-text" :class="mov.tipo === 'entrada' ? 'text-positive' : 'text-negative'">
                     {{ mov.valor }}
+                  </div>
+                </q-item-section>
+              </q-item>
+
+              <q-item v-if="movimentacoesExibidas.length === 0" class="mov-empty">
+                <q-item-section class="text-center">
+                  <div class="column items-center q-py-lg">
+                    <q-icon name="receipt_long" size="26px" class="q-mb-sm text-grey-6" />
+                    <q-item-label class="text-grey-5 text-weight-medium">Não há movimentações.</q-item-label>
                   </div>
                 </q-item-section>
               </q-item>
@@ -736,6 +745,11 @@ onMounted(async () => {
   font-weight: 700;
   color: #e5e7eb;
   letter-spacing: 0.2px;
+}
+
+.mov-empty {
+  min-height: 120px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 @media (max-width: 1023px) {

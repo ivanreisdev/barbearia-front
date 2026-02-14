@@ -207,6 +207,10 @@ onBeforeUnmount(() => {
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
 }
 
+.drawer-bg .q-drawer__content {
+  overflow-x: hidden;
+}
+
 .lista-acoes-menu {
   font-family: 'Inter', sans-serif;
   padding-top: 8px;
@@ -295,6 +299,44 @@ onBeforeUnmount(() => {
 .drawer-bg .text-grey-4,
 .drawer-bg .text-grey-6 {
   color: inherit !important;
+}
+
+@media (min-width: 601px) {
+  .drawer-bg .q-drawer__content,
+  .drawer-bg .scroll,
+  .drawer-bg .q-scrollarea__container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(178, 189, 208, 0.45) transparent;
+  }
+
+  .drawer-bg .q-drawer__content::-webkit-scrollbar,
+  .drawer-bg .scroll::-webkit-scrollbar,
+  .drawer-bg .q-scrollarea__container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .drawer-bg .q-drawer__content::-webkit-scrollbar-track,
+  .drawer-bg .scroll::-webkit-scrollbar-track,
+  .drawer-bg .q-scrollarea__container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .drawer-bg .q-drawer__content::-webkit-scrollbar-thumb,
+  .drawer-bg .scroll::-webkit-scrollbar-thumb,
+  .drawer-bg .q-scrollarea__container::-webkit-scrollbar-thumb {
+    background: rgba(178, 189, 208, 0.35);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .drawer-bg .q-drawer__content::-webkit-scrollbar-thumb:hover,
+  .drawer-bg .scroll::-webkit-scrollbar-thumb:hover,
+  .drawer-bg .q-scrollarea__container::-webkit-scrollbar-thumb:hover {
+    background: rgba(198, 209, 228, 0.5);
+    background-clip: content-box;
+  }
 }
 
 @media (max-width: 1024px) {

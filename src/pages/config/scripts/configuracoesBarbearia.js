@@ -77,14 +77,14 @@ export const useConfiguracoesBarbearia = () => {
   })
 
 
-  const adicionarServico = () => {
-    router.push({
-      name: 'servicos-create',
-      params: {
-        barbeariaId: barbearia.value.id
-      }
-    })
-  }
+  // const adicionarServico = () => {
+  //   router.push({
+  //     name: 'servicos-create',
+  //     params: {
+  //       barbeariaId: barbearia.value.id
+  //     }
+  //   })
+  // }
 
   const servicos = ref([
     {
@@ -135,13 +135,12 @@ export const useConfiguracoesBarbearia = () => {
   const buscarUsuario = async () => {
     try {
       const { data } = await api.get('/usuario/buscarDadosUsuario')
-      console.log(data)
 
       usuario.value = {
-        id: data.id,
-        name: data.name,
-        telefone: data.telefone,
-        email: data.email,
+        id: data.id ?? '',
+        name: data.name ?? '',
+        telefone: data.telefone ?? '',
+        email: data.email ?? '',
         endereco: data.endereco,
         foto: data.foto
       }
@@ -291,7 +290,7 @@ export const useConfiguracoesBarbearia = () => {
     confirmarCrop,
     Cropper,
     imagemParaCrop,
-    adicionarServico,
+    // adicionarServico,
     modalCrop,
     cropperReady,
     cropper,

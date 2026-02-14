@@ -104,10 +104,19 @@
             <q-input v-model="novoAgendamento.email" rounded filled label="E-mail do cliente" type="email" />
 
             <q-select v-model="novoAgendamento.servico" :options="servicos" option-label="nome" option-value="id"
-              emit-value map-options rounded filled label="Selecione um serviço" @update:model-value="atualizarPreco" />
+              emit-value map-options rounded filled label="Selecione um serviço" @update:model-value="atualizarPreco">
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey">
+                    Nenhum serviço cadastrado
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
 
-            <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data" />
-
+            <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
+              :disable="!novoAgendamento.servico" />
+              
             <div class="row q-col-gutter-sm">
               <div class="col">
                 <q-select v-model="novoAgendamento.hora" :options="horariosPadrao" option-label="label"

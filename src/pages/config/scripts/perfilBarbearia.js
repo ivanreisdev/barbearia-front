@@ -1,10 +1,12 @@
 import { ref, onMounted, computed } from 'vue'
-import { useQuasar } from 'quasar'
+import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
+import LoadingLogo from 'components/LoadingLogo.vue'
+
 
 export const useConfiguracoesBarbearia = () => {
   const $q = useQuasar()
-  const loading = ref(true)
+  const carregamento = ref(true)
 
   const barbearia = ref({
     nome: '',
@@ -95,20 +97,23 @@ export const useConfiguracoesBarbearia = () => {
   }
 
   onMounted(async () => {
-    loading.value = true
+    Loading.show({
+      spinner: LoadingLogo,
+      backgroundColor: '#0c0d10'
+    })
 
     try {
       await Promise.all([
         buscarBarbearia(),
       ])
     } finally {
-      loading.value = false
+      carregamento.value = false
+      Loading.hide()
     }
   })
 
   return {
     barbearia,
-    loading,
     salvarPerfilBarbearia,
     fotoBackend,
     fotoFile,
@@ -118,5 +123,7 @@ export const useConfiguracoesBarbearia = () => {
     onImagemCortada,
     fileInput,
     previewFoto,
+    LoadingLogo,
+    carregamento
   }
 }
