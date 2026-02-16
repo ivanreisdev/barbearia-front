@@ -8,14 +8,19 @@ export function useAgendamentos(dataSelecionada) {
   const $q = useQuasar()
 
   const safeNotify = (opts) => {
+    const notifyOpts = {
+      position: 'top',
+      ...opts
+    }
+
     try {
       if (typeof Notify !== 'undefined' && typeof Notify.create === 'function') {
-        Notify.create(opts)
+        Notify.create(notifyOpts)
         return
       }
 
       if ($q && typeof $q.notify === 'function') {
-        $q.notify(opts)
+        $q.notify(notifyOpts)
         return
       }
 
@@ -26,11 +31,11 @@ export function useAgendamentos(dataSelecionada) {
         window.Quasar.Notify &&
         typeof window.Quasar.Notify.create === 'function'
       ) {
-        window.Quasar.Notify.create(opts)
+        window.Quasar.Notify.create(notifyOpts)
         return
       }
 
-      console.log('Notify fallback:', opts)
+      console.log('Notify fallback:', notifyOpts)
     } catch (e) {
       console.error('safeNotify error:', e)
     }
@@ -652,12 +657,87 @@ export function useAgendamentos(dataSelecionada) {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
 
   const salvarAgendamento = async () => {
+    const validarNovoAgendamento = () => {
+      const nome = (novoAgendamento.value.cliente || '').trim()
+      const email = (novoAgendamento.value.email || '').trim()
+      const telefone = (novoAgendamento.value.telefone || '').trim()
+      const servico = novoAgendamento.value.servico
+      const data = novoAgendamento.value.data
+      const hora = novoAgendamento.value.hora
+
+      if (!nome || nome.length < 2) {
+        safeNotify({
+          type: 'negative',
+          message: 'Informe um nome valido para o cliente',
+        })
+        return false
+      }
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        safeNotify({
+          type: 'negative',
+          message: 'Informe um e-mail valido',
+        })
+        return false
+      }
+
+      const telefoneNumeros = telefone.replace(/\D/g, '')
+      if (telefoneNumeros.length < 10 || telefoneNumeros.length > 11) {
+        safeNotify({
+          type: 'negative',
+          message: 'Informe um telefone valido',
+        })
+        return false
+      }
+
+      if (!servico) {
+        safeNotify({
+          type: 'negative',
+          message: 'Selecione um servico',
+        })
+        return false
+      }
+
+      if (!data || Number.isNaN(new Date(data).getTime())) {
+        safeNotify({
+          type: 'negative',
+          message: 'Selecione uma data valida',
+        })
+        return false
+      }
+
+      if (!hora || !/^\d{2}:\d{2}$/.test(hora)) {
+        safeNotify({
+          type: 'negative',
+          message: 'Selecione um horario valido',
+        })
+        return false
+      }
+
+      const horarioDisponivel = (horariosPadrao.value || [])
+        .some((op) => !op?.disable && op?.value === hora)
+
+      if (!horarioDisponivel) {
+        safeNotify({
+          type: 'negative',
+          message: 'O horario selecionado nao esta disponivel',
+        })
+        return false
+      }
+
+      return true
+    }
+
+    if (!validarNovoAgendamento()) {
+      return
+    }
+
     const dataHora = `${novoAgendamento.value.data} ${novoAgendamento.value.hora}:00`
 
     const payload = {
-      nomeCliente: novoAgendamento.value.cliente,
-      emailCliente: novoAgendamento.value.email,
-      telefoneCliente: novoAgendamento.value.telefone,
+      nomeCliente: novoAgendamento.value.cliente.trim(),
+      emailCliente: novoAgendamento.value.email.trim(),
+      telefoneCliente: novoAgendamento.value.telefone.replace(/\D/g, ''),
       servico_id: novoAgendamento.value.servico,
       data_horario: dataHora,
       status: 'agendado',

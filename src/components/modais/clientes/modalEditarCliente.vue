@@ -236,7 +236,7 @@ const confirmarEdicaoDoCliente = async () => {
     swipeX.value = 0
     return
   }
-  swipeX.value = 0
+
   try {
     const response = await api.post(
       '/clientes/editarCliente',
@@ -248,13 +248,16 @@ const confirmarEdicaoDoCliente = async () => {
       }
     )
     if (response.data.tipo == 'sucesso') {
+      swipeX.value = 0
       fechar()
       emit('atualizado')
       notifySuccess(response.data.msg)
     } else {
+      swipeX.value = 0
       notifyError('Erro ao editar o Cliente ')
     }
   } catch (e) {
+    swipeX.value = 0
     console.error('Erro ao editar o Cliente:', e.response?.data || e)
     notifyError('Erro ao editar o Cliente')
 

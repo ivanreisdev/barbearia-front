@@ -8,9 +8,9 @@
                 <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md" @click="fechar" />
 
                 <div class="header-content text-white">
-                    <div class="text-h5 text-weight-medium texto-secundario">Novo Cliente</div>
+                    <div class="text-h5 text-weight-medium texto-secundario">Excluir Cliente</div>
                     <div class="text-caption opacity-8 texto-secundario">
-                        Adicione um novo cliente para gerenciar seus agendamentos e informações de contato
+                        Após a Confirmação, essa Ação Não Poderá Ser Desfeita
                     </div>
                 </div>
             </div>
@@ -20,20 +20,22 @@
 
                 <div class="agendamento-info text-center q-gutter-md">
                     <div class="inputs-wrap">
-                        <q-input outlined dense label="Nome do Cliente" v-model="form.nome" class="input-centered">
+                        <q-input outlined dense label="Nome do Cliente" :model-value="cliente?.nome || ''" readonly
+                            class="input-centered">
                             <template #prepend>
                                 <q-icon name="person" />
                             </template>
                         </q-input>
 
-                        <q-input outlined dense label="Email do Cliente" v-model="form.email" class="input-centered">
+                        <q-input outlined dense label="Email do Cliente" :model-value="cliente?.email || ''" readonly
+                            class="input-centered">
                             <template #prepend>
                                 <q-icon name="email" />
                             </template>
                         </q-input>
 
-                        <q-input outlined dense label="Celular do Cliente" v-model="form.celular"
-                            class="input-centered" mask="(##) #####-####" fill-mask>
+                        <q-input outlined dense label="Celular do Cliente"
+                            :model-value="formatarCelular(cliente?.celular)" readonly class="input-centered">
                             <template #prepend>
                                 <q-icon name="phone" />
                             </template>
@@ -78,17 +80,16 @@ import { api } from 'src/boot/axios';
 import { ref, computed } from 'vue'
 import { notifySuccess, notifyError } from '../../../scripts/notificaçoes'
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'clienteRemovido'])
 
 const fechar = () => {
     emit('update:modelValue', false)
 }
-
-const form = ref({
-    nome: '',
-    email: '',
-    celular: '',
+const props = defineProps({
+    modelValue: Boolean,
+    cliente: Object
 })
+
 
 const swipeX = ref(0)
 const maxSwipe = 260
@@ -122,7 +123,7 @@ const endSwipe = () => {
     dragging = false
 
     if (swipeX.value >= maxSwipe) {
-        criarNovoCliente()
+        excluirCliente()
     } else {
         swipeX.value = 0
     }
@@ -132,63 +133,46 @@ const endSwipe = () => {
     document.removeEventListener('touchmove', moveSwipe)
     document.removeEventListener('touchend', endSwipe)
 }
-const aplicarValidacoes = () => {
-    if (!form.value.nome || form.value.nome.trim().length < 1) {
-        notifyError('O nome do cliente é obrigatório.')
-        return false
-    }
 
-    if (form.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-        notifyError('O email fornecido não é válido.')
-        return false
-    }
 
-    if (form.value.celular) {
-        const celularNumeros = form.value.celular.replace(/\D/g, '')
-        if (celularNumeros.length < 10) {
-            notifyError('O número de celular fornecido não é válido.')
-            return false
-        }
-    }
+const excluirCliente = async () => {
+    const idCliente = props.cliente?.id
 
-    return true
-}
-
-const criarNovoCliente = async () => {
-    
-    if(!aplicarValidacoes()){
+    if (!idCliente) {
+        notifyError('Cliente sem identificador para exclusao')
+        swipeX.value = 0
         return
     }
 
     try {
-        const celularNumeros = (form.value.celular || '').replace(/\D/g, '')
         const response = await api.post(
-            '/clientes/criarNovoCliente',
+            '/clientes/removerCliente',
             {
-                nome: form.value.nome,
-                email: form.value.email,
-                celular: celularNumeros,
+                identificador: idCliente,
             }
         )
         if (response.data.tipo == 'sucesso') {
             swipeX.value = 0
-            form.value = {
-                nome: '',
-                email: '',
-                celular: '',
-            }
             fechar()
-            emit('clienteCriado')
+            emit('clienteRemovido')
             notifySuccess(response.data.msg)
         } else {
             swipeX.value = 0
-            notifyError(response.data.msg || 'Erro ao criar o Cliente')
+            notifyError(response.data.msg || 'Erro ao Remover o Cliente')
         }
     } catch (e) {
         swipeX.value = 0
         console.error('Erro ao criar o Cliente:', e.response?.data || e)
-        notifyError(e.response?.data?.message || 'Erro ao criar o Cliente')
+        notifyError(e.response?.data?.message || 'Erro ao Remover o Cliente')
     }
+}
+
+const formatarCelular = (celular) => {
+    if (!celular) return ''
+    const n = String(celular).replace(/\D/g, '')
+    if (n.length < 10) return celular
+    if (n.length === 10) return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`
+    return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7, 11)}`
 }
 </script>
 
@@ -337,7 +321,7 @@ const criarNovoCliente = async () => {
     position: relative;
 
     background-image:
-        linear-gradient(135deg, rgba(168, 156, 156, 0.65), rgba(133, 138, 125, 0.75)),
+        linear-gradient(135deg, rgba(201, 75, 75, 0.65), rgba(148, 34, 34, 0.75)),
         url('../imgs/novoCliente.webp');
 
     background-repeat: no-repeat;

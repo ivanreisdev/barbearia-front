@@ -1,10 +1,8 @@
-import { ref, computed, onMounted } from 'vue'
+﻿import { ref, computed, onMounted } from 'vue'
 import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
 import LoadingLogo from 'components/LoadingLogo.vue'
-
-
 
 export const useClientes = () => {
   const $q = useQuasar()
@@ -13,8 +11,9 @@ export const useClientes = () => {
   })
 
   const modalEditarClienteAberto = ref(false)
-  
   const modalNovoClienteAberto = ref(false)
+  const modalExcluirClienteAberto = ref(false)
+
 
   const carregando = ref(true)
 
@@ -31,15 +30,19 @@ export const useClientes = () => {
     modalEditarClienteAberto.value = true
   }
 
-    const abriModalNovoCliente = async () => {
+  const abriModalNovoCliente = async () => {
     modalNovoClienteAberto.value = true
+  }
+
+  const abriModalExcluirCliente = async (cliente) => {
+    clienteSelecionado.value = cliente
+    modalExcluirClienteAberto.value = true
   }
 
   const buscarClientes = async () => {
     try {
       const { data } = await api.get('/clientes/buscarClientes')
       clientes.value = data.clientes
-
     } catch (error) {
       console.error(error)
       $q.notify({ type: 'negative', message: 'Erro ao carregar barbearia' })
@@ -47,7 +50,6 @@ export const useClientes = () => {
   }
 
   const router = useRouter()
-
 
   const verCliente = (cliente) => {
     router.push(`/clientes/${cliente.id}`)
@@ -71,7 +73,7 @@ export const useClientes = () => {
     })
     try {
       await Promise.all([
-        buscarClientes(),
+        buscarClientes()
       ])
     } finally {
       carregando.value = false
@@ -85,6 +87,7 @@ export const useClientes = () => {
     formatarCelular,
     abrirWhatsapp,
     verCliente,
+    abriModalExcluirCliente,
     filtros,
     buscarClientes,
     modalEditarClienteAberto,
@@ -93,6 +96,7 @@ export const useClientes = () => {
     LoadingLogo,
     carregando,
     modalNovoClienteAberto,
-    abriModalNovoCliente
+    abriModalNovoCliente,
+    modalExcluirClienteAberto
   }
 }
