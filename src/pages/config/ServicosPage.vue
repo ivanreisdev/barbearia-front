@@ -829,7 +829,16 @@ onMounted(async () => {
     padding: 0 8px;
   }
 }
-.novo-servico-swipe{
-  margin-bottom: 10px;
+
+.novo-servico-swipe {
+  margin-bottom: 6px;
+}
+
+.novo-servico-swipe :deep(.q-mt-xl) {
+  margin-top: 8px;
+}
+
+.novo-servico-swipe :deep(.q-mt-md) {
+  margin-top: 6px;
 }
 </style>
