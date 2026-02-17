@@ -103,16 +103,28 @@
             <q-input v-model="novoAgendamento.telefone" rounded filled label="Telefone" mask="(##) #####-####" />
             <q-input v-model="novoAgendamento.email" rounded filled label="E-mail do cliente" type="email" />
 
-            <q-select v-model="novoAgendamento.servico" :options="servicos" option-label="nome" option-value="id"
-              emit-value map-options rounded filled label="Selecione um serviço" @update:model-value="atualizarPreco">
-              <template v-slot:no-option>
-                <q-item>
-                  <q-item-section class="text-grey">
-                    Nenhum serviço cadastrado
-                  </q-item-section>
-                </q-item>
-              </template>
-            </q-select>
+            <div class="servicos-selecao">
+              <div class="text-caption text-grey-8 q-mb-sm">
+                Selecione um serviço
+              </div>
+
+              <div v-if="servicos.length" class="servicos-scroll">
+                <q-card v-for="servico in servicos" :key="servico.id" class="servico-card"
+                  :class="{ 'servico-card--ativo': novoAgendamento.servico === servico.id }" flat bordered clickable
+                  v-ripple @click="selecionarServico(servico.id)">
+                  <div class="servico-card__nome">
+                    {{ servico.nome }}
+                  </div>
+                  <div class="servico-card__preco">
+                    R$ {{ servico.preco }}
+                  </div>
+                </q-card>
+              </div>
+
+              <q-banner v-else dense rounded class="bg-grey-2 text-grey-7">
+                Nenhum serviço cadastrado
+              </q-banner>
+            </div>
 
             <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
               :disable="!novoAgendamento.servico" />
@@ -333,6 +345,11 @@ const onConfirmSalvarAgendamento = async () => {
   if (!sucesso) {
     swipeRef.value?.resetSwipe?.()
   }
+}
+
+const selecionarServico = (servicoId) => {
+  novoAgendamento.value.servico = servicoId
+  atualizarPreco(servicoId)
 }
 </script>
 <style scoped>
@@ -776,5 +793,84 @@ const onConfirmSalvarAgendamento = async () => {
 .novo-agendamento-swipe {
   margin-top: -30px;
   margin-bottom: 18px;
+}
+
+.servicos-selecao {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+.servicos-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c5c5c5 transparent;
+}
+
+.servicos-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.servicos-scroll::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 999px;
+}
+
+.servicos-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.servico-card {
+  min-width: 180px;
+  max-width: 240px;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid #7e7b7b;
+  background: linear-gradient(180deg, #646464 0%, #5c5a5a 100%);
+  box-shadow: 0 2px 8px rgba(22, 22, 22, 0.08);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.servico-card--ativo {
+  border-color: #3b3b3b;
+  background: linear-gradient(180deg, #a7a4a4 0%, #9b9a9a 100%);
+  box-shadow: 0 6px 14px rgba(16, 16, 16, 0.14);
+  transform: translateY(-1px);
+}
+
+.servico-card:hover {
+  border-color: #bcbcbc;
+  box-shadow: 0 5px 12px rgba(18, 18, 18, 0.12);
+}
+
+.servico-card__nome {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.96rem;
+  color: #ffffff;
+ 
+}
+
+.servico-card__preco {
+  margin-top: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #faf4f4;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+@media (max-width: 600px) {
+  .servico-card {
+    min-width: 160px;
+    max-width: 200px;
+    padding: 10px 12px;
+  }
 }
 </style>
