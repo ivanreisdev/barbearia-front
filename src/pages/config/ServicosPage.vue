@@ -1,145 +1,177 @@
-<!-- Cabeçalho -->
 <template>
   <LoadingLogo v-if="carregando" class="loading-overlay" />
 
-  <q-page v-else class="q-pa-lg bg-dark relative-position servicos-page">
-
-    <!-- LOADING -->
+  <q-page v-else class="q-pa-md q-pa-lg-sm relative-position servicos-page">
     <q-inner-loading :showing="loading">
       <q-spinner-dots size="40px" color="orange" />
     </q-inner-loading>
-    <div v-if="!loading">
-      <!-- Header -->
 
-      <div class="row items-center q-mb-lg page-header header-inline no-wrap">
-        <q-btn flat round icon="arrow_back" class="back-btn" @click="$router.back()" />
+    <div v-if="!loading" class="servicos-shell">
+      <div class="row items-center no-wrap justify-between q-mb-lg page-header">
+        <div class="row items-center no-wrap q-gutter-sm">
+          <q-btn flat round icon="arrow_back" class="back-btn" @click="$router.back()" />
 
-        <div class="header-text">
-          <div class="text-h6 text-white q-mb-xs title-gradient">
-            Serviços
-          </div>
+          <div class="header-text">
+            <div class="text-h6 q-mb-xs title-gradient">
+              Servicos
+            </div>
 
-          <div class="text-caption text-grey-5 subtitle-soft">
-            Cadastre e edite os serviços fornecidos pela empresa
+            <div class="text-caption text-grey-5 subtitle-soft">
+              Cadastre e gerencie os servicos da barbearia
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- INSERIR NOVO SERVIÇO -->
-      <div class="text-caption text-grey-6 q-mb-sm">
-        INSERIR UM NOVO SERVIÇO
-      </div>
-      <q-card class="q-mb-xl novo-servico-card card-dark">
+      <q-card class="q-mb-lg card-dark form-card">
         <q-card-section>
+          <div class="row items-center justify-between q-mb-md">
+            <div>
+              <div class="text-overline section-kicker">
+                Novo servico
+              </div>
 
-          <div class="text-caption text-grey-6 q-mb-sm">
-            NOME DO SERVIÇO
+              <div class="text-subtitle1 text-weight-medium text-white">
+                Adicionar item ao catalogo
+              </div>
+            </div>
+
+            <div class="desktop-only text-caption text-grey-5">
+              Preencha e clique em adicionar
+            </div>
           </div>
-          <q-input dense dark filled placeholder="EX: Corte Social" class="input-dark q-mb-md" v-model="form.nome" />
+
+          <q-input v-model="form.nome" dense dark filled placeholder="Ex: Corte social" class="input-soft q-mb-sm">
+            <template #prepend>
+              <q-icon name="badge" />
+            </template>
+          </q-input>
 
           <div class="row q-col-gutter-sm q-mb-md">
-            <div class="col-6">
-              <div class="text-caption text-grey-6 q-mb-sm">
-                DURAÇÃO (min)
-              </div>
-              <q-input dense dark filled type="number" placeholder="Duração (min)" class="input-dark"
-                v-model="form.duracao" />
+            <div class="col-12 col-sm-6">
+              <q-input v-model="form.duracao" dense dark filled type="number" placeholder="Duracao (min)"
+                class="input-soft">
+                <template #prepend>
+                  <q-icon name="schedule" />
+                </template>
+              </q-input>
             </div>
 
-            <div class="col-6">
-              <div class="text-caption text-grey-6 q-mb-sm">
-                PREÇO
-              </div>
-              <q-input dense dark filled prefix="R$" placeholder=" 0,00" class="input-dark" v-model="form.preco"
-                mask="#,##" reverse-fill-mask />
+            <div class="col-12 col-sm-6">
+              <q-input v-model="form.preco" dense dark filled prefix="R$" placeholder="0,00" class="input-soft"
+                mask="#,##" reverse-fill-mask>
+                <template #prepend>
+                  <q-icon name="payments" />
+                </template>
+              </q-input>
             </div>
           </div>
 
-          <!-- Botão -->
-          <q-btn label="ADICIONAR À LISTA" unelevated class="full-width btn-add-servico ghost-btn" size="md"
+          <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
             @click="salvar" />
-
         </q-card-section>
       </q-card>
 
-      <div class="text-caption text-grey-6 q-mb-sm">
-        LISTA DE SERVIÇOS
+      <div class="row items-center justify-between q-mb-sm">
+        <div class="text-overline section-kicker">
+          Lista de servicos
+        </div>
+
+        <div class="text-caption text-grey-5">
+          {{ servicos.length }} itens cadastrados
+        </div>
       </div>
 
-      <q-list class="servicos-list">
+      <div v-if="servicos.length" class="service-grid">
+        <q-card v-for="servico in servicos" :key="servico.id" class="servico-card item-hover">
+          <q-card-section class="q-pa-md">
+            <div class="row items-start justify-between no-wrap q-gutter-sm">
+              <div class="row items-center no-wrap q-gutter-sm">
+                <div class="icon-wrapper">
+                  <q-icon name="content_cut" size="20px" color="orange-3" />
+                </div>
 
-        <q-item v-for="servico in servicos" :key="servico.id" clickable class="servico-card q-mb-sm item-hover">
+                <div>
+                  <div class="servico-nome">
+                    {{ servico.nome }}
+                  </div>
 
-          <!-- Ícone -->
-          <q-item-section avatar>
-            <div class="icon-wrapper">
-              <q-icon name="content_cut" size="20px" color="orange-4" />
+                  <div class="text-caption text-grey-5">
+                    Servico ativo
+                  </div>
+                </div>
+              </div>
+
+              <div class="row items-center q-gutter-xs">
+                <q-btn flat round dense icon="edit" color="grey-4" class="iconeEdicao"
+                  @click="AbrirModaleditarServico(servico)" />
+                <q-btn flat round dense icon="delete" color="grey-4" class="iconeDelete"
+                  @click="abrirModalExcluir(servico)" />
+              </div>
             </div>
-          </q-item-section>
 
-          <!-- Infos -->
-          <q-item-section>
-            <q-item-label class="servico-nome">
-              {{ servico.nome }}
-            </q-item-label>
+            <div class="row q-col-gutter-sm q-mt-md">
+              <div class="col-6">
+                <div class="meta-chip">
+                  <q-icon name="schedule" size="16px" />
+                  <span>{{ servico.duracao }}</span>
+                </div>
+              </div>
 
-            <div class="row items-center q-gutter-sm servico-info">
-              <span>{{ servico.duracao }}</span>
-              <span>•</span>
-              <span>{{ servico.preco }}</span>
+              <div class="col-6">
+                <div class="meta-chip price">
+                  <q-icon name="payments" size="16px" />
+                  <span>{{ servico.preco }}</span>
+                </div>
+              </div>
             </div>
-          </q-item-section>
+          </q-card-section>
+        </q-card>
+      </div>
 
-          <!-- Ações -->
-          <q-item-section side>
-            <div class="row items-center q-gutter-xs">
-              <q-btn flat round dense icon="edit" color="grey-5" class="iconeEdiçao"
-                @click="AbrirModaleditarServico(servico)" />
-              <q-btn flat round dense icon="delete" color="grey-5" class="iconeDelete"
-                @click="abrirModalExcluir(servico)" />
-            </div>
-          </q-item-section>
+      <q-card v-else class="card-dark empty-state">
+        <q-card-section class="text-center q-py-xl">
+          <q-icon name="content_cut" size="36px" color="grey-6" class="q-mb-sm" />
 
-        </q-item>
-      </q-list>
+          <div class="text-subtitle2 text-grey-4">
+            Nenhum servico cadastrado ainda
+          </div>
 
-      <!-- MODAL Excluir serviço -->
+          <div class="text-caption text-grey-6">
+            Use o formulario acima para adicionar o primeiro servico.
+          </div>
+        </q-card-section>
+      </q-card>
+
       <q-dialog v-model="modalExcluir" maximized persistent>
         <div class="modal-excluir-servico">
-
-          <!-- HEADER -->
           <div class="header-exclusao">
             <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
               @click="fecharModalExcluir" />
 
             <div class="header-content text-white">
               <div class="titulo-exclusao">
-                Excluir serviço
+                Excluir servico
               </div>
+
               <div class="subtitulo-exclusao">
-                Essa ação não poderá ser desfeita
+                Essa acao nao podera ser desfeita
               </div>
             </div>
           </div>
 
-          <!-- BODY -->
           <div class="modal-body">
-
             <div class="servico-info text-center q-gutter-lg">
-
-              <!-- Nome -->
-
               <div class="text-h6 text-weight-medium servico-nome-delete">
                 {{ servicoSelecionado?.nome }}
               </div>
 
-              <!-- Infos -->
               <div class="row justify-center q-gutter-lg info-servico">
-
                 <div class="info-item">
                   <div class="subtitulo-exclusao">
-                    Duração
+                    Duracao
                   </div>
+
                   <span class="chip-info servico-duracao">
                     {{ servicoSelecionado?.duracao }}
                   </span>
@@ -149,23 +181,19 @@
                   <div class="subtitulo-exclusao">
                     Valor
                   </div>
+
                   <span class="chip-info preco">
                     {{ servicoSelecionado?.preco }}
                   </span>
                 </div>
-
               </div>
 
-
-              <!-- Texto -->
               <div class="q-mt-xl text-caption opacity-8 texto-deslize">
-                Deslize para confirmar a exclusão
+                Deslize para confirmar a exclusao
               </div>
 
-              <!-- SLIDER -->
               <div class="row justify-center q-mt-md">
                 <div class="swipe-container">
-
                   <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
 
                   <span class="swipe-text">
@@ -183,35 +211,22 @@
         </div>
       </q-dialog>
 
-
-      <!--  modal Editar -->
       <q-dialog v-model="modalEditarServico" maximized persistent>
-        <!-- OVERLAY -->
         <div class="modal-overlay">
-
-          <!-- MODAL CARD -->
           <div class="modal-editar-servico">
-            <!-- HEADER -->
             <div class="modal-header header-editar-servico">
               <q-btn flat round icon="arrow_back" color="white" @click="fecharModalEditar" />
 
               <div class="modal-title">
-                ATUALIZE SEU SERVIÇO
+                Atualize seu servico
               </div>
 
-              <!-- Spacer invisível para balancear -->
               <div class="header-spacer"></div>
-
             </div>
-            <!-- CONTEÚDO -->
+
             <div class="modal-content">
-
-              <div class="text-caption text-grey-5 q-mb-sm">
-
-              </div>
-
               <div class="text-caption text-grey-6 q-mb-sm">
-                NOME DO SERVIÇO
+                Nome do servico
               </div>
 
               <q-input dense dark filled class="input-dark q-mb-md" v-model="servicoSelecionado.nome" />
@@ -219,22 +234,23 @@
               <div class="row q-col-gutter-sm q-mb-md">
                 <div class="col-6">
                   <div class="text-caption text-grey-6 q-mb-sm">
-                    DURAÇÃO (min)
+                    Duracao (min)
                   </div>
+
                   <q-input dense dark filled type="number" v-model="servicoSelecionado.duracao" />
                 </div>
 
                 <div class="col-6">
                   <div class="text-caption text-grey-6 q-mb-sm">
-                    PREÇO
+                    Preco
                   </div>
+
                   <q-input dense dark filled prefix="R$" mask="#,##" reverse-fill-mask
                     v-model="servicoSelecionado.preco" />
                 </div>
               </div>
 
-              <q-btn label="ATUALIZAR SERVIÇO" unelevated class="full-width btn-add-servico" @click="atualizar" />
-
+              <q-btn label="Atualizar servico" unelevated class="full-width btn-add-servico" @click="atualizar" />
             </div>
           </div>
         </div>
@@ -249,11 +265,11 @@ import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import LoadingLogo from 'components/LoadingLogo.vue'
 
-
 import 'src/css/servicos.css'
 
 const $q = useQuasar()
 const carregando = ref(true)
+const loading = ref(false)
 
 const servicos = ref([
   {
@@ -289,7 +305,7 @@ const moveSwipe = (e) => {
   if (!dragging) return
 
   const clientX = e.touches ? e.touches[0].clientX : e.clientX
-  let delta = clientX - startX
+  const delta = clientX - startX
 
   swipeX.value = Math.max(0, Math.min(delta, maxSwipe))
 }
@@ -308,6 +324,7 @@ const endSwipe = () => {
   document.removeEventListener('touchmove', moveSwipe)
   document.removeEventListener('touchend', endSwipe)
 }
+
 const confirmarCancelamento = async () => {
   if (!servicoSelecionado.value) return
   await excluirServico(servicoSelecionado.value.id)
@@ -318,6 +335,7 @@ const abrirModalExcluir = (servico) => {
   swipeX.value = 0
   modalExcluir.value = true
 }
+
 const AbrirModaleditarServico = (servico) => {
   servicoSelecionado.value = {
     id: servico.id,
@@ -329,7 +347,6 @@ const AbrirModaleditarServico = (servico) => {
   modalEditarServico.value = true
 }
 
-
 const fecharModalExcluir = () => {
   swipeX.value = 0
   servicoSelecionado.value = null
@@ -339,25 +356,27 @@ const fecharModalExcluir = () => {
 const fecharModalEditar = () => {
   modalEditarServico.value = false
 }
+
 const buscarServicos = async () => {
-  console.log(localStorage.getItem('user'));
+  console.log(localStorage.getItem('user'))
   try {
     const { data } = await api.get('/servicos/buscarServicosPorBarbeariaId')
 
-    servicos.value = data.map(item => ({
+    servicos.value = data.map((item) => ({
       id: item.id,
       nome: item.nome,
       preco: `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}`,
       duracao: `${item.duracao_minutos} min`
     }))
   } catch (error) {
-    console.error('Erro ao buscar serviços', error)
+    console.error('Erro ao buscar servicos', error)
     $q.notify({
       type: 'negative',
-      message: 'Erro ao carregar serviços'
+      message: 'Erro ao carregar servicos'
     })
   }
 }
+
 const form = ref({
   nome: '',
   duracao: null,
@@ -370,32 +389,32 @@ const excluirServico = async (servico) => {
 
     $q.notify({
       type: 'positive',
-      message: 'Serviço excluído com sucesso!'
+      message: 'Servico excluido com sucesso!'
     })
 
     buscarServicos()
     modalExcluir.value = false
   } catch (error) {
-    console.error('Erro ao excluir serviço', error)
+    console.error('Erro ao excluir servico', error)
     $q.notify({
       type: 'negative',
-      message: 'Erro ao excluir serviço'
+      message: 'Erro ao excluir servico'
     })
   }
 }
+
 const salvar = async () => {
   try {
-    console.log('Salvando serviço:', form.value)
+    console.log('Salvando servico:', form.value)
     await api.post('/servicos/criarNovoServico', {
       nome: form.value.nome,
       duracao_minutos: form.value.duracao,
-      preco: form.value.preco.replace(',', '.'),
-      // barbearia_id: barbeariaId
+      preco: form.value.preco.replace(',', '.')
     })
 
     $q.notify({
       type: 'positive',
-      message: 'Serviço cadastrado com sucesso!'
+      message: 'Servico cadastrado com sucesso!'
     })
     form.value.nome = ''
     form.value.duracao = null
@@ -406,7 +425,7 @@ const salvar = async () => {
     console.error(error)
     $q.notify({
       type: 'negative',
-      message: 'Erro ao salvar serviço'
+      message: 'Erro ao salvar servico'
     })
   }
 }
@@ -424,18 +443,17 @@ const atualizar = async () => {
 
     $q.notify({
       type: 'positive',
-      message: 'Serviço atualizado com sucesso!'
+      message: 'Servico atualizado com sucesso!'
     })
 
     modalEditarServico.value = false
     servicoSelecionado.value = null
     buscarServicos()
-
   } catch (error) {
     console.error(error)
     $q.notify({
       type: 'negative',
-      message: 'Erro ao atualizar serviço'
+      message: 'Erro ao atualizar servico'
     })
   }
 }
@@ -452,39 +470,36 @@ onMounted(async () => {
     carregando.value = false
   }
 })
-
 </script>
+
 <style scoped>
 .servicos-page {
   color: #f3f4f6;
   font-family: 'Inter', sans-serif;
   background:
-    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.10), transparent 60%),
+    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.1), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, rgba(59, 130, 246, 0.08), transparent 55%),
     linear-gradient(180deg, #0f1115 0%, #0c0d10 100%);
   border-radius: 16px;
 }
 
-.page-header {
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(39, 39, 39, 0.06);
+.servicos-shell {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
-.header-inline {
-  gap: 12px;
+.page-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .header-text {
   min-width: 0;
 }
 
-.header-text .text-h6,
-.header-text .text-caption {
-  text-align: left;
-}
-
 .title-gradient {
-  background: linear-gradient(90deg, #e5e7eb 0%, #9ca3af 100%);
+  background: linear-gradient(90deg, #f8fafc 0%, #94a3b8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -495,62 +510,105 @@ onMounted(async () => {
 }
 
 .back-btn {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stats-chip {
+  background: linear-gradient(140deg, rgba(249, 115, 22, 0.24), rgba(249, 115, 22, 0.1));
+  border: 1px solid rgba(251, 146, 60, 0.35);
 }
 
 .card-dark {
-  background: linear-gradient(180deg, #12151b 0%, #0f1116 100%);
+  background: linear-gradient(180deg, #151923 0%, #10141d 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.form-card {
+  overflow: hidden;
+}
+
+.section-kicker {
+  color: #94a3b8;
+  letter-spacing: 0.6px;
+}
+
+.input-soft :deep(.q-field__control) {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ghost-btn {
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
+  background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+  color: #0f1115;
+  font-weight: 700;
 }
 
-.item-hover {
-  transition: background 160ms ease, transform 160ms ease, border-color 160ms ease;
-}
-
-.item-hover:hover {
-  background: rgba(255, 255, 255, 0.03);
-  transform: translateX(2px);
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .servico-card {
-  background: #12151b;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 24, 34, 0.95), rgba(14, 18, 27, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  height: auto;
+  min-height: 0;
+}
+
+.item-hover {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.item-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
 .servico-nome {
   font-weight: 600;
   letter-spacing: 0.2px;
-}
-
-.servico-info {
-  color: #9ca3af;
+  color: #e2e8f0;
 }
 
 .icon-wrapper {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(251, 146, 60, 0.26);
 }
 
-@media (max-width: 600px) {
-  .servicos-page {
-    width: calc(100% - 20px);
-    margin: 0 auto;
-    border-radius: 16px;
-  }
+.meta-chip {
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.meta-chip.price {
+  color: #fdba74;
+}
+
+.empty-state {
+  margin-bottom: 8px;
 }
 
 .inter-semibold {
@@ -559,17 +617,13 @@ onMounted(async () => {
 }
 
 .header-exclusao {
-  height: 120px;
-  background: linear-gradient(135deg, #ac012059, #da4d4d);
+  height: 250px;
+  background: linear-gradient(135deg, #c50327a8, #f56363);
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0 0 50px 50px;
   font-family: 'Inter', sans-serif;
-}
-
-.cliente-nome {
-  color: #e57373;
-  /* vermelho claro */
 }
 
 .card-form {
@@ -583,16 +637,6 @@ onMounted(async () => {
   background: #201a1af5;
 }
 
-.header-exclusao {
-  height: 250px;
-  flex-shrink: 0;
-  border-radius: 0 0 50px 50px;
-}
-
-.header-exclusao {
-  background: linear-gradient(135deg, #c50327a8, #f56363);
-}
-
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -604,46 +648,6 @@ onMounted(async () => {
 .servico-info {
   width: 100%;
   max-width: 420px;
-}
-
-.swipe-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.swipe-track {
-  position: relative;
-  width: 320px;
-  height: 56px;
-  background: #5f6368;
-  border-radius: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.swipe-text {
-  color: white;
-  font-weight: 500;
-  pointer-events: none;
-  font-size: 12px;
-  font-family: 'Inter', sans-serif;
-}
-
-.swipe-thumb {
-  position: absolute;
-  left: 4px;
-  width: 48px;
-  height: 48px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
 }
 
 .swipe-container {
@@ -675,6 +679,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #fff;
+  font-size: 12px;
   font-weight: 600;
   z-index: 1;
   pointer-events: none;
@@ -703,12 +708,7 @@ onMounted(async () => {
   font-family: 'Inter', sans-serif;
 }
 
-.servico-duracao {
-  font-size: 18px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
-}
-
+.servico-duracao,
 .preco {
   font-size: 18px;
   font-weight: 600;
@@ -720,15 +720,8 @@ onMounted(async () => {
   font-family: 'Inter', sans-serif;
 }
 
-header-subtitulo {
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  color: #201f1f;
-}
-
 .header-content {
   text-align: center;
-  /* centraliza visualmente */
 }
 
 .titulo-exclusao {
@@ -739,31 +732,26 @@ header-subtitulo {
 
 .subtitulo-exclusao {
   margin-top: 6px;
-  /* RESPIRO 👈 */
   font-size: 14px;
   opacity: 0.85;
 }
 
 .btn-add-servico {
-  font-size: 0.90rem;
+  font-size: 0.9rem;
   padding: 15px;
-  /* 12px */
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
-/* Overlay transparente */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  /* TRANSPARÊNCIA REAL */
   backdrop-filter: blur(6px);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Card do modal */
 .modal-editar-servico {
   width: 100%;
   max-width: 420px;
@@ -773,14 +761,12 @@ header-subtitulo {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* Header */
 .modal-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 20px;
-  /* background: linear-gradient(135deg, #2c2c2c, #1a1a1a); */
-  background-color: black;
+  background-color: #000;
 }
 
 .header-editar-servico {
@@ -793,15 +779,13 @@ header-subtitulo {
   text-align: center;
   font-weight: 600;
   font-size: 1rem;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .header-spacer {
   width: 40px;
-  /* largura aproximada do botão */
 }
 
-/* Conteúdo */
 .modal-content {
   padding: 24px;
 }
@@ -811,5 +795,28 @@ header-subtitulo {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .service-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .servicos-page {
+    width: calc(100% - 20px);
+    margin: 0 auto;
+    border-radius: 16px;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .stats-chip {
+    font-size: 11px;
+    padding: 0 8px;
+  }
 }
 </style>

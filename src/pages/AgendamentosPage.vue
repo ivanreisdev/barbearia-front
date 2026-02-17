@@ -116,7 +116,7 @@
 
             <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
               :disable="!novoAgendamento.servico" />
-              
+
             <div class="row q-col-gutter-sm">
               <div class="col">
                 <q-select v-model="novoAgendamento.hora" :options="horariosPadrao" option-label="label"
@@ -135,9 +135,11 @@
 
           </q-card-section>
 
-          <q-card-actions class="q-pa-md">
-            <q-btn label="AGENDAR" class="btn-agendar full-width" unelevated @click="salvarAgendamento" />
-          </q-card-actions>
+          <q-card-section>
+            <SwipeConfirm ref="swipeRef" class="novo-agendamento-swipe" label="Deslize para salvar o Agendamento"
+              hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
+          </q-card-section>
+
         </q-card>
       </div>
     </q-dialog>
@@ -272,11 +274,12 @@ import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendame
 import ModalExcluirBloqueioAgenda from '../components/modais/ModalExcluirBloqueioAgenda.vue'
 
 import '../css/agendamentos.css'
-import { toRef, defineProps } from 'vue'
+import { toRef, defineProps, ref } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
 
 const props = defineProps({ dataSelecionada: { type: Date, required: true } })
 const dataSelecionada = toRef(props, 'dataSelecionada')
+const swipeRef = ref(null)
 
 
 const {
@@ -318,11 +321,19 @@ const {
   erroHoraFim,
   erroHoraInicio,
   swipeHabilitado,
-  FecharmodalBloqueiaAgendamentos
+  FecharmodalBloqueiaAgendamentos,
+  SwipeConfirm
 } = useAgendamentos(dataSelecionada)
 
 // Wrapper para abrir o modal a partir do botão fixo (sem passar minuto)
 const abrirModalGlobal = () => abrirModal?.()
+
+const onConfirmSalvarAgendamento = async () => {
+  const sucesso = await salvarAgendamento()
+  if (!sucesso) {
+    swipeRef.value?.resetSwipe?.()
+  }
+}
 </script>
 <style scoped>
 .container-mobile {
@@ -760,5 +771,10 @@ const abrirModalGlobal = () => abrirModal?.()
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.novo-agendamento-swipe {
+  margin-top: -30px;
+  margin-bottom: 18px;
 }
 </style>

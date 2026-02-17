@@ -3,6 +3,9 @@ import { api } from 'boot/axios'
 import { useQuasar, Notify } from 'quasar'
 import { useRouter } from 'vue-router'
 
+import SwipeConfirm from 'components/SwipeConfirm.vue'
+
+
 
 export function useAgendamentos(dataSelecionada) {
   const $q = useQuasar()
@@ -729,7 +732,7 @@ export function useAgendamentos(dataSelecionada) {
     }
 
     if (!validarNovoAgendamento()) {
-      return
+      return false
     }
 
     const dataHora = `${novoAgendamento.value.data} ${novoAgendamento.value.hora}:00`
@@ -754,11 +757,13 @@ export function useAgendamentos(dataSelecionada) {
         modalAberto.value = false
         await loadAgendamentos() // atualiza a lista
         console.log('Agendamento criado:', res.data.data) // log do objeto criado
+        return true
       } else {
         safeNotify({
           type: 'negative',
           message: res.data?.message || 'Erro ao criar agendamento',
         })
+        return false
       }
     } catch (err) {
       console.error('Erro ao criar agendamento:', err.response?.data || err)
@@ -766,6 +771,7 @@ export function useAgendamentos(dataSelecionada) {
         type: 'negative',
         message: 'Erro ao criar agendamento',
       })
+      return false
     }
   }
 
@@ -971,6 +977,7 @@ export function useAgendamentos(dataSelecionada) {
     swipeHabilitado,
     FecharmodalBloqueiaAgendamentos,
     abrirWhatsapp,
-    formatarCelular
+    formatarCelular,
+    SwipeConfirm
   }
 }
