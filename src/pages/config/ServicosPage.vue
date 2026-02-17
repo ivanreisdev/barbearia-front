@@ -487,7 +487,7 @@ onMounted(async () => {
   color: #f3f4f6;
   font-family: 'Inter', sans-serif;
   background:
-    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.1), transparent 60%),
+    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.10), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, rgba(59, 130, 246, 0.08), transparent 55%),
     linear-gradient(180deg, #0f1115 0%, #0c0d10 100%);
   border-radius: 16px;
@@ -529,8 +529,13 @@ onMounted(async () => {
   border: 1px solid rgba(251, 146, 60, 0.35);
 }
 
+
+
 .card-dark {
-  background: linear-gradient(180deg, #151923 0%, #10141d 100%);
+  background:
+    radial-gradient(1200px 600px at 10% -20%, rgba(34, 197, 94, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(180deg, #0f1115 0%, #0c0d10 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -566,7 +571,10 @@ onMounted(async () => {
 }
 
 .servico-card {
-  background: linear-gradient(180deg, rgba(20, 24, 34, 0.95), rgba(14, 18, 27, 0.95));
+  background:
+    radial-gradient(1200px 600px at 10% -20%, rgba(48, 122, 76, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(44, 116, 233, 0.08), transparent 55%),
+    linear-gradient(180deg, #0f1115 0%, #0c0d10 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   height: auto;
