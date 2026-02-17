@@ -37,7 +37,7 @@
             </div>
 
             <div class="desktop-only text-caption text-grey-5">
-              Preencha e clique em adicionar
+              Preencha e Deslize para adicionar
             </div>
           </div>
 
