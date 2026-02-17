@@ -67,8 +67,10 @@
             </div>
           </div>
 
-          <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
-            @click="salvar" />
+          <!-- <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
+            @click="salvar" /> -->
+          <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo Serviço"
+            hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
         </q-card-section>
       </q-card>
 
@@ -264,12 +266,15 @@ import { ref, onMounted, computed } from 'vue'
 import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import LoadingLogo from 'components/LoadingLogo.vue'
+import SwipeConfirm from 'components/SwipeConfirm.vue'
+
 
 import 'src/css/servicos.css'
 
 const $q = useQuasar()
 const carregando = ref(true)
 const loading = ref(false)
+const swipeRef = ref(null)
 
 const servicos = ref([
   {
@@ -356,7 +361,12 @@ const fecharModalExcluir = () => {
 const fecharModalEditar = () => {
   modalEditarServico.value = false
 }
-
+const onConfirmSalvarAgendamento = async () => {
+  const sucesso = await salvar()
+  if (!sucesso) {
+    swipeRef.value?.resetSwipe?.()
+  }
+}
 const buscarServicos = async () => {
   console.log(localStorage.getItem('user'))
   try {
@@ -818,5 +828,8 @@ onMounted(async () => {
     font-size: 11px;
     padding: 0 8px;
   }
+}
+.novo-servico-swipe{
+  margin-bottom: 10px;
 }
 </style>
