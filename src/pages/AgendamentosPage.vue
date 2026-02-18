@@ -1,5 +1,14 @@
 <template>
   <q-page padding>
+    <q-inner-loading :showing="carregandoInicial" color="primary" class="loading-overlay">
+      <div class="loading-dots" aria-label="Carregando">
+        <span>.</span>
+        <span>.</span>
+        <span>.</span>
+      </div>
+    </q-inner-loading>
+
+    <div v-if="!carregandoInicial">
     <div class="agenda-wrapper relative-position" :key="dataSelecionada">
       <!-- HORAS -->
       <div class="agenda-hours">
@@ -149,7 +158,7 @@
 
           <q-card-section>
             <SwipeConfirm ref="swipeRef" class="novo-agendamento-swipe" label="Deslize para salvar o Agendamento"
-              hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
+              hint="Deslize para confirmar" :enabled="!carregandoInicial" @confirm="onConfirmSalvarAgendamento" />
           </q-card-section>
 
         </q-card>
@@ -277,6 +286,7 @@
         {{ textoHorarioFuncionamento }}
       </span>
     </div>
+    </div>
 
   </q-page>
 </template>
@@ -295,6 +305,7 @@ const swipeRef = ref(null)
 
 
 const {
+  carregandoInicial,
   horariosPadrao,
   abrirModal,
   salvarAgendamento,
@@ -871,6 +882,45 @@ const selecionarServico = (servicoId) => {
     min-width: 160px;
     max-width: 200px;
     padding: 10px 12px;
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 6px;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 700;
+  color: #8a8a8a;
+}
+
+.loading-overlay {
+  background: transparent !important;
+}
+
+.loading-dots span {
+  animation: dotBlink 1.2s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBlink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-4px);
   }
 }
 </style>

@@ -46,6 +46,7 @@ export function useAgendamentos(dataSelecionada) {
 
   const agendamentos = ref([])
   const servicos = ref([])
+  const carregandoInicial = ref(true)
   const horariosDisponiveis = ref([]) // opções vindas da rota de disponibilidade
   const horariosAtendimento = ref([])
   const horariosBloqueadosDaAgenda = ref([])
@@ -306,6 +307,7 @@ export function useAgendamentos(dataSelecionada) {
 
   // carrega agendamentos, opcionalmente filtrando por data (YYYY-MM-DD or Date)
   const loadAgendamentos = async (dateParam = null) => {
+    console.log('entrou no load')
     try {
       // determina data a ser enviada para a API (YYYY-MM-DD) — prioriza dateParam, senão dataSelecionada.value
       const dateISO = dateParam
@@ -906,15 +908,31 @@ export function useAgendamentos(dataSelecionada) {
 
 
 
-  carregarHorariosAtendimento()
-  if (dataSelecionada?.value) {
-    loadAgendamentos(dataSelecionada?.value);
+  const carregarDadosIniciais = async () => {
+    carregandoInicial.value = true
+
+    try {
+      const tasks = [
+        carregarHorariosAtendimento(),
+        carregarHorariosBloqueadosDaAgenda(),
+        buscarServicos()
+      ]
+
+      if (dataSelecionada?.value) {
+        tasks.push(loadAgendamentos(dataSelecionada.value))
+      }
+
+      await Promise.all(tasks)
+    } finally {
+      carregandoInicial.value = false
+    }
   }
-  carregarHorariosBloqueadosDaAgenda()
-  buscarServicos()
+
+  carregarDadosIniciais()
 
   // Recarrega agendamentos quando a data selecionada muda
   watch(dataSelecionada, async (nova) => {
+    carregandoInicial.value = true
     agendamentos.value = []
     horariosBloqueadosDaAgenda.value = []
 
@@ -925,6 +943,7 @@ export function useAgendamentos(dataSelecionada) {
         carregarHorariosBloqueadosDaAgenda()
       ])
     } finally {
+      carregandoInicial.value = false
       console.log('carregamento bem sucedido')
     }
   })
@@ -943,6 +962,7 @@ export function useAgendamentos(dataSelecionada) {
 
   return {
     horariosPadrao,
+    carregandoInicial,
     abrirModal,
     salvarAgendamento,
     novoAgendamento,
