@@ -896,6 +896,7 @@ const selecionarServico = (servicoId) => {
 
 .loading-overlay {
   background: transparent !important;
+  padding-bottom: 850px;
 }
 
 .loading-dots span {
