@@ -5,8 +5,13 @@ const requireAuth = (to, from, next) => {
   const pinia = getActivePinia()
   const auth = useAuthStore(pinia)
 
-  if (!auth.token) next('/login')
-  else next()
+  const token = auth.token || localStorage.getItem('token')
+
+  if (!token) {
+    next('/login')
+  } else {
+    next()
+  }
 }
 
 const routes = [
@@ -17,7 +22,14 @@ const routes = [
 
   {
     path: '/login',
-    component: () => import('pages/LoginPage.vue')
+    component: () => import('pages/LoginPage.vue'),
+    beforeEnter: (to, from, next) => {
+      const pinia = getActivePinia()
+      const auth = useAuthStore(pinia)
+
+      if (auth.token) next('/dashboard')
+      else next()
+    }
   },
 
   {
@@ -39,7 +51,7 @@ const routes = [
         component: () => import('pages/AgendamentosPage.vue')
       },
 
-       {
+      {
         path: 'despesas',
         component: () => import('pages/DespesasPage.vue')
       },

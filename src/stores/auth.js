@@ -12,6 +12,18 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
+
+    setAuthData(token, user = null) {
+      this.token = token
+      localStorage.setItem('token', token)
+
+      if (user) {
+        this.user = user
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+    },
+
+
     async login(email, password) {
       try {
         const { data } = await api.post('/login', { email, password })
@@ -30,11 +42,11 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-     async registrar(payload) {
-  try {
-    const { data } = await api.post('/register', payload)
+    async registrar(payload) {
+      try {
+        const { data } = await api.post('/register', payload)
 
-this.token = data.token
+        this.token = data.token
         localStorage.setItem('token', data.token)
 
         // salva user
@@ -42,12 +54,12 @@ this.token = data.token
         localStorage.setItem('user', JSON.stringify(data.user))
 
         return true
-  } catch (error) {
-    throw new Error(
-      error?.response?.data?.message || 'Erro ao registrar usuário'
-    )
-  }
-},
+      } catch (error) {
+        throw new Error(
+          error?.response?.data?.message || 'Erro ao registrar usuário'
+        )
+      }
+    },
 
     logout() {
       this.token = null
