@@ -212,52 +212,9 @@
           </div>
         </div>
       </q-dialog>
-
-      <q-dialog v-model="modalEditarServico" maximized persistent>
-        <div class="modal-overlay">
-          <div class="modal-editar-servico">
-            <div class="modal-header header-editar-servico">
-              <q-btn flat round icon="arrow_back" color="white" @click="fecharModalEditar" />
-
-              <div class="modal-title">
-                Atualize seu servico
-              </div>
-
-              <div class="header-spacer"></div>
-            </div>
-
-            <div class="modal-content">
-              <div class="text-caption text-grey-6 q-mb-sm">
-                Nome do servico
-              </div>
-
-              <q-input dense dark filled class="input-dark q-mb-md" v-model="servicoSelecionado.nome" />
-
-              <div class="row q-col-gutter-sm q-mb-md">
-                <div class="col-6">
-                  <div class="text-caption text-grey-6 q-mb-sm">
-                    Duracao (min)
-                  </div>
-
-                  <q-input dense dark filled type="number" v-model="servicoSelecionado.duracao" />
-                </div>
-
-                <div class="col-6">
-                  <div class="text-caption text-grey-6 q-mb-sm">
-                    Preco
-                  </div>
-
-                  <q-input dense dark filled prefix="R$" mask="#,##" reverse-fill-mask
-                    v-model="servicoSelecionado.preco" />
-                </div>
-              </div>
-
-              <q-btn label="Atualizar servico" unelevated class="full-width btn-add-servico" @click="atualizar" />
-            </div>
-          </div>
-        </div>
-      </q-dialog>
     </div>
+    <ModalUpdateServico v-model="modalEditarServicoAberto" :servico="servicoSelecionado" @atualizado="buscarServicos" />
+
   </q-page>
 </template>
 
@@ -267,6 +224,8 @@ import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import LoadingLogo from 'components/LoadingLogo.vue'
 import SwipeConfirm from 'components/SwipeConfirm.vue'
+import ModalUpdateServico from 'components/modais/ModalUpdateServico.vue'
+
 
 
 import 'src/css/servicos.css'
@@ -286,7 +245,7 @@ const servicos = ref([
 ])
 const servicoSelecionado = ref(null)
 const modalExcluir = ref(false)
-const modalEditarServico = ref(false)
+const modalEditarServicoAberto = ref(false)
 const swipeX = ref(0)
 const maxSwipe = 260
 let startX = 0
@@ -349,7 +308,7 @@ const AbrirModaleditarServico = (servico) => {
     preco: servico.preco.replace('R$', '').trim()
   }
 
-  modalEditarServico.value = true
+  modalEditarServicoAberto.value = true
 }
 
 const fecharModalExcluir = () => {
@@ -358,9 +317,6 @@ const fecharModalExcluir = () => {
   modalExcluir.value = false
 }
 
-const fecharModalEditar = () => {
-  modalEditarServico.value = false
-}
 const onConfirmSalvarAgendamento = async () => {
   const sucesso = await salvar()
   if (!sucesso) {
@@ -436,34 +392,6 @@ const salvar = async () => {
     $q.notify({
       type: 'negative',
       message: 'Erro ao salvar servico'
-    })
-  }
-}
-
-const atualizar = async () => {
-  if (!servicoSelecionado.value) return
-
-  try {
-    await api.put('/servicos/editarServico', {
-      id: servicoSelecionado.value.id,
-      nome: servicoSelecionado.value.nome,
-      duracao_minutos: servicoSelecionado.value.duracao,
-      preco: String(servicoSelecionado.value.preco).replace(',', '.')
-    })
-
-    $q.notify({
-      type: 'positive',
-      message: 'Servico atualizado com sucesso!'
-    })
-
-    modalEditarServico.value = false
-    servicoSelecionado.value = null
-    buscarServicos()
-  } catch (error) {
-    console.error(error)
-    $q.notify({
-      type: 'negative',
-      message: 'Erro ao atualizar servico'
     })
   }
 }

@@ -261,6 +261,7 @@ export function useAgendamentos(dataSelecionada) {
   const abrirModal = async (hora = null) => {
     // abre o modal; se hora for null => não pré-preenche data/hora (usuário deve escolher a data)
     modalAberto.value = true
+    horariosDisponiveis.value = []
 
     let dataFormatada = ''
     if (hora !== null && dataSelecionada?.value) {
@@ -280,6 +281,18 @@ export function useAgendamentos(dataSelecionada) {
       repetir: false,
     }
 
+    // try {
+    //   const res = await api.get('/servicos/buscarServicosPorBarbeariaId')
+    //   servicos.value = res.data
+    //   // limpa horários disponíveis ao abrir modal
+    //   horariosDisponiveis.value = []
+    // } catch (err) {
+    //   console.error('Erro ao carregar serviços:', err)
+    //   safeNotify({ type: 'negative', message: 'Erro ao carregar serviços' })
+    // }
+  }
+
+  const buscarServicos = async () => {
     try {
       const res = await api.get('/servicos/buscarServicosPorBarbeariaId')
       servicos.value = res.data
@@ -848,7 +861,7 @@ export function useAgendamentos(dataSelecionada) {
     return !horaDentroDoIntervalo(formBloqueio.value.hora_inicio)
   })
 
-  const formatarCelular = (celular) =>{
+  const formatarCelular = (celular) => {
     if (!celular) return ''
 
     const numero = celular.replace(/\D/g, '')
@@ -882,7 +895,7 @@ export function useAgendamentos(dataSelecionada) {
     }
   })
 
-  const abrirWhatsapp =  (celular) => {
+  const abrirWhatsapp = (celular) => {
     const numero = celular.replace(/\D/g, '') // remove () - espaços etc
     const url = `https://wa.me/55${numero}`
     window.open(url, '_blank')
@@ -894,10 +907,11 @@ export function useAgendamentos(dataSelecionada) {
 
 
   carregarHorariosAtendimento()
-  if(dataSelecionada?.value){
+  if (dataSelecionada?.value) {
     loadAgendamentos(dataSelecionada?.value);
   }
   carregarHorariosBloqueadosDaAgenda()
+  buscarServicos()
 
   // Recarrega agendamentos quando a data selecionada muda
   watch(dataSelecionada, async (nova) => {
