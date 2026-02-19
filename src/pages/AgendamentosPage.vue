@@ -9,283 +9,288 @@
     </q-inner-loading>
 
     <div v-if="!carregandoInicial">
-    <div class="agenda-wrapper relative-position" :key="dataSelecionada">
-      <!-- HORAS -->
-      <div class="agenda-hours">
-        <div v-for="h in horasDoDia" :key="h" class="hour-row">
-          {{ h }}
-        </div>
-      </div>
-
-      <!-- GRID -->
-      <div class="agenda-grid" v-if="horasDoDia.length">
-
-        <div v-for="h in horasDoDia" :key="h" class="grid-hour" />
-
-        <q-card v-for="ev in eventos" :key="ev.id" class="event-card" :class="ev.tipo" :style="estiloEvento(ev)"
-          clickable v-ripple @click="ev.tipo === 'agendamento' && irParaDetalheAgendamento(ev.id)">
-          <template v-if="ev.tipo === 'agendamento'">
-
-            <div class="conteudo">
-              <div class="text-bold card-nome-servico">
-                {{ formatarHorarioInicio(ev.inicio) }}
-                -
-                {{ calcularHorarioFim(ev.inicio, ev.duracao) }}
-              </div>
-
-              <div class="text-bold card-cliente-nome">
-                {{ ev.cliente?.nome || '—' }}
-              </div>
-
-              <div class="text-caption card-nome-cliente">
-                {{ ev.servico.nome }}
-              </div>
-            </div>
-
-            <div class="rodape">
-              <div class="text-caption card-nome-cliente">
-                R$ {{ ev.servico.preco }}
-              </div>
-            </div>
-          </template>
-
-          <template v-else-if="ev.tipo === 'almoco'">
-            <div class="almoco-card">
-              <div class="almoco-text">
-                <q-icon name="restaurant" size="32px" class="almoco-icon" /> {{ formatarHora(ev.hora_inicio) }}–{{
-                  formatarHora(ev.hora_fim) }}
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="texto-block">
-              FECHADO
-            </div>
-            <div class="bloqueado-text">
-              {{ ev.hora_inicio }}–{{ ev.hora_fim }}
-            </div>
-            <div class="btn-excluir-bloqueio_agenda">
-              <q-icon name="delete" @click="abriModalExclusaoBloqueio(ev)" />
-            </div>
-            <div class="motivo-bloqueio">
-              {{ ev.motivo }}
-            </div>
-          </template>
-        </q-card>
-      </div>
-    </div>
-
-    <div class="hora-final">
-      {{ horarioFinalExpediente }}
-    </div>
-
-    <!-- Modal de detalhes -->
-    <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
-      :formato-moeda="formatoMoeda" :calcular-horario-fim="calcularHorarioFim" @cancelar="cancelarAgendamento" />
-
-    <ModalExcluirBloqueioAgenda v-model="modalExclusaoBloqueioAberto" :bloqueio="bloqueioSelecionado"
-      @excluido="carregarHorariosBloqueadosDaAgenda" />
-
-
-    <!-- Modal novo agendamento -->
-    <q-dialog v-model="modalAberto" maximized persistent>
-      <div class="agendamento-wrapper">
-        <!-- HEADER -->
-        <div class="header-agendamento">
-          <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
-            @click="modalAberto = false" />
-
-          <div class="header-content">
-            <div class="text-h5 text-weight-medium">Novo agendamento</div>
-            <div class="text-caption opacity-8">
-              Preencha todos os campos para realizar um novo agendamento.
-            </div>
+      <div class="agenda-wrapper relative-position" :key="dataSelecionada">
+        <!-- HORAS -->
+        <div class="agenda-hours">
+          <div v-for="h in horasDoDia" :key="h" class="hour-row">
+            {{ h }}
           </div>
         </div>
 
-        <!-- CARD -->
-        <q-card class="card-form">
-          <q-card-section class="q-gutter-md">
+        <!-- GRID -->
+        <div class="agenda-grid" v-if="horasDoDia.length">
 
-            <q-input v-model="novoAgendamento.cliente" rounded filled label="Nome do cliente" />
-            <q-input v-model="novoAgendamento.telefone" rounded filled label="Telefone" mask="(##) #####-####" />
-            <q-input v-model="novoAgendamento.email" rounded filled label="E-mail do cliente" type="email" />
+          <div v-for="h in horasDoDia" :key="h" class="grid-hour" />
 
-            <div class="servicos-selecao">
-              <div class="text-caption text-grey-8 q-mb-sm">
-                Selecione um serviço
+          <q-card v-for="ev in eventos" :key="ev.id" class="event-card" :class="ev.tipo" :style="estiloEvento(ev)"
+            clickable v-ripple @click="ev.tipo === 'agendamento' && irParaDetalheAgendamento(ev.id)">
+            <template v-if="ev.tipo === 'agendamento'">
+
+              <div class="conteudo">
+                <div class="text-bold card-nome-servico">
+                  {{ formatarHorarioInicio(ev.inicio) }}
+                  -
+                  {{ calcularHorarioFim(ev.inicio, ev.duracao) }}
+                </div>
+
+                <div class="text-bold card-cliente-nome">
+                  {{ ev.cliente?.nome || '—' }}
+                </div>
+
+                <div class="text-caption card-nome-cliente">
+                  {{ ev.servico.nome }}
+                </div>
               </div>
 
-              <div v-if="servicos.length" class="servicos-scroll">
-                <q-card v-for="servico in servicos" :key="servico.id" class="servico-card"
-                  :class="{ 'servico-card--ativo': novoAgendamento.servico === servico.id }" flat bordered clickable
-                  v-ripple @click="selecionarServico(servico.id)">
-                  <div class="servico-card__nome">
-                    {{ servico.nome }}
-                  </div>
-                  <div class="servico-card__preco">
-                    R$ {{ servico.preco }}
-                  </div>
-                </q-card>
+              <div class="rodape">
+                <div class="text-caption card-nome-cliente">
+                  R$ {{ ev.servico.preco }}
+                </div>
               </div>
+            </template>
 
-              <q-banner v-else dense rounded class="bg-grey-2 text-grey-7">
-                Nenhum serviço cadastrado
-              </q-banner>
-            </div>
-
-            <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
-              :disable="!novoAgendamento.servico" />
-
-            <div class="row q-col-gutter-sm">
-              <div class="col">
-                <q-select v-model="novoAgendamento.hora" :options="horariosPadrao" option-label="label"
-                  option-value="value" emit-value map-options rounded filled label="Horário"
-                  :disable="!novoAgendamento.data" :placeholder="novoAgendamento.data
-                    ? 'Selecione um horário'
-                    : 'Selecione a data primeiro'" />
+            <template v-else-if="ev.tipo === 'almoco'">
+              <div class="almoco-card">
+                <div class="almoco-text">
+                  <q-icon name="restaurant" size="32px" class="almoco-icon" /> {{ formatarHora(ev.hora_inicio) }}–{{
+                    formatarHora(ev.hora_fim) }}
+                </div>
               </div>
+            </template>
 
-              <div class="col-auto">
-                <q-chip color="positive" text-color="white" class="q-mt-sm">
-                  Livre
-                </q-chip>
+            <template v-else>
+              <div class="texto-block">
+                FECHADO
               </div>
-            </div>
-
-          </q-card-section>
-
-          <q-card-section>
-            <SwipeConfirm ref="swipeRef" class="novo-agendamento-swipe" label="Deslize para salvar o Agendamento"
-              hint="Deslize para confirmar" :enabled="!carregandoInicial" @confirm="onConfirmSalvarAgendamento" />
-          </q-card-section>
-
-        </q-card>
-      </div>
-    </q-dialog>
-
-    <q-dialog v-model="modalBloqueiaAgendamentos" maximized persistent>
-      <div class="modal-cancelamento">
-
-        <!-- HEADER FIXO -->
-        <div class="header-agendamento header-bloqueio">
-          <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
-            @click="FecharmodalBloqueiaAgendamentos" />
-
-          <div class="header-content text-white">
-            <div class="text-h5 titulo-bloqueio text-weight-medium">Fechar Agenda</div>
-            <div class="text-caption opacity-8 descricao-header-bloqueio">
-              Por favor informe quando você deseja
-            </div>
-            <div class="text-caption opacity-8 descricao-header-bloqueio">
-              fechar o Estabelecimento.
-            </div>
-          </div>
+              <div class="bloqueado-text">
+                {{ ev.hora_inicio }}–{{ ev.hora_fim }}
+              </div>
+              <div class="btn-excluir-bloqueio_agenda">
+                <q-icon name="delete" @click="abriModalExclusaoBloqueio(ev)" />
+              </div>
+              <div class="motivo-bloqueio">
+                {{ ev.motivo }}
+              </div>
+            </template>
+          </q-card>
         </div>
+      </div>
 
-        <!-- CORPO DO MODAL -->
-        <div class="modal-body">
+      <div class="hora-final">
+        {{ horarioFinalExpediente }}
+      </div>
 
-          <div class="agendamento-info text-center q-gutter-md">
+      <!-- Modal de detalhes -->
+      <ModalCancelarAgendamento v-model="modalAgendamento" :agendamento="agendamentoSelecionado"
+        :formato-moeda="formatoMoeda" :calcular-horario-fim="calcularHorarioFim" @cancelar="cancelarAgendamento" />
 
-            <div class="bloqueio-form q-gutter-md">
+      <ModalExcluirBloqueioAgenda v-model="modalExclusaoBloqueioAberto" :bloqueio="bloqueioSelecionado"
+        @excluido="carregarHorariosBloqueadosDaAgenda" />
 
-              <!-- DATA -->
-              <q-input v-model="formBloqueio.data" type="date" label="Data do bloqueio" outlined dense rounded
-                color="primary" @update:model-value="buscarIntervalosLivres">
-                <template #prepend>
-                  <q-icon name="event" />
-                </template>
-              </q-input>
 
-              <q-select v-model="intervaloSelecionado" :options="opcoesIntervalos"
-                label="Selecione um intervalo disponível" outlined dense rounded emit-value map-options
-                :disable="!opcoesIntervalos.length">
-                <template #prepend>
-                  <q-icon name="schedule" />
-                </template>
-              </q-select>
+      <!-- Modal novo agendamento -->
+      <q-dialog v-model="modalAberto" maximized persistent>
+        <div class="agendamento-wrapper">
+          <!-- HEADER -->
+          <div class="header-agendamento">
+            <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
+              @click="modalAberto = false" />
 
-              <!-- INTERVALO -->
-              <div v-if="intervaloSelecionado" class="intervalo-card q-pa-sm q-mt-xs">
-                <div class="text-caption text-grey-7 q-mb-xs">
-                  Horário do bloqueio
-                </div>
-
-                <div class="row q-col-gutter-sm">
-                  <div class="col-6">
-                    <q-input v-model="formBloqueio.hora_inicio" type="time" label="Das" outlined dense rounded
-                      :min="limitesHorario.min" :max="limitesHorario.max" :disable="!intervaloSelecionado"
-                      :error="erroHoraInicio" error-message="O horário definido não bate com o intervalo selecionado" />
-                  </div>
-
-                  <div class="col-6">
-                    <q-input v-model="formBloqueio.hora_fim" type="time" label="Até" outlined dense rounded
-                      :min="formBloqueio.hora_inicio || limitesHorario.min" :max="limitesHorario.max"
-                      :disable="!intervaloSelecionado" :error="erroHoraFim"
-                      error-message="O horário definido não bate com o intervalo selecionado" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- MOTIVO -->
-              <q-input v-model="formBloqueio.motivo" type="textarea" label="Motivo do bloqueio (opcional)" outlined
-                autogrow dense rounded>
-                <template #prepend>
-                  <q-icon name="notes" />
-                </template>
-              </q-input>
-
-            </div>
-            <div class="q-mt-xl text-caption inter-semibold">
-              Deslize para confirmar o cancelamento
-            </div>
-
-            <!-- SLIDER -->
-            <div class="row justify-center q-mt-md">
-
-              <div class="swipe-container">
-                <!-- TRACK QUE PREENCHE -->
-                <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
-
-                <!-- TEXTO -->
-                <span class="swipe-text">
-                  Deslize para a direita
-                </span>
-
-                <!-- BOTÃO -->
-                <div class="swipe-thumb" :class="{ disabled: !swipeHabilitado }"
-                  :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="swipeHabilitado && startSwipe($event)"
-                  @touchstart="swipeHabilitado && startSwipe($event)">
-                  <q-icon name="chevron_right" size="26px" color="negative" />
-                </div>
-
+            <div class="header-content">
+              <div class="text-h5 text-weight-medium">Novo agendamento</div>
+              <div class="text-caption opacity-8">
+                Preencha todos os campos para realizar um novo agendamento.
               </div>
             </div>
           </div>
+
+          <!-- CARD -->
+          <q-card class="card-form">
+            <q-card-section class="q-gutter-md">
+
+              <q-input v-model="novoAgendamento.cliente" rounded filled label="Nome do cliente" />
+              <q-input v-model="novoAgendamento.telefone" rounded filled label="Telefone" mask="(##) #####-####" />
+              <q-input v-model="novoAgendamento.email" rounded filled label="E-mail do cliente" type="email" />
+
+              <div class="servicos-selecao">
+                <div class="row items-center justify-between q-mb-md">
+                  <div class="text-grey-8 titulo-selecione-servico">
+                    Selecione um serviço
+                  </div>
+
+                  <q-icon name="trending_flat" size="36px" color="grey-8" class="seta-larga" />
+                </div>
+
+                <div v-if="servicos.length" class="servicos-scroll">
+                  <q-card v-for="servico in servicos" :key="servico.id" class="servico-card"
+                    :class="{ 'servico-card--ativo': novoAgendamento.servico === servico.id }" flat bordered clickable
+                    v-ripple @click="selecionarServico(servico.id)">
+                    <div class="servico-card__nome">
+                      {{ servico.nome }}
+                    </div>
+                    <div class="servico-card__preco">
+                      R$ {{ servico.preco }}
+                    </div>
+                  </q-card>
+                </div>
+
+                <q-banner v-else dense rounded class="bg-grey-2 text-grey-7">
+                  Nenhum serviço cadastrado
+                </q-banner>
+              </div>
+
+              <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
+                :disable="!novoAgendamento.servico" />
+
+              <div class="row q-col-gutter-sm">
+                <div class="col">
+                  <q-select v-model="novoAgendamento.hora" :options="horariosPadrao" option-label="label"
+                    option-value="value" emit-value map-options rounded filled label="Horário"
+                    :disable="!novoAgendamento.data" :placeholder="novoAgendamento.data
+                      ? 'Selecione um horário'
+                      : 'Selecione a data primeiro'" />
+                </div>
+
+                <div class="col-auto">
+                  <q-chip color="positive" text-color="white" class="q-mt-sm">
+                    Livre
+                  </q-chip>
+                </div>
+              </div>
+
+            </q-card-section>
+
+            <q-card-section>
+              <SwipeConfirm ref="swipeRef" class="novo-agendamento-swipe" label="Deslize para salvar o Agendamento"
+                hint="Deslize para confirmar" :enabled="!carregandoInicial" @confirm="onConfirmSalvarAgendamento" />
+            </q-card-section>
+
+          </q-card>
         </div>
+      </q-dialog>
+
+      <q-dialog v-model="modalBloqueiaAgendamentos" maximized persistent>
+        <div class="modal-cancelamento">
+
+          <!-- HEADER FIXO -->
+          <div class="header-agendamento header-bloqueio">
+            <q-btn icon="arrow_back" flat round color="white" class="absolute-top-left q-ma-md"
+              @click="FecharmodalBloqueiaAgendamentos" />
+
+            <div class="header-content text-white">
+              <div class="text-h5 titulo-bloqueio text-weight-medium">Fechar Agenda</div>
+              <div class="text-caption opacity-8 descricao-header-bloqueio">
+                Por favor informe quando você deseja
+              </div>
+              <div class="text-caption opacity-8 descricao-header-bloqueio">
+                fechar o Estabelecimento.
+              </div>
+            </div>
+          </div>
+
+          <!-- CORPO DO MODAL -->
+          <div class="modal-body">
+
+            <div class="agendamento-info text-center q-gutter-md">
+
+              <div class="bloqueio-form q-gutter-md">
+
+                <!-- DATA -->
+                <q-input v-model="formBloqueio.data" type="date" label="Data do bloqueio" outlined dense rounded
+                  color="primary" @update:model-value="buscarIntervalosLivres">
+                  <template #prepend>
+                    <q-icon name="event" />
+                  </template>
+                </q-input>
+
+                <q-select v-model="intervaloSelecionado" :options="opcoesIntervalos"
+                  label="Selecione um intervalo disponível" outlined dense rounded emit-value map-options
+                  :disable="!opcoesIntervalos.length">
+                  <template #prepend>
+                    <q-icon name="schedule" />
+                  </template>
+                </q-select>
+
+                <!-- INTERVALO -->
+                <div v-if="intervaloSelecionado" class="intervalo-card q-pa-sm q-mt-xs">
+                  <div class="text-caption text-grey-7 q-mb-xs">
+                    Horário do bloqueio
+                  </div>
+
+                  <div class="row q-col-gutter-sm">
+                    <div class="col-6">
+                      <q-input v-model="formBloqueio.hora_inicio" type="time" label="Das" outlined dense rounded
+                        :min="limitesHorario.min" :max="limitesHorario.max" :disable="!intervaloSelecionado"
+                        :error="erroHoraInicio"
+                        error-message="O horário definido não bate com o intervalo selecionado" />
+                    </div>
+
+                    <div class="col-6">
+                      <q-input v-model="formBloqueio.hora_fim" type="time" label="Até" outlined dense rounded
+                        :min="formBloqueio.hora_inicio || limitesHorario.min" :max="limitesHorario.max"
+                        :disable="!intervaloSelecionado" :error="erroHoraFim"
+                        error-message="O horário definido não bate com o intervalo selecionado" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- MOTIVO -->
+                <q-input v-model="formBloqueio.motivo" type="textarea" label="Motivo do bloqueio (opcional)" outlined
+                  autogrow dense rounded>
+                  <template #prepend>
+                    <q-icon name="notes" />
+                  </template>
+                </q-input>
+
+              </div>
+              <div class="q-mt-xl text-caption inter-semibold">
+                Deslize para confirmar o cancelamento
+              </div>
+
+              <!-- SLIDER -->
+              <div class="row justify-center q-mt-md">
+
+                <div class="swipe-container">
+                  <!-- TRACK QUE PREENCHE -->
+                  <div class="swipe-fill" :style="{ width: fillPercent + '%' }"></div>
+
+                  <!-- TEXTO -->
+                  <span class="swipe-text">
+                    Deslize para a direita
+                  </span>
+
+                  <!-- BOTÃO -->
+                  <div class="swipe-thumb" :class="{ disabled: !swipeHabilitado }"
+                    :style="{ transform: `translateX(${swipeX}px)` }" @mousedown="swipeHabilitado && startSwipe($event)"
+                    @touchstart="swipeHabilitado && startSwipe($event)">
+                    <q-icon name="chevron_right" size="26px" color="negative" />
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </q-dialog>
+
+      <!-- Botão fixo -->
+      <div class="floating-wrapper">
+        <q-btn flat dense icon="lock" class="btn-lock" color="black" @click="abrirModalBloqueiaAgendamentos" />
+
+        <q-btn unelevated class="btn-main" @click="abrirModalGlobal">
+          <div class="btn-content">
+            <span class="btn-text">Novo Agendamento</span>
+            <q-icon name="arrow_forward" class="btn-arrow" />
+          </div>
+        </q-btn>
       </div>
-    </q-dialog>
 
-    <!-- Botão fixo -->
-    <div class="floating-wrapper">
-      <q-btn flat dense icon="lock" class="btn-lock" color="black" @click="abrirModalBloqueiaAgendamentos" />
-
-      <q-btn unelevated class="btn-main" @click="abrirModalGlobal">
-        <div class="btn-content">
-          <span class="btn-text">Novo Agendamento</span>
-          <q-icon name="arrow_forward" class="btn-arrow" />
-        </div>
-      </q-btn>
-    </div>
-
-    <div class="footer-agendamento">
-      <span class="btn-text">
-        <q-icon name="schedule" size="16px" />
-        {{ textoHorarioFuncionamento }}
-      </span>
-    </div>
+      <div class="footer-agendamento">
+        <span class="btn-text">
+          <q-icon name="schedule" size="16px" />
+          {{ textoHorarioFuncionamento }}
+        </span>
+      </div>
     </div>
 
   </q-page>
@@ -864,7 +869,7 @@ const selecionarServico = (servicoId) => {
   font-weight: 600;
   font-size: 0.96rem;
   color: #ffffff;
- 
+
 }
 
 .servico-card__preco {
@@ -912,6 +917,7 @@ const selecionarServico = (servicoId) => {
 }
 
 @keyframes dotBlink {
+
   0%,
   80%,
   100% {
@@ -923,5 +929,14 @@ const selecionarServico = (servicoId) => {
     opacity: 1;
     transform: translateY(-4px);
   }
+}
+
+.titulo-selecione-servico {
+  font-size: 18px;
+}
+
+.seta-larga {
+  transform: scaleX(3.2);
+  margin-right: 50px;
 }
 </style>
