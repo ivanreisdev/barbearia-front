@@ -67,13 +67,19 @@ export function useAgendamentos(dataSelecionada) {
     cliente: '',
     email: '',
     telefone: '',
-    servico: null,
+    servicos: [],
     preco: 0,
     barbeiro: '',
   })
 
   // Bloqueio
   const formBloqueio = ref({
+    data: null,
+    hora_inicio: null,
+    hora_fim: null,
+    motivo: ''
+  })
+  const estadoInicialFormBloqueio = () => ({
     data: null,
     hora_inicio: null,
     hora_fim: null,
@@ -174,7 +180,7 @@ export function useAgendamentos(dataSelecionada) {
         modalBloqueiaAgendamentos.value = false
         loadAgendamentos(),
           carregarHorariosBloqueadosDaAgenda()
-        formBloqueio.value = '';
+        formBloqueio.value = estadoInicialFormBloqueio()
         intervaloSelecionado.value = null;
         intervalosLivres.value = [];
         swipeX.value = 0;
@@ -215,13 +221,14 @@ export function useAgendamentos(dataSelecionada) {
 
 
   // busca horários disponíveis no backend para serviço+data selecionados
-  const buscarHorariosDisponiveis = async (servicoId, dataISO) => {
+  const buscarHorariosDisponiveis = async (servicoIds, dataISO) => {
     horariosDisponiveis.value = []
-    if (!servicoId || !dataISO) return
+    const ids = (Array.isArray(servicoIds) ? servicoIds : [servicoIds]).filter(Boolean)
+    if (!ids.length || !dataISO) return
 
     try {
       const res = await api.get('/horarios-atendimento/buscarHorariosDisponiveis', {
-        params: { servicoId, data: dataISO },
+        params: { servicoIds: ids, data: dataISO },
       })
 
       const raw = res.data?.horarios ?? []
@@ -242,12 +249,14 @@ export function useAgendamentos(dataSelecionada) {
 
   // observa seleção de serviço/data no modal e chama a rota quando ambos existirem
   watch(
-    [() => novoAgendamento.value.servico, () => novoAgendamento.value.data],
-    ([servico, data]) => {
-      if (servico && data) {
+    [() => novoAgendamento.value.servicos, () => novoAgendamento.value.data],
+    ([servicosSelecionados, data]) => {
+      const servicoIds = (Array.isArray(servicosSelecionados) ? servicosSelecionados : []).filter(Boolean)
+
+      if (servicoIds.length && data) {
         // garante formato YYYY-MM-DD
         const dataISO = new Date(data).toISOString().split('T')[0]
-        buscarHorariosDisponiveis(servico, dataISO)
+        buscarHorariosDisponiveis(servicoIds, dataISO)
       } else {
         horariosDisponiveis.value = []
       }
@@ -274,7 +283,7 @@ export function useAgendamentos(dataSelecionada) {
       cliente: '',
       telefone: '',
       email: '',
-      servico: null,
+      servicos: [],
       preco: 0,
       barbeiro: '',
       data: dataFormatada, // se vazio, campo data permanece vazio e campo hora fica desabilitado no template
@@ -383,13 +392,15 @@ export function useAgendamentos(dataSelecionada) {
     return jsDay === 0 ? 1 : jsDay + 1
   }
 
-  const atualizarPreco = (servicoId) => {
-    const selecionado = servicos.value.find((s) => s.id === servicoId)
-    if (selecionado) {
-      novoAgendamento.value.preco = selecionado.preco
-    } else {
-      novoAgendamento.value.preco = 0
-    }
+  const atualizarPreco = (servicoIds) => {
+    const ids = (Array.isArray(servicoIds) ? servicoIds : [servicoIds]).filter(Boolean)
+    const idsSelecionados = new Set(ids.map((id) => String(id)))
+
+    const precoTotal = servicos.value
+      .filter((s) => idsSelecionados.has(String(s.id)))
+      .reduce((total, s) => total + Number(s.preco || 0), 0)
+
+    novoAgendamento.value.preco = precoTotal
   }
 
   const statusColor = (status) => {
@@ -503,7 +514,24 @@ export function useAgendamentos(dataSelecionada) {
     console.log(agendamentos.value)
     return agendamentos.value.map(ag => {
       const inicioMin = datetimeParaMinutos(ag.data_horario)
-      const duracao = ag.servico?.duracao_minutos ?? 0
+      const servicosDoAgendamento = Array.isArray(ag.servicos) && ag.servicos.length
+        ? ag.servicos
+        : ag.servico
+          ? [ag.servico]
+          : []
+
+      const duracao = servicosDoAgendamento.reduce(
+        (total, servico) => total + Number(servico?.duracao_minutos ?? servico?.pivot?.duracao ?? 0),
+        0,
+      )
+      const precoTotal = servicosDoAgendamento.reduce(
+        (total, servico) => total + Number(servico?.preco ?? servico?.pivot?.preco ?? 0),
+        0,
+      )
+      const nomeServicos = servicosDoAgendamento
+        .map((servico) => servico?.nome)
+        .filter(Boolean)
+        .join(' + ')
 
       return {
         id: `ag-${ag.id}`,
@@ -511,7 +539,9 @@ export function useAgendamentos(dataSelecionada) {
         inicioMinutos: inicioMin,
         duracao,
         inicio: ag.data_horario,
-        servico: ag.servico,
+        servicos: servicosDoAgendamento,
+        nomeServicos,
+        precoTotal,
         cliente: ag.cliente
       }
     })
@@ -679,7 +709,7 @@ export function useAgendamentos(dataSelecionada) {
       const nome = (novoAgendamento.value.cliente || '').trim()
       const email = (novoAgendamento.value.email || '').trim()
       const telefone = (novoAgendamento.value.telefone || '').trim()
-      const servico = novoAgendamento.value.servico
+      const servicosSelecionados = (novoAgendamento.value.servicos || []).filter(Boolean)
       const data = novoAgendamento.value.data
       const hora = novoAgendamento.value.hora
 
@@ -708,10 +738,10 @@ export function useAgendamentos(dataSelecionada) {
         return false
       }
 
-      if (!servico) {
+      if (!servicosSelecionados.length) {
         safeNotify({
           type: 'negative',
-          message: 'Selecione um servico',
+          message: 'Selecione pelo menos um servico',
         })
         return false
       }
@@ -750,13 +780,15 @@ export function useAgendamentos(dataSelecionada) {
       return false
     }
 
+    const servicosSelecionados = (novoAgendamento.value.servicos || []).filter(Boolean)
     const dataHora = `${novoAgendamento.value.data} ${novoAgendamento.value.hora}:00`
 
     const payload = {
       nomeCliente: novoAgendamento.value.cliente.trim(),
       emailCliente: novoAgendamento.value.email.trim(),
       telefoneCliente: novoAgendamento.value.telefone.replace(/\D/g, ''),
-      servico_id: novoAgendamento.value.servico,
+      servico_ids: servicosSelecionados,
+      servico_id: servicosSelecionados[0],
       data_horario: dataHora,
       status: 'agendado',
     }
@@ -835,7 +867,7 @@ export function useAgendamentos(dataSelecionada) {
 
   const FecharmodalBloqueiaAgendamentos = () => {
     modalBloqueiaAgendamentos.value = false;
-    formBloqueio.value = '';
+    formBloqueio.value = estadoInicialFormBloqueio()
     intervaloSelecionado.value = null;
     intervalosLivres.value = [];
     swipeX.value = 0;

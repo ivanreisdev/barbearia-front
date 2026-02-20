@@ -48,8 +48,9 @@
             <div class="q-mb-xl">
               <div class="text-caption text-grey-6 inter-semibold">SERVIÇO(S)</div>
               <div class="row q-gutter-sm q-mt-sm">
-                <q-chip color="grey-3" text-color="dark" class="inter-semibold">
-                  {{ agendamento.servico.nome }}
+                <q-chip v-for="servico in servicosDoAgendamento" :key="servico.id" color="grey-3" text-color="dark"
+                  class="inter-semibold">
+                  {{ servico.nome }}
                 </q-chip>
               </div>
             </div>
@@ -63,7 +64,7 @@
             <div class="q-mb-xl">
               <div class="text-caption text-grey-6 inter-semibold">TOTAL</div>
               <div class="text-h5 text-weight-bold inter-semibold">
-                {{ formatoMoeda(agendamento.servico.preco) }}
+                {{ formatoMoeda(precoTotalAgendamento) }}
               </div>
             </div>
           </div>
@@ -125,8 +126,8 @@
               </div>
 
               <div class="text-h8 text-grey-6 inter-semibold">
-                {{ agendamento?.servico?.nome }}
-                - {{ formatoMoeda(agendamento?.servico?.preco) }}
+                {{ nomeServicos || '-' }}
+                - {{ formatoMoeda(precoTotalAgendamento) }}
               </div>
 
               <div class="q-mt-xl text-caption inter-semibold">
@@ -288,9 +289,41 @@ const horarioFim = computed(() => {
 
   return calcularHorarioFimCancelamento(
     inicioMinutos,
-    agendamento.value.servico.duracao_minutos
+    duracaoTotalAgendamento.value
   )
 })
+
+const servicosDoAgendamento = computed(() => {
+  if (!agendamento.value) return []
+  if (Array.isArray(agendamento.value.servicos) && agendamento.value.servicos.length) {
+    return agendamento.value.servicos
+  }
+  if (agendamento.value.servico) {
+    return [agendamento.value.servico]
+  }
+  return []
+})
+
+const duracaoTotalAgendamento = computed(() =>
+  servicosDoAgendamento.value.reduce(
+    (total, servico) => total + Number(servico?.duracao_minutos ?? servico?.pivot?.duracao ?? 0),
+    0,
+  )
+)
+
+const precoTotalAgendamento = computed(() =>
+  servicosDoAgendamento.value.reduce(
+    (total, servico) => total + Number(servico?.preco ?? servico?.pivot?.preco ?? 0),
+    0,
+  )
+)
+
+const nomeServicos = computed(() =>
+  servicosDoAgendamento.value
+    .map((servico) => servico?.nome)
+    .filter(Boolean)
+    .join(' + ')
+)
 
 
 console.log('horarioFim =', horarioFim.value);

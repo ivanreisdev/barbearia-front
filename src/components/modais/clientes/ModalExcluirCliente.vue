@@ -236,8 +236,8 @@ const formatarCelular = (celular) => {
     top: 0;
     height: 100%;
     background: linear-gradient(135deg,
-            rgba(46, 204, 113, 0.85),
-            rgba(39, 174, 96, 0.9));
+            rgba(212, 37, 37, 0.85),
+            rgba(122, 48, 4, 0.9));
     border-radius: 26px;
     transition: width 0.1s linear;
 }

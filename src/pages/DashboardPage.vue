@@ -6,15 +6,10 @@
         <div class="row items-center header-left">
           <q-avatar size="56" class="cursor-pointer"
             style="background: linear-gradient(144deg, #777777, #494949); color: white">
-            <!-- LOADING -->
             <q-skeleton v-if="loadingUser" type="QAvatar" size="56px" />
-
-            <!-- CONTEÚDO REAL -->
             <template v-else>
-              <!-- FOTO -->
               <img v-if="fotoBackend" :src="fotoBackend" />
 
-              <!-- FALLBACK -->
               <span v-else>
                 {{ usuario?.name?.charAt(0) || 'U' }}
               </span>
@@ -27,7 +22,6 @@
                 <!-- LOADING -->
                 <q-skeleton v-if="loadingUser" type="text" width="180px" />
 
-                <!-- DADO REAL -->
                 <span v-else>
                   Olá,
                   <span class="user-name-bold">
@@ -36,7 +30,6 @@
                 </span>
               </div>
             </div>
-
 
             <div class="text-subtitle2 text-grey-6 texto-comun">
               confira seus agendamentos
@@ -71,7 +64,6 @@
       </div>
 
 
-      <!-- 🟦 CARDS DOS DIAS DA SEMANA -->
       <div class="row q-gutter-xs q-mb-sm">
         <q-card v-for="(day, index) in diasDaSemana" :key="index" clickable @click="selecionarDia(index)"
           class="q-pa-sm text-center cursor-pointer card-dia"
@@ -82,8 +74,7 @@
         </q-card>
       </div>
     </div>
-    <!-- 📊 CARDS DE RENDA -->
-    <!-- 📊 CARDS DE RENDA -->
+
     <div class="row q-gutter-xs cards-renda-container">
       <!-- Renda do dia selecionado -->
       <q-card class="q-pa-md q-mr-xs card-renda-dia card-renda">
@@ -100,13 +91,10 @@
             </div>
           </div>
 
-          <!-- <q-icon name="today" class="text-h5" /> -->
         </div>
 
-        <!-- <div class="text-caption q-mt-sm">{{ buscarMesDia(dataSelecionada) }}</div> -->
       </q-card>
 
-      <!-- Renda da semana -->
       <q-card class="q-pa-xs card-renda-semana card-renda">
         <div class="row items-center justify-between">
           <div>
@@ -127,7 +115,7 @@
     <br>
 
     <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
-      :dia-selecionado="diaSelecionado" />
+      :dia-selecionado="diaSelecionado" @agendamento-criado="atualizarReceitas" />
 
   </q-page>
 </template>
@@ -144,7 +132,6 @@ const carregando = ref([true])
 
 import { api } from 'boot/axios'
 import { useQuasar } from 'quasar'
-import { useAuthStore } from 'stores/auth'
 
 const $q = useQuasar()
 
@@ -254,16 +241,9 @@ async function fetchDiaDaReceita() {
 
   try {
     const dateISO = toISODate(dataSelecionada.value)
-    console.log('dateISO');
-
-    console.log(dateISO);
-
-    const auth = useAuthStore()
-
     const res = await api.get('/rendas/calcularTotalPorDia', {
       params: {
         dia: dateISO,
-        usuario_id: auth.user.id,
       },
     })
     console.log(res);
@@ -323,8 +303,10 @@ const fotoBackend = computed(() => {
 
 // ------------------ BUSCA DA RENDA SEMANAL ------------------
 async function fetchReceitaDaSemana() {
-  loadingWeek.value = true
   receitaDaSemana.value = 0
+  quantidadeAgendamentoSemana.value = ''
+  loadingWeek.value = true
+
 
   try {
     const dataInicial = toISODate(inicioDaSemana.value);
@@ -345,12 +327,17 @@ async function fetchReceitaDaSemana() {
   loadingWeek.value = false
 }
 
+function atualizarReceitas() {
+  fetchDiaDaReceita()
+  fetchReceitaDaSemana()
+}
+
 function voltarUmaSemana() {
   inicioDaSemana.value = new Date(inicioDaSemana.value.getTime() - 7 * 86400000)
   fimDeSemana.value = new Date(fimDeSemana.value.getTime() - 7 * 86400000)
 }
 
-const formatarNomeInicial = (nome) =>{
+const formatarNomeInicial = (nome) => {
   return nome.trim().split(" ")[0]
 }
 

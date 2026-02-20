@@ -38,13 +38,13 @@
                 </div>
 
                 <div class="text-caption card-nome-cliente">
-                  {{ ev.servico.nome }}
+                  {{ ev.nomeServicos || '-' }}
                 </div>
               </div>
 
               <div class="rodape">
                 <div class="text-caption card-nome-cliente">
-                  R$ {{ ev.servico.preco }}
+                  {{ formatoMoeda(ev.precoTotal || 0) }}
                 </div>
               </div>
             </template>
@@ -123,7 +123,7 @@
 
                 <div v-if="servicos.length" class="servicos-scroll">
                   <q-card v-for="servico in servicos" :key="servico.id" class="servico-card"
-                    :class="{ 'servico-card--ativo': novoAgendamento.servico === servico.id }" flat bordered clickable
+                    :class="{ 'servico-card--ativo': novoAgendamento.servicos?.includes(servico.id) }" flat bordered clickable
                     v-ripple @click="selecionarServico(servico.id)">
                     <div class="servico-card__nome">
                       {{ servico.nome }}
@@ -140,7 +140,7 @@
               </div>
 
               <q-input v-model="novoAgendamento.data" type="date" rounded filled label="Data"
-                :disable="!novoAgendamento.servico" />
+                :disable="!novoAgendamento.servicos?.length" />
 
               <div class="row q-col-gutter-sm">
                 <div class="col">
@@ -301,10 +301,11 @@ import ModalCancelarAgendamento from '../components/modais/ModalCancelarAgendame
 import ModalExcluirBloqueioAgenda from '../components/modais/ModalExcluirBloqueioAgenda.vue'
 
 import '../css/agendamentos.css'
-import { toRef, defineProps, ref } from 'vue'
+import { toRef, defineProps, defineEmits, ref } from 'vue'
 import { useAgendamentos } from '../scripts/agendamentos.js'
 
 const props = defineProps({ dataSelecionada: { type: Date, required: true } })
+const emit = defineEmits(['agendamento-criado'])
 const dataSelecionada = toRef(props, 'dataSelecionada')
 const swipeRef = ref(null)
 
@@ -358,14 +359,28 @@ const abrirModalGlobal = () => abrirModal?.()
 
 const onConfirmSalvarAgendamento = async () => {
   const sucesso = await salvarAgendamento()
-  if (!sucesso) {
+  if (sucesso) {
+    emit('agendamento-criado')
+  } else {
     swipeRef.value?.resetSwipe?.()
   }
 }
 
 const selecionarServico = (servicoId) => {
-  novoAgendamento.value.servico = servicoId
-  atualizarPreco(servicoId)
+  const selecionados = Array.isArray(novoAgendamento.value.servicos)
+    ? [...novoAgendamento.value.servicos]
+    : []
+
+  const index = selecionados.indexOf(servicoId)
+
+  if (index >= 0) {
+    selecionados.splice(index, 1)
+  } else {
+    selecionados.push(servicoId)
+  }
+
+  novoAgendamento.value.servicos = selecionados
+  atualizarPreco(selecionados)
 }
 </script>
 <style scoped>

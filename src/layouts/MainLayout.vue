@@ -78,7 +78,7 @@
               <q-item-section>Usuário</q-item-section>
             </q-item>
 
-            <q-item clickable v-ripple to="/config/barbearia" active-class="menu-active" @click="fecharDrawer">
+            <q-item v-if="isAdm" clickable v-ripple to="/config/barbearia" active-class="menu-active" @click="fecharDrawer">
               <q-item-section avatar>
                 <q-icon name="content_cut" size="18px" />
               </q-item-section>
@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
 // import { useQuasar } from 'quasar'
@@ -150,6 +150,8 @@ import { useAuthStore } from 'stores/auth'
 const drawer = ref(false)
 const router = useRouter()
 const auth = useAuthStore()
+console.log('auth.user');
+console.log(auth.user.tipo_usuario);
 // const $q = useQuasar()
 
 // function avaliarApp() {
@@ -169,9 +171,17 @@ function handleToggleDrawer() {
   drawer.value = !drawer.value
 }
 
+
+const isAdm = computed(() => {
+  return auth.user?.tipo_usuario =='admin'
+})
+
+
 onMounted(() => {
   window.addEventListener('toggle-drawer', handleToggleDrawer)
 })
+
+
 
 onBeforeUnmount(() => {
   window.removeEventListener('toggle-drawer', handleToggleDrawer)

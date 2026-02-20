@@ -123,13 +123,13 @@
                       {{ ag.data }} • {{ ag.hora }}
                     </q-item-label>
                     <q-item-label caption class="text-grey-5" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
-                      {{ ag.servico.nome }}
+                      {{ ag.servicosNomes }}
                     </q-item-label>
                   </q-item-section>
 
                   <q-item-section side>
                     <div class="price-text" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
-                      {{ formatarPreco(ag.servico.preco)  }}
+                      {{ formatarPreco(ag.precoTotal)  }}
                     </div>
                     <q-chip
                       v-if="ag.status === 'cancelado'"
@@ -227,13 +227,13 @@
                             {{ ag.data }} • {{ ag.hora }}
                           </q-item-label>
                           <q-item-label caption class="text-grey-5" :class="ag.status === 'cancelado' ? 'text-cancelado' : ''">
-                            {{ ag.barbeiro.nome }} · {{ ag.status }}
+                            {{ ag.servicosNomes }} · {{ ag.status }}
                           </q-item-label>
                         </q-item-section>
 
                         <q-item-section side>
                           <q-chip outline color="green-5" text-color="white" size="sm" class="price-chip">
-                            {{ formatarPreco(ag.servico.preco) }}
+                            {{ formatarPreco(ag.precoTotal) }}
                           </q-chip>
                           <q-chip
                             v-if="ag.status === 'cancelado'"
@@ -374,14 +374,28 @@ const formatarTelefone = (telefone) => {
 }
 
 
+const obterServicosAgendamento = (ag) => {
+  if (Array.isArray(ag?.servicos) && ag.servicos.length) return ag.servicos
+  if (ag?.servico) return [ag.servico]
+  return []
+}
+
+const somarPrecoServicos = (servicos) => {
+  return (servicos || []).reduce((total, servico) => {
+    return total + Number(servico?.preco ?? servico?.pivot?.preco ?? 0)
+  }, 0)
+}
+
 const topServicos = computed(() => {
   const contagem = agendamentos.value
     .filter(ag => ag.status === 'agendado')
     .reduce((acc, ag) => {
-    const nome = ag.servico?.nome ?? 'Serviço'
-    acc[nome] = (acc[nome] || 0) + 1
-    return acc
-  }, {})
+      ;(ag.servicosLista || []).forEach((servico) => {
+        const nome = servico?.nome ?? 'Serviço'
+        acc[nome] = (acc[nome] || 0) + 1
+      })
+      return acc
+    }, {})
 
   return Object.entries(contagem)
     .map(([nome, quantidade]) => ({ nome, quantidade }))
@@ -441,9 +455,18 @@ const agendamentosFiltrados = computed(() => {
 const formatarAgendamentos = (agendamentosApi) => {
   return agendamentosApi.map(ag => {
     const dataObj = new Date(ag.data_horario.replace(' ', 'T'))
+    const servicosLista = obterServicosAgendamento(ag)
+    const servicosNomes = servicosLista
+      .map((servico) => servico?.nome)
+      .filter(Boolean)
+      .join(' + ') || '-'
+    const precoTotal = somarPrecoServicos(servicosLista)
 
     return {
       ...ag,
+      servicosLista,
+      servicosNomes,
+      precoTotal,
       data: dataObj.toLocaleDateString('pt-BR'),
       hora: dataObj.toLocaleTimeString('pt-BR', {
         hour: '2-digit',
@@ -461,12 +484,14 @@ const stats = computed(() => {
   const totalAgendamentos = agendamentosValidos.length
 
   // serviços realizados (normalmente = agendamentos)
-  const totalServicos = ags.filter(ag => ag.status === 'agendado').length
+  const totalServicos = ags
+    .filter(ag => ag.status === 'agendado')
+    .reduce((total, ag) => total + (ag.servicosLista?.length || 0), 0)
   // se não tiver status, pode ser: ags.length
 
   // soma dos valores (ignora cancelados)
   const totalFaturado = agendamentosValidos.reduce((total, ag) => {
-    return total + Number(ag.servico?.preco ?? 0)
+    return total + Number(ag.precoTotal ?? 0)
   }, 0)
 
   const ticketMedio =

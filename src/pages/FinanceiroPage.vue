@@ -198,6 +198,29 @@ const periodosServico = [
   { value: '12m', label: 'Ultimos 12 meses' }
 ]
 
+const obterServicosAgendamento = (ag) => {
+  if (Array.isArray(ag?.servicos) && ag.servicos.length) return ag.servicos
+  if (ag?.servico) return [ag.servico]
+  return []
+}
+
+const obterValorTotalAgendamento = (ag) => {
+  const valorApi = Number(ag?.valor_total_agendamento)
+  if (!Number.isNaN(valorApi)) return valorApi
+
+  return obterServicosAgendamento(ag).reduce((total, servico) => {
+    const preco = Number(servico?.preco ?? servico?.pivot?.preco ?? 0)
+    return total + (Number.isNaN(preco) ? 0 : preco)
+  }, 0)
+}
+
+const obterNomeServicosAgendamento = (ag) => {
+  const nomes = obterServicosAgendamento(ag)
+    .map((servico) => servico?.nome)
+    .filter(Boolean)
+  return nomes.length ? nomes.join(' + ') : 'Servico'
+}
+
 const calcularTotalMes = (dataBase) => {
   const ano = dataBase.getFullYear()
   const mes = dataBase.getMonth()
@@ -207,9 +230,7 @@ const calcularTotalMes = (dataBase) => {
     const data = new Date(ag.data_horario.replace(' ', 'T'))
     if (Number.isNaN(data.getTime())) return acc
     if (data.getFullYear() !== ano || data.getMonth() !== mes) return acc
-    const preco = Number(ag.servico?.preco ?? 0)
-    if (Number.isNaN(preco)) return acc
-    return acc + preco
+    return acc + obterValorTotalAgendamento(ag)
   }, 0)
 }
 
@@ -309,10 +330,7 @@ const receitaMensalRaw = computed(() => {
     const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
     const item = mapa.get(chave)
     if (!item) return
-    const preco = Number(ag.servico?.preco ?? 0)
-    if (!Number.isNaN(preco)) {
-      item.valor += preco
-    }
+    item.valor += obterValorTotalAgendamento(ag)
   })
 
   return meses
@@ -422,9 +440,7 @@ const totalServicoPeriodo = computed(() => {
     const agora = new Date()
     const limite = new Date(agora.getFullYear(), agora.getMonth() - (meses - 1), 1)
     if (data < limite) return acc
-    const preco = Number(ag.servico?.preco ?? 0)
-    if (Number.isNaN(preco)) return acc
-    return acc + preco
+    return acc + obterValorTotalAgendamento(ag)
   }, 0)
   return formatarMoeda(totalBruto)
 })
@@ -459,11 +475,13 @@ const categorias = computed(() => {
     if (!ag?.data_horario) return
     const data = new Date(String(ag.data_horario).replace(' ', 'T'))
     if (Number.isNaN(data.getTime()) || data < limite) return
-    const nome = ag.servico?.nome || 'Servico'
-    const preco = Number(ag.servico?.preco ?? 0)
-    if (!Number.isNaN(preco)) {
-      mapa.set(nome, (mapa.get(nome) || 0) + preco)
-    }
+    obterServicosAgendamento(ag).forEach((servico) => {
+      const nome = servico?.nome || 'Servico'
+      const preco = Number(servico?.preco ?? servico?.pivot?.preco ?? 0)
+      if (!Number.isNaN(preco)) {
+        mapa.set(nome, (mapa.get(nome) || 0) + preco)
+      }
+    })
   })
 
   const ordenado = Array.from(mapa.entries()).sort((a, b) => b[1] - a[1])
@@ -522,10 +540,10 @@ const movimentacoes = computed(() => {
   const entradas = agendamentos.value
     .filter(ag => ag?.data_horario)
     .map((ag, idx) => {
-      const preco = Number(ag.servico?.preco ?? 0)
+      const preco = obterValorTotalAgendamento(ag)
       return {
         id: `ag-${ag.id ?? idx}`,
-        titulo: ag.servico?.nome || 'Servico',
+        titulo: obterNomeServicosAgendamento(ag),
         data: formatarDataHora(ag.data_horario),
         categoria: 'Servico',
         valor: formatarMoeda(preco),
