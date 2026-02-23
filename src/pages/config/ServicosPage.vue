@@ -67,9 +67,42 @@
             </div>
           </div>
 
+          <div class="q-mb-md">
+            <div class="text-caption text-grey-5 q-mb-sm">
+              Barbeiros que realizam este servico
+            </div>
+
+            <div v-if="barbeiros.length" class="barbeiros-grid">
+              <q-card v-for="barbeiro in barbeiros" :key="barbeiro.id" flat bordered class="barbeiro-card"
+                :class="{ 'barbeiro-card--ativo': form.barbeiros_ids.includes(barbeiro.id) }"
+                @click="alternarBarbeiro(barbeiro.id)">
+                <div class="row items-center no-wrap q-gutter-sm">
+                  <q-avatar size="36px" class="barbeiro-avatar">
+                    <img v-if="fotoBarbeiroUrl(barbeiro.foto)" :src="fotoBarbeiroUrl(barbeiro.foto)"
+                      :alt="barbeiro.nome">
+                    <q-icon v-else name="person" />
+                  </q-avatar>
+
+                  <div class="barbeiro-nome ellipsis">
+                    {{ barbeiro.nome }}
+                  </div>
+
+                  <q-space />
+
+                  <q-checkbox :model-value="form.barbeiros_ids.includes(barbeiro.id)" color="orange-5"
+                    @update:model-value="alternarBarbeiro(barbeiro.id)" @click.stop />
+                </div>
+              </q-card>
+            </div>
+
+            <div v-if="!barbeiros.length" class="text-caption text-grey-6 q-mt-xs">
+              Nenhum barbeiro cadastrado
+            </div>
+          </div>
+
           <!-- <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
             @click="salvar" /> -->
-          <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo Serviço"
+          <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo ServiÃ§o"
             hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
         </q-card-section>
       </q-card>
@@ -243,6 +276,8 @@ const servicos = ref([
     duracao: ''
   }
 ])
+
+const barbeiros = ref([])
 const servicoSelecionado = ref(null)
 const modalExcluir = ref(false)
 const modalEditarServicoAberto = ref(false)
@@ -326,7 +361,7 @@ const onConfirmSalvarAgendamento = async () => {
 const buscarServicos = async () => {
   console.log(localStorage.getItem('user'))
   try {
-    const { data } = await api.get('/servicos/buscarServicosPorBarbeariaId')
+    const { data } = await api.get('/servicos/buscarServicosDoBarbeiroLogado')
 
     servicos.value = data.map((item) => ({
       id: item.id,
@@ -346,8 +381,31 @@ const buscarServicos = async () => {
 const form = ref({
   nome: '',
   duracao: null,
-  preco: ''
+  preco: '',
+  barbeiros_ids: []
 })
+
+const apiBaseUrl = import.meta.env.VITE_API_URL || ''
+
+const fotoBarbeiroUrl = (foto) => {
+  if (!foto) return null
+  if (/^https?:\/\//i.test(foto)) return foto
+  const caminho = String(foto).replace(/^\/+/, '')
+  return `${apiBaseUrl}/storage/${caminho}`
+}
+
+const alternarBarbeiro = (barbeiroId) => {
+  const selecionados = [...form.value.barbeiros_ids]
+  const index = selecionados.indexOf(barbeiroId)
+
+  if (index >= 0) {
+    selecionados.splice(index, 1)
+  } else {
+    selecionados.push(barbeiroId)
+  }
+
+  form.value.barbeiros_ids = selecionados
+}
 
 const excluirServico = async (servico) => {
   try {
@@ -369,13 +427,57 @@ const excluirServico = async (servico) => {
   }
 }
 
+const buscarBarbeiros = async () => {
+  try {
+    const { data } = await api.get('/barbearia/buscarBarbeiros')
+
+    barbeiros.value = data.barbeiros.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      foto: item.user?.foto || null
+    }))
+    console.log('barbeiros.value')
+
+    console.log(barbeiros.value)
+
+  } catch (error) {
+    console.error('Erro ao buscar Barbeiros', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Erro ao carregar Barbeiros'
+    })
+  }
+}
+
 const salvar = async () => {
+  const nome = String(form.value.nome || '').trim()
+  const duracao = Number(form.value.duracao)
+  const preco = String(form.value.preco || '').trim()
+  const barbeirosIds = form.value.barbeiros_ids || []
+
+  if (!nome || !duracao || !preco) {
+    $q.notify({
+      type: 'negative',
+      message: 'Todos os campos sao obrigatorios'
+    })
+    return false
+  }
+
+  if (!barbeirosIds.length) {
+    $q.notify({
+      type: 'negative',
+      message: 'Selecione os barbeiros que executarão este serviço'
+    })
+    return false
+  }
+
   try {
     console.log('Salvando servico:', form.value)
     await api.post('/servicos/criarNovoServico', {
-      nome: form.value.nome,
-      duracao_minutos: form.value.duracao,
-      preco: form.value.preco.replace(',', '.')
+      nome,
+      duracao_minutos: duracao,
+      preco: preco.replace(',', '.'),
+      barbeiros_ids: barbeirosIds
     })
 
     $q.notify({
@@ -385,14 +487,17 @@ const salvar = async () => {
     form.value.nome = ''
     form.value.duracao = null
     form.value.preco = ''
+    form.value.barbeiros_ids = []
 
     buscarServicos()
+    return true
   } catch (error) {
     console.error(error)
     $q.notify({
       type: 'negative',
       message: 'Erro ao salvar servico'
     })
+    return false
   }
 }
 
@@ -404,6 +509,7 @@ onMounted(async () => {
 
   try {
     await buscarServicos()
+    await buscarBarbeiros()
   } finally {
     carregando.value = false
   }
@@ -482,6 +588,42 @@ onMounted(async () => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.barbeiros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.barbeiro-card {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.barbeiro-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(251, 146, 60, 0.32);
+}
+
+.barbeiro-card--ativo {
+  border-color: rgba(251, 146, 60, 0.45);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.barbeiro-avatar {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.barbeiro-nome {
+  max-width: 150px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
 }
 
 .ghost-btn {

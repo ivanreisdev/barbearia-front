@@ -168,7 +168,7 @@ export const useConfiguracoesBarbearia = () => {
 
   const buscarServicos = async () => {
     try {
-      const { data } = await api.get('/servicos/buscarServicosPorBarbeariaId')
+      const { data } = await api.get('/servicos/buscarServicosDoBarbeiroLogado')
 
       servicos.value = data.map(item => ({
         id: item.id,

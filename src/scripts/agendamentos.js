@@ -291,20 +291,11 @@ export function useAgendamentos(dataSelecionada) {
       repetir: false,
     }
 
-    // try {
-    //   const res = await api.get('/servicos/buscarServicosPorBarbeariaId')
-    //   servicos.value = res.data
-    //   // limpa horários disponíveis ao abrir modal
-    //   horariosDisponiveis.value = []
-    // } catch (err) {
-    //   console.error('Erro ao carregar serviços:', err)
-    //   safeNotify({ type: 'negative', message: 'Erro ao carregar serviços' })
-    // }
   }
 
   const buscarServicos = async () => {
     try {
-      const res = await api.get('/servicos/buscarServicosPorBarbeariaId')
+      const res = await api.get('/servicos/buscarServicosDoBarbeiroLogado')
       servicos.value = res.data
       // limpa horários disponíveis ao abrir modal
       horariosDisponiveis.value = []
