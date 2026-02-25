@@ -102,7 +102,7 @@
 
           <!-- <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
             @click="salvar" /> -->
-          <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo ServiÃ§o"
+          <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo Serviço"
             hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
         </q-card-section>
       </q-card>
@@ -257,7 +257,7 @@ import { useQuasar, Loading } from 'quasar'
 import { api } from 'boot/axios'
 import LoadingLogo from 'components/LoadingLogo.vue'
 import SwipeConfirm from 'components/SwipeConfirm.vue'
-import ModalUpdateServico from 'components/modais/ModalUpdateServico.vue'
+import ModalUpdateServico from 'components/modais/modalUpdateServico.vue'
 
 
 
