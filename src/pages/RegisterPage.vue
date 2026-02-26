@@ -18,49 +18,21 @@
         <q-input filled dark v-model="email" label="Email" class="q-mt-sm input-dark" />
         <q-input filled dark v-model="telefone" label="Telefone" class="q-mt-sm input-dark" />
 
+        <q-input filled dark type="password" v-model="password" label="Senha" class="q-mt-sm input-dark" />
+        <q-input v-if="!isAdmin" filled dark v-model="codigoVinculacao" label="Codigo de Vinculacao"
+          class="q-mt-sm input-dark" />
 
-        <q-input
-          filled
-          dark
-          type="password"
-          v-model="password"
-          label="Senha"
-          class="q-mt-md input-dark"
-        />
-        <q-toggle
-  v-model="isAdmin"
-  color="green"
-  :label="isAdmin ? 'Admin' : 'Barbeiro'"
-  class="q-mt-sm"
-/>
+        <q-toggle v-model="isAdmin" color="green" :label="isAdmin ? 'Admin' : 'Barbeiro'" class="q-mt-sm" />
 
-        <q-input
-  v-if="isAdmin"
-  filled
-  dark
-  v-model="nomeBarbearia"
-  label="Nome da Barbearia"
-  class="q-mt-sm input-dark"
-/>
+        <q-input v-if="isAdmin" filled dark v-model="nomeBarbearia" label="Nome da Barbearia"
+          class="q-mt-sm input-dark" />
 
-<q-input
-  v-if="isAdmin"
-  filled
-  dark
-  v-model="enderecoBarbearia"
-  label="Endereço da Barbearia"
-  class="q-mt-sm input-dark"
-/>
+        <q-input v-if="isAdmin" filled dark v-model="enderecoBarbearia" label="Endereço da Barbearia"
+          class="q-mt-sm input-dark" />
       </q-card-section>
 
       <q-card-actions align="center" class="q-mt-sm">
-        <q-btn
-          label="Registrar"
-          color="amber-8"
-          class="full-width text-bold login-btn"
-          @click="registrar"
-          unelevated
-        />
+        <q-btn label="Registrar" color="amber-8" class="full-width text-bold login-btn" @click="registrar" unelevated />
       </q-card-actions>
 
       <q-card-section class="text-center q-mt-md">

@@ -103,7 +103,7 @@
           <!-- <q-btn label="Adicionar servico" unelevated class="full-width btn-add-servico ghost-btn" size="md"
             @click="salvar" /> -->
           <SwipeConfirm ref="swipeRef" class="novo-servico-swipe" label="Deslize para Criar um Novo Serviço"
-            hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarAgendamento" />
+            hint="Deslize para confirmar" :enabled="!loading" @confirm="onConfirmSalvarServico" />
         </q-card-section>
       </q-card>
 
@@ -352,7 +352,7 @@ const fecharModalExcluir = () => {
   modalExcluir.value = false
 }
 
-const onConfirmSalvarAgendamento = async () => {
+const onConfirmSalvarServico = async () => {
   const sucesso = await salvar()
   if (!sucesso) {
     swipeRef.value?.resetSwipe?.()

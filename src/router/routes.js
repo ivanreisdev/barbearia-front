@@ -96,7 +96,14 @@ const routes = [
         path: 'servicosCreate/:barbeariaId',
         name: 'servicos-create',
         component: () => import('pages/ServicosCreatePage.vue')
-      }
+      },
+
+      //links
+      {
+        path: 'meu-link-contratacao',
+        name: 'link-contratacao-page',
+        component: () => import('pages/links/linkContratacaoPage.vue')
+      },
       // {
       //   path: 'servicosUpdate/:servicoId',
       //   name: 'servicos-update',

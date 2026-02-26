@@ -78,7 +78,8 @@
               <q-item-section>Usuário</q-item-section>
             </q-item>
 
-            <q-item v-if="isAdm" clickable v-ripple to="/config/barbearia" active-class="menu-active" @click="fecharDrawer">
+            <q-item v-if="isAdm" clickable v-ripple to="/config/barbearia" active-class="menu-active"
+              @click="fecharDrawer">
               <q-item-section avatar>
                 <q-icon name="content_cut" size="18px" />
               </q-item-section>
@@ -96,12 +97,21 @@
         </q-expansion-item>
 
         <!-- OUTROS -->
-        <q-item clickable v-ripple to="/meu-link" active-class="menu-active" @click="fecharDrawer">
+        <q-item clickable v-ripple to="/meu-link-agendamento" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="link" size="20px" />
           </q-item-section>
           <q-item-section class="text-weight-medium">
             Meu link de agendamento
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple to="/meu-link-contratacao" active-class="menu-active" @click="fecharDrawer">
+          <q-item-section avatar>
+            <q-icon name="link" size="20px" />
+          </q-item-section>
+          <q-item-section class="text-weight-medium">
+            Meu link de Contratação
           </q-item-section>
         </q-item>
 
@@ -173,7 +183,7 @@ function handleToggleDrawer() {
 
 
 const isAdm = computed(() => {
-  return auth.user?.tipo_usuario =='admin'
+  return auth.user?.tipo_usuario == 'admin'
 })
 
 
@@ -287,7 +297,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.drawer-bg .q-expansion-item__container > .q-item {
+.drawer-bg .q-expansion-item__container>.q-item {
   margin: 0;
   border-radius: 0;
 }
@@ -312,6 +322,7 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 601px) {
+
   .drawer-bg .q-drawer__content,
   .drawer-bg .scroll,
   .drawer-bg .q-scrollarea__container {
@@ -373,5 +384,4 @@ onBeforeUnmount(() => {
     min-height: 44px;
   }
 }
-
 </style>
