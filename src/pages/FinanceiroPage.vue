@@ -26,8 +26,8 @@
       </div>
     </div>
 
-    <div class="row q-col-gutter-md q-mb-lg justify-center">
-      <div class="col-12 col-sm-6 col-lg-3" v-for="card in resumoCards" :key="card.label">
+    <div class="row q-col-gutter-md q-mb-lg resumo-row">
+      <div class="col-12 col-sm resumo-col" v-for="card in resumoCards" :key="card.label">
         <q-card flat bordered class="card-dark summary-card">
           <q-card-section class="row items-center justify-between summary-content">
             <div>
@@ -47,7 +47,7 @@
       <div class="row items-center justify-center q-mb-sm">
         <div class="text-center">
           <div class="text-subtitle1 text-weight-bold">Faturamento por Funcionario</div>
-          <div class="text-caption text-grey-5">Todos os barbeiros da barbearia, incluindo o dono</div>
+          <div class="text-caption text-grey-5">{{ subtituloFaturamentoMembros }}</div>
         </div>
       </div>
 
@@ -231,6 +231,8 @@ import LoadingLogo from 'components/LoadingLogo.vue'
 const agendamentos = ref([])
 const despesas = ref([])
 const membrosFaturamento = ref([])
+const inicioBaseMembros = ref(null)
+const fimBaseMembros = ref(null)
 const $q = useQuasar()
 const mostrarTodasMovimentacoes = ref(false)
 const filtroPeriodoServico = ref('3m')
@@ -419,6 +421,10 @@ const buscarFaturamentoPorMembro = async () => {
   try {
     const response = await api.get('/financeiro/faturamentoPorBarbeiro')
     const data = Array.isArray(response.data) ? response.data : []
+    const primeiroItem = data[0] || {}
+    inicioBaseMembros.value = primeiroItem?.inicio_base || null
+    fimBaseMembros.value = primeiroItem?.fim_base || null
+
     membrosFaturamento.value = data.map((item) => {
       const foto = String(item?.foto || '').replace(/^\/+/, '')
       const fotoUrl = foto
@@ -436,6 +442,8 @@ const buscarFaturamentoPorMembro = async () => {
   } catch (error) {
     console.error('Erro ao buscar faturamento por funcionario:', error)
     membrosFaturamento.value = []
+    inicioBaseMembros.value = null
+    fimBaseMembros.value = null
   }
 }
 
@@ -493,6 +501,35 @@ const formatarDataHora = (dataHoraStr) => {
   if (Number.isNaN(data.getTime())) return dataHoraStr
   return data.toLocaleDateString('pt-BR')
 }
+
+const formatarDataBaseIso = (dataIso) => {
+  if (!dataIso) return null
+  const texto = String(dataIso)
+  const parteData = texto.slice(0, 10)
+  const match = parteData.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (match) {
+    const [, ano, mes, dia] = match
+    return `${dia}/${mes}/${ano}`
+  }
+
+  const data = new Date(texto)
+  if (Number.isNaN(data.getTime())) return null
+  const dia = String(data.getUTCDate()).padStart(2, '0')
+  const mes = String(data.getUTCMonth() + 1).padStart(2, '0')
+  const ano = String(data.getUTCFullYear())
+  return `${dia}/${mes}/${ano}`
+}
+
+const subtituloFaturamentoMembros = computed(() => {
+  const inicio = formatarDataBaseIso(inicioBaseMembros.value)
+  const fim = formatarDataBaseIso(fimBaseMembros.value)
+
+  if (inicio && fim) {
+    return `Todos os barbeiros da barbearia | Data base: ${inicio} ate ${fim}`
+  }
+
+  return 'Todos os barbeiros da barbearia'
+})
 
 const totalReceita = computed(() => {
   const total = receitaMensalRaw.value.reduce((acc, item) => acc + item.valor, 0)
@@ -705,6 +742,14 @@ onMounted(async () => {
 .summary-card {
   min-height: 110px;
 
+}
+
+.resumo-row {
+  flex-wrap: nowrap;
+}
+
+.resumo-col {
+  min-width: 0;
 }
 
 .membro-card {
@@ -953,6 +998,14 @@ onMounted(async () => {
 }
 
 @media (max-width: 599px) {
+  .resumo-row {
+    flex-wrap: wrap;
+  }
+
+  .resumo-col {
+    min-width: 100%;
+  }
+
   .chart-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     height: 180px;

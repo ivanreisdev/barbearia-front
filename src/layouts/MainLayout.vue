@@ -106,7 +106,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple to="/meu-link-contratacao" active-class="menu-active" @click="fecharDrawer">
+        <q-item v-if="isAdm" clickable v-ripple to="/meu-link-contratacao" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="link" size="20px" />
           </q-item-section>
