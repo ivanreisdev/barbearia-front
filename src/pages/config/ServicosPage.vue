@@ -353,10 +353,8 @@ const fecharModalExcluir = () => {
 }
 
 const onConfirmSalvarServico = async () => {
-  const sucesso = await salvar()
-  if (!sucesso) {
-    swipeRef.value?.resetSwipe?.()
-  }
+  await salvar()
+  swipeRef.value?.resetSwipe?.()
 }
 const buscarServicos = async () => {
   console.log(localStorage.getItem('user'))

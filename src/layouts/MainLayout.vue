@@ -41,11 +41,11 @@
           </q-item-section>
         </q-item>
 
-        <q-item-label header class="text-grey-6">
+        <q-item-label v-if="isAdm" header class="text-grey-6">
           FINANCEIRO
         </q-item-label>
 
-        <q-item clickable v-ripple to="/financeiro" active-class="menu-active" @click="fecharDrawer">
+        <q-item v-if="isAdm" clickable v-ripple to="/financeiro" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="attach_money" size="20px" />
           </q-item-section>
@@ -54,7 +54,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple to="/despesas" active-class="menu-active" @click="fecharDrawer">
+        <q-item v-if="isAdm" clickable v-ripple to="/despesas" active-class="menu-active" @click="fecharDrawer">
           <q-item-section avatar>
             <q-icon name="receipt_long" size="20px" />
           </q-item-section>

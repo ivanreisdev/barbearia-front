@@ -129,7 +129,7 @@
       <div class="col-12 col-lg-8">
         <q-card flat bordered class="card-dark card-stack">
           <q-card-section class="row items-center justify-between">
-          <div>
+            <div>
               <div class="text-subtitle1 text-weight-bold">Ultimas Movimentacoes</div>
               <div class="text-caption text-grey-5">Entradas e saidas recentes</div>
             </div>
@@ -189,6 +189,7 @@ const filtroPeriodoServico = ref('3m')
 const ticketMedio = ref('')
 const taxaOcupacao = ref('')
 const carregando = ref(true)
+
 
 
 const periodosServico = [
@@ -361,6 +362,15 @@ const buscarDespesas = async () => {
     const data = response.data
     despesas.value = data?.despesas || []
     console.log('Dados de despesas:', data)
+  } catch (error) {
+    console.error('Erro ao buscar dados de despesas:', error)
+  }
+}
+const buscarFaturamentoPorMembro = async () => {
+  try {
+    const response = await api.get('/financeiro/faturamentoPorBarbeiro')
+    const data = response.data
+    console.log(data);
   } catch (error) {
     console.error('Erro ao buscar dados de despesas:', error)
   }
@@ -577,7 +587,8 @@ onMounted(async () => {
       buscarDadosFaturamento(),
       buscarDespesas(),
       buscarTicketMedioMesAtual(),
-      buscarOcupacaoMesAtual()
+      buscarOcupacaoMesAtual(),
+      buscarFaturamentoPorMembro()
     ])
   } finally {
     carregando.value = false
