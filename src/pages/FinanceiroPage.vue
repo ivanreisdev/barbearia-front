@@ -43,6 +43,53 @@
       </div>
     </div>
 
+    <div class="q-mb-lg">
+      <div class="row items-center justify-center q-mb-sm">
+        <div class="text-center">
+          <div class="text-subtitle1 text-weight-bold">Faturamento por Funcionario</div>
+          <div class="text-caption text-grey-5">Todos os barbeiros da barbearia, incluindo o dono</div>
+        </div>
+      </div>
+
+      <div v-if="membrosFaturamento.length" class="row q-col-gutter-sm justify-center membros-row">
+        <div v-for="membro in membrosFaturamento" :key="membro.id" class="col-12 col-sm-6 col-md-5 col-lg-4 membro-col">
+          <q-card flat bordered class="card-dark membro-card">
+            <q-card-section class="membro-card-section">
+              <div class="membro-header">
+                <q-avatar size="34px" class="membro-avatar">
+                  <img v-if="membro.fotoUrl" :src="membro.fotoUrl" :alt="membro.nome">
+                  <q-icon v-else name="person" color="grey-4" />
+                </q-avatar>
+                <div class="membro-identidade">
+                  <div class="membro-nome ellipsis">{{ membro.nome }}</div>
+                  <div class="membro-cargo">Barbeiro</div>
+                </div>
+              </div>
+
+              <div class="membro-info">
+                <div class="membro-metricas">
+                  <div class="metrica-col">
+                    <div class="metrica-label">Agendamentos</div>
+                    <div class="metrica-valor">{{ membro.totalAgendamentos }}</div>
+                  </div>
+                  <div class="metrica-col">
+                    <div class="metrica-label">Faturamento</div>
+                    <div class="metrica-valor metrica-valor--money">{{ formatarMoeda(membro.totalFaturado) }}</div>
+                  </div>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <q-card v-else flat bordered class="card-dark membro-empty">
+        <q-card-section class="text-center text-grey-5">
+          Nenhum dado de faturamento por funcionario encontrado.
+        </q-card-section>
+      </q-card>
+    </div>
+
     <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-12 col-lg-8">
         <q-card flat bordered class="card-dark chart-card">
@@ -183,12 +230,14 @@ import LoadingLogo from 'components/LoadingLogo.vue'
 
 const agendamentos = ref([])
 const despesas = ref([])
+const membrosFaturamento = ref([])
 const $q = useQuasar()
 const mostrarTodasMovimentacoes = ref(false)
 const filtroPeriodoServico = ref('3m')
 const ticketMedio = ref('')
 const taxaOcupacao = ref('')
 const carregando = ref(true)
+const apiBaseUrl = import.meta.env.VITE_API_URL || ''
 
 
 
@@ -369,10 +418,24 @@ const buscarDespesas = async () => {
 const buscarFaturamentoPorMembro = async () => {
   try {
     const response = await api.get('/financeiro/faturamentoPorBarbeiro')
-    const data = response.data
-    console.log(data);
+    const data = Array.isArray(response.data) ? response.data : []
+    membrosFaturamento.value = data.map((item) => {
+      const foto = String(item?.foto || '').replace(/^\/+/, '')
+      const fotoUrl = foto
+        ? (/^https?:\/\//i.test(foto) ? foto : `${apiBaseUrl}/storage/${foto}`)
+        : null
+
+      return {
+        id: item?.barbeiro_id,
+        nome: item?.nome || 'Funcionario',
+        fotoUrl,
+        totalAgendamentos: Number(item?.total_agendamentos || 0),
+        totalFaturado: Number(item?.total_faturado || 0)
+      }
+    })
   } catch (error) {
-    console.error('Erro ao buscar dados de despesas:', error)
+    console.error('Erro ao buscar faturamento por funcionario:', error)
+    membrosFaturamento.value = []
   }
 }
 
@@ -642,6 +705,108 @@ onMounted(async () => {
 .summary-card {
   min-height: 110px;
 
+}
+
+.membro-card {
+  min-height: 110px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.membros-row {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.membro-col {
+  max-width: 400px;
+}
+
+.membro-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.membro-card-section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px;
+}
+
+.membro-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.membro-avatar {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.membro-identidade {
+  min-width: 0;
+}
+
+.membro-nome {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.membro-cargo {
+  margin-top: 1px;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+}
+
+.membro-info {
+  min-width: 0;
+  width: 100%;
+}
+
+.membro-metricas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.metrica-col {
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 9px 10px;
+  text-align: center;
+}
+
+.metrica-valor {
+  margin-top: 4px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.metrica-valor--money {
+  color: #86efac;
+}
+
+.metrica-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+}
+
+.membro-empty {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .summary-content {
