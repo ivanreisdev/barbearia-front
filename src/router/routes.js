@@ -38,6 +38,12 @@ const routes = [
   },
 
   {
+    path: '/chat/:id',
+    name: 'chat-publico',
+    component: () => import('pages/ChatPage.vue')
+  },
+
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     beforeEnter: requireAuth, // 🔥 PROTEGE TUDO

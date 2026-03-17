@@ -359,7 +359,7 @@ const onConfirmSalvarServico = async () => {
 const buscarServicos = async () => {
   console.log(localStorage.getItem('user'))
   try {
-    const { data } = await api.get('/servicos/buscarServicosDoBarbeiroLogado')
+    const { data } = await api.get('/servicos/buscarServicosDaBarbearia')
 
     servicos.value = data.map((item) => ({
       id: item.id,

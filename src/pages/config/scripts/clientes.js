@@ -45,7 +45,7 @@ export const useClientes = () => {
       clientes.value = data.clientes
     } catch (error) {
       console.error(error)
-      $q.notify({ type: 'negative', message: 'Erro ao carregar barbearia' })
+      $q.notify({ type: 'negative', message: 'Erro ao carregar clientes' })
     }
   }
 
