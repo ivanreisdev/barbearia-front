@@ -38,7 +38,7 @@ const routes = [
   },
 
   {
-    path: '/chat/:id',
+    path: '/chat/:cod_agendamento',
     name: 'chat-publico',
     component: () => import('pages/ChatPage.vue')
   },

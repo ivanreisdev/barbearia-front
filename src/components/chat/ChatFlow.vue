@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-shell">
+  <div v-if="isReady" class="chat-shell">
     <header class="chat-header">
       <div class="brand">
         <div class="brand-avatar">
@@ -14,36 +14,41 @@
     </header>
 
     <section class="chat-body" ref="bodyRef">
-      <transition-group v-if="isReady" name="bubble" tag="div" class="chat-bubbles">
+      <transition-group name="bubble" tag="div" class="chat-bubbles">
         <div v-for="msg in messages" :key="msg.id" class="bubble"
           :class="msg.role === 'assistant' ? 'bubble-assistant' : 'bubble-user'">
           <div class="bubble-text">{{ msg.text }}</div>
           <div class="bubble-time">{{ msg.time }}</div>
         </div>
       </transition-group>
-
-      <div v-else class="loading-state">
-        <div class="loading-card">
-          <q-spinner color="amber-5" size="32px" />
-          <div class="loading-title">Carregando barbearia...</div>
-          <div class="loading-subtitle">Preparando o atendimento.</div>
-        </div>
-      </div>
     </section>
 
-    <section class="chat-input" v-if="isReady">
+    <section class="chat-input">
       <div v-if="currentStep?.type === 'select' && currentStep?.key === 'barbeiro'" class="barbeiros-scroll">
         <q-card
           v-for="barbeiro in barbeirosCards"
           :key="barbeiro.value"
           class="barbeiro-card"
-          :class="{ 'barbeiro-card--ativo': form.barbeiro === barbeiro.value }"
+          :class="{
+            'barbeiro-card--ativo': form.barbeiro_id === barbeiro.value,
+            'barbeiro-card--indisponivel': !barbeiro.temServicos
+          }"
           flat
           bordered
           clickable
           v-ripple
-          @click="selectOption(barbeiro)"
+          @click="barbeiro.temServicos && selectOption(barbeiro)"
         >
+          <q-btn
+            v-if="!barbeiro.temServicos"
+            dense
+            flat
+            round
+            size="sm"
+            icon="info"
+            class="barbeiro-card__info"
+            @click.stop="modalBarbeiroSemServicos = true"
+          />
           <div class="barbeiro-card__foto">
             <img v-if="barbeiro.fotoUrl" :src="barbeiro.fotoUrl" :alt="barbeiro.label" />
             <div v-else class="barbeiro-card__foto-fallback">
@@ -61,38 +66,149 @@
           v-for="option in currentStep.options"
           :key="option.value"
           class="servico-card"
-          :class="{ 'servico-card--ativo': form.servico === option.value }"
+          :class="{ 'servico-card--ativo': form.servicos_ids.includes(option.value) }"
           flat
           bordered
           clickable
           v-ripple
-          @click="selectOption(option)"
+          @click="toggleServico(option)"
         >
+          <q-checkbox
+            dense
+            color="grey-4"
+            class="servico-card__check"
+            :model-value="form.servicos_ids.includes(option.value)"
+            @update:model-value="toggleServico(option)"
+            @click.stop
+          />
           <div class="servico-card__nome">
             {{ option.label }}
           </div>
+          <div v-if="option.precoFormatado" class="servico-card__preco">
+            {{ option.precoFormatado }}
+          </div>
         </q-card>
       </div>
-
-      <div v-else-if="currentStep?.type === 'select'" class="options-grid">
-        <q-btn v-for="option in currentStep.options" :key="option.value" :label="option.label" no-caps
-          class="option-btn" @click="selectOption(option)" />
+      <div v-else-if="currentStep?.type === 'select' && currentStep?.key === 'horario'" class="horarios-area">
+        <div v-if="horariosLoading" class="horarios-loading">
+          <q-spinner color="amber-4" size="28px" />
+          <span>Carregando horarios...</span>
+        </div>
+        <div v-else-if="horariosMensagem" class="horarios-empty">
+          {{ horariosMensagem }}
+        </div>
+        <div v-else class="horarios-scroll">
+          <q-card
+            v-for="option in currentStep.options"
+            :key="option.value"
+            class="horario-card"
+            :class="{ 'horario-card--ativo': form.horario === option.value }"
+            flat
+            bordered
+            clickable
+            v-ripple
+            @click="selectOption(option)"
+          >
+            <div class="horario-card__hora">{{ option.label }}</div>
+          </q-card>
+        </div>
+      </div>
+      <div v-if="currentStep?.type === 'select' && currentStep?.key === 'servico'" class="servicos-action">
+        <q-btn
+          label="Continuar"
+          class="primary-action"
+          no-caps
+          unelevated
+          :disable="!form.servicos_ids.length"
+          @click="confirmarServicos"
+        />
       </div>
 
       <div v-else-if="currentStep?.type === 'final'" class="final-actions">
-        <q-btn label="Confirmar agendamento" class="primary-action" no-caps unelevated @click="confirmarAgendamento" />
-        <q-btn label="Editar respostas" class="secondary-action" flat no-caps @click="reiniciar" />
+        <div v-if="editMenuAberto" class="edit-menu">
+          <div class="edit-title">Qual informacao deseja alterar?</div>
+          <div class="edit-options">
+            <q-btn
+              v-for="option in editOptions"
+              :key="option.key"
+              :label="option.label"
+              no-caps
+              flat
+              class="edit-option-btn"
+              @click="iniciarEdicao(option.key)"
+            />
+          </div>
+          <q-btn label="Cancelar" no-caps flat class="secondary-action" @click="cancelarEdicao" />
+        </div>
+        <template v-else>
+          <q-btn label="Confirmar agendamento" class="primary-action" no-caps unelevated @click="confirmarAgendamento" />
+          <q-btn label="Editar Informações" class="back-btn" flat no-caps @click="abrirEdicao" />
+        </template>
       </div>
 
-      <div v-else class="input-row">
-        <q-input v-model="inputValue" dense dark filled :type="currentStep?.inputType || 'text'"
-          :placeholder="currentStep?.placeholder" class="chat-input-field" @keyup.enter="enviarResposta" />
+      <div v-else-if="currentStep?.type !== 'select'" class="input-row">
+        <q-input
+          :model-value="inputValue"
+          dense
+          dark
+          filled
+          :type="currentStep?.inputType || 'text'"
+          :placeholder="currentStep?.placeholder"
+          :maxlength="currentStep?.key === 'telefone' ? 15 : undefined"
+          class="chat-input-field"
+          @update:model-value="handleInputValue"
+          @keyup.enter="enviarResposta"
+        />
         <q-btn label="Enviar" no-caps unelevated class="send-btn" @click="enviarResposta" />
       </div>
 
-      <div v-if="inputError" class="input-error">{{ inputError }}</div>
+      <div v-if="stepIndex > 0 && currentStep?.key !== 'final'" class="back-action">
+        <q-btn label="Voltar" no-caps flat class="back-btn" @click="voltar" />
+      </div>
     </section>
   </div>
+
+  <q-dialog v-model="modalBarbeariaNaoEncontrada" persistent>
+    <q-card class="erro-card">
+      <q-card-section class="erro-header">
+        <div class="erro-icon">
+          <span class="erro-icon-text">!</span>
+        </div>
+        <div>
+          <div class="erro-title">Barbearia nao encontrada</div>
+          <div class="erro-subtitle">Verifique o link e tente novamente.</div>
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="modalBarbeariaSemServicos" persistent>
+    <q-card class="erro-card">
+      <q-card-section class="erro-header">
+        <div class="erro-icon">
+          <span class="erro-icon-text">!</span>
+        </div>
+        <div>
+          <div class="erro-title">Barbearia sem servicos</div>
+          <div class="erro-subtitle">A barbearia nao possui servicos cadastrados ainda.</div>
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="modalBarbeiroSemServicos">
+    <q-card class="erro-card">
+      <q-card-section class="erro-header">
+        <div class="erro-icon">
+          <span class="erro-icon-text">!</span>
+        </div>
+        <div>
+          <div class="erro-title">Barbeiro indisponivel</div>
+          <div class="erro-subtitle">O barbeiro escolhido não possui servicos para realizar.</div>
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup>
@@ -107,18 +223,30 @@ const inputError = ref('')
 const stepIndex = ref(0)
 const route = useRoute()
 const isReady = ref(false)
+const modalBarbeariaNaoEncontrada = ref(false)
+const modalBarbeariaSemServicos = ref(false)
+const modalBarbeiroSemServicos = ref(false)
+const horariosLoading = ref(false)
+const horariosMensagem = ref('')
+const editMenuAberto = ref(false)
+const editTarget = ref('')
 
 const barbearia = ref({
   nome: 'Barbearia Modelo',
   barbeiros: [],
 })
 
+const servicos = ref([])
+const horariosDisponiveis = ref([])
+
 const form = reactive({
   nome: '',
   email: '',
   telefone: '',
   barbeiro: '',
-  servico: '',
+  barbeiro_id: null,
+  servicos: [],
+  servicos_ids: [],
   data: '',
   horario: '',
 })
@@ -132,7 +260,8 @@ const barbeirosOptions = computed(() => {
       if (!nome) return null
       return {
         label: nome,
-        value: nome,
+        value: item?.id ?? nome,
+        temServicos: Array.isArray(item?.servicos) && item.servicos.length > 0,
       }
     })
     .filter(Boolean)
@@ -159,23 +288,48 @@ const barbeirosCards = computed(() => {
       if (!nome) return null
       return {
         label: nome,
-        value: nome,
+        value: item?.id ?? nome,
         fotoUrl: fotoBarbeiroUrl(item?.user?.foto || null),
+        temServicos: Array.isArray(item?.servicos) && item.servicos.length > 0,
       }
     })
     .filter(Boolean)
 
   if (mapped.length) return mapped
-  return [{ label: 'Qualquer barbeiro', value: 'qualquer', fotoUrl: null }]
+  return []
 })
+
+const servicosOptions = computed(() => {
+  return (servicos.value || [])
+    .map(item => ({
+      label: item?.nome,
+      value: item?.id ?? item?.nome,
+      precoFormatado: formatarPreco(item?.preco),
+    }))
+    .filter(item => item.label)
+})
+
+const editOptions = computed(() => ([
+  { key: 'nome', label: 'Nome' },
+  { key: 'email', label: 'Email' },
+  { key: 'telefone', label: 'Telefone' },
+  { key: 'barbeiro', label: 'Barbeiro' },
+  { key: 'servico', label: 'Servicos' },
+  { key: 'data', label: 'Data' },
+  { key: 'horario', label: 'Horario' },
+]))
 
 const steps = computed(() => [
   {
     key: 'nome',
     inputType: 'text',
     placeholder: 'Digite seu nome',
-    validate: value => value.trim().length >= 2,
-    error: 'Informe seu nome.',
+    validate: value => {
+      const texto = value.trim()
+      if (texto.length < 2) return false
+      return !/[^a-zA-ZÀ-ÿ\s]/.test(texto)
+    },
+    error: 'Desculpe, insira um nome valido e sem Caracteres Especiais ou Numeros (ex: Nome Sobrenome)',
     question: () =>
       `Ola, eu sou a assistente da ${barbeariaTitulo.value}. Qual e o seu nome?`,
   },
@@ -183,16 +337,19 @@ const steps = computed(() => [
     key: 'email',
     inputType: 'email',
     placeholder: 'Digite seu email',
-    validate: value => /\S+@\S+\.\S+/.test(value),
-    error: 'Informe um email valido.',
+    validate: value => /@.+\.com$/i.test(value.trim()),
+    error: 'Desculpe, insira um email valido para continuar.',
     question: () => `Prazer, ${form.nome}. Qual e o seu email?`,
   },
   {
     key: 'telefone',
     inputType: 'tel',
     placeholder: 'Digite seu telefone',
-    validate: value => value.replace(/\D/g, '').length >= 10,
-    error: 'Informe um telefone com DDD.',
+    validate: value => {
+      const digits = value.replace(/\D/g, '')
+      return digits.length >= 10 && digits.length <= 11
+    },
+    error: 'Informe um telefone valido com DDD.',
     question: () => 'Qual telefone podemos usar no agendamento?',
   },
   {
@@ -200,18 +357,13 @@ const steps = computed(() => [
     type: 'select',
     options: barbeirosOptions.value.length
       ? barbeirosOptions.value
-      : [{ label: 'Qualquer barbeiro', value: 'qualquer' }],
-    question: () => 'Com qual barbeiro voce quer ser atendido?',
+      : [],
+    question: () => 'Com qual Profissional você quer ser atendido?',
   },
   {
     key: 'servico',
     type: 'select',
-    options: [
-      { label: 'Corte', value: 'Corte' },
-      { label: 'Barba', value: 'Barba' },
-      { label: 'Corte + Barba', value: 'Corte + Barba' },
-      { label: 'Acabamento', value: 'Acabamento' },
-    ],
+    options: servicosOptions.value,
     question: () => 'Qual servico voce deseja?',
   },
   {
@@ -225,19 +377,24 @@ const steps = computed(() => [
   {
     key: 'horario',
     type: 'select',
-    options: [
-      { label: '09:00', value: '09:00' },
-      { label: '10:30', value: '10:30' },
-      { label: '14:00', value: '14:00' },
-      { label: '16:30', value: '16:30' },
-    ],
+    options: horariosDisponiveis.value.length
+      ? horariosDisponiveis.value
+      : [],
     question: () => 'Qual horario fica melhor?',
   },
   {
     key: 'final',
     type: 'final',
     question: () =>
-      `Resumo: ${form.nome} - ${form.email} - ${form.telefone}. Barbeiro: ${form.barbeiro}. Servico: ${form.servico} em ${form.data} as ${form.horario}. Posso confirmar o agendamento?`,
+      `Resumo do agendamento:\n` +
+      `Nome: ${form.nome}\n` +
+      `Email: ${form.email}\n` +
+      `Telefone: ${form.telefone}\n` +
+      `Barbeiro: ${form.barbeiro}\n` +
+      `Servicos: ${form.servicos.join(', ')}\n` +
+      `Data: ${formatarDataBR(form.data)}\n` +
+      `Horario: ${form.horario}\n\n` +
+      `Posso confirmar o agendamento?`,
   },
 ])
 
@@ -248,6 +405,141 @@ const formatTime = date => {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+const formatarPreco = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return null
+  const numero = Number(String(valor).replace(',', '.'))
+  if (Number.isNaN(numero)) return null
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(numero)
+}
+
+const formatarDataBR = (valor) => {
+  if (!valor) return ''
+  const partes = String(valor).split('-')
+  if (partes.length !== 3) return String(valor)
+  const [ano, mes, dia] = partes
+  if (!ano || !mes || !dia) return String(valor)
+  return `${dia}/${mes}/${ano}`
+}
+
+const formatarTelefone = (valor) => {
+  const digits = String(valor ?? '').replace(/\D/g, '').slice(0, 11)
+  if (!digits) return ''
+  const ddd = digits.slice(0, 2)
+  const resto = digits.slice(2)
+  if (!resto) return `(${ddd}`
+  if (resto.length <= 4) return `(${ddd}) ${resto}`
+  if (resto.length <= 8) {
+    return `(${ddd}) ${resto.slice(0, 4)}-${resto.slice(4)}`
+  }
+  return `(${ddd}) ${resto.slice(0, 5)}-${resto.slice(5)}`
+}
+
+const handleInputValue = (valor) => {
+  if (currentStep.value?.key === 'telefone') {
+    inputValue.value = formatarTelefone(valor)
+    return
+  }
+  inputValue.value = valor
+}
+
+const clearStepKey = (key) => {
+  if (!key) return
+  if (key === 'barbeiro') {
+    form.barbeiro = ''
+    form.barbeiro_id = null
+    servicos.value = []
+    form.servicos = []
+    form.servicos_ids = []
+    form.data = ''
+    form.horario = ''
+    horariosDisponiveis.value = []
+    horariosMensagem.value = ''
+    return
+  }
+  if (key === 'servico') {
+    form.servicos = []
+    form.servicos_ids = []
+    form.data = ''
+    form.horario = ''
+    horariosDisponiveis.value = []
+    horariosMensagem.value = ''
+    return
+  }
+  if (key === 'data') {
+    form.data = ''
+    form.horario = ''
+    horariosDisponiveis.value = []
+    horariosMensagem.value = ''
+    return
+  }
+  if (key === 'horario') {
+    form.horario = ''
+    return
+  }
+  if (key in form) {
+    form[key] = ''
+  }
+}
+
+const resetAfterStep = (stepKey) => {
+  const keys = steps.value.map(step => step.key)
+  const fromIndex = keys.indexOf(stepKey)
+  if (fromIndex < 0) return
+  for (let i = fromIndex + 1; i < keys.length; i += 1) {
+    clearStepKey(keys[i])
+  }
+}
+
+const abrirEdicao = () => {
+  editMenuAberto.value = true
+  editTarget.value = ''
+  inputError.value = ''
+}
+
+const cancelarEdicao = () => {
+  editMenuAberto.value = false
+  editTarget.value = ''
+}
+
+const iniciarEdicao = (key) => {
+  const index = steps.value.findIndex(step => step.key === key)
+  if (index < 0) return
+  editMenuAberto.value = false
+  editTarget.value = key
+  stepIndex.value = index
+  inputError.value = ''
+  const step = steps.value[index]
+  if (step?.type === 'select' || step?.type === 'final') {
+    pushMessage('assistant', step.question())
+    inputValue.value = ''
+    return
+  }
+  inputValue.value = String(form[key] ?? '')
+  pushMessage('assistant', step.question())
+}
+
+const voltar = () => {
+  if (stepIndex.value === 0) return
+  if (messages.value.length) messages.value.pop()
+  if (messages.value.length && messages.value[messages.value.length - 1].role === 'user') {
+    messages.value.pop()
+  }
+  stepIndex.value -= 1
+  const step = steps.value[stepIndex.value]
+  if (!editTarget.value) {
+    resetAfterStep(step?.key)
+  }
+  inputError.value = ''
+  if (!step || step.type === 'select' || step.type === 'final') {
+    inputValue.value = ''
+    return
+  }
+  inputValue.value = String(form[step.key] ?? '')
 }
 
 const pushMessage = (role, text) => {
@@ -271,6 +563,8 @@ const startFlow = () => {
   messages.value = []
   inputValue.value = ''
   inputError.value = ''
+  editMenuAberto.value = false
+  editTarget.value = ''
   pushMessage('assistant', steps.value[0].question())
 }
 
@@ -281,6 +575,10 @@ const enviarResposta = () => {
   const value = inputValue.value.trim()
   if (step.validate && !step.validate(value)) {
     inputError.value = step.error || 'Resposta invalida.'
+    if (step.error) {
+      pushMessage('assistant', step.error)
+    }
+    inputValue.value = ''
     return
   }
 
@@ -288,6 +586,9 @@ const enviarResposta = () => {
   form[step.key] = value
   pushMessage('user', value)
   inputValue.value = ''
+  if (step.key === 'data' && !editTarget.value) {
+    buscarHorariosDisponivceis(form.barbeiro_id, value, form.servicos_ids)
+  }
   avancar()
 }
 
@@ -295,31 +596,124 @@ const selectOption = option => {
   const step = currentStep.value
   if (!step || step.type !== 'select') return
 
+  if (step.key === 'barbeiro') {
+    if (!option.temServicos) {
+      modalBarbeiroSemServicos.value = true
+      return
+    }
+    form.barbeiro = option.label
+    form.barbeiro_id = option.value
+    const barber = (barbearia.value.barbeiros || []).find(
+      item => item?.id === option.value
+    )
+    servicos.value = Array.isArray(barber?.servicos) ? barber.servicos : []
+    pushMessage('user', option.label)
+    avancar()
+    return
+  }
+
   form[step.key] = option.value
   pushMessage('user', option.label)
   avancar()
 }
 
-const buscarBarbearia = async (id) => {
-  if (!id) {
-    return
+const toggleServico = (option) => {
+  const ids = [...form.servicos_ids]
+  const labels = [...form.servicos]
+  const index = ids.indexOf(option.value)
+  if (index >= 0) {
+    ids.splice(index, 1)
+    labels.splice(index, 1)
+  } else {
+    ids.push(option.value)
+    labels.push(option.label)
   }
+  form.servicos_ids = ids
+  form.servicos = labels
+}
+
+const confirmarServicos = () => {
+  if (!form.servicos.length) return
+  pushMessage('user', form.servicos.join(', '))
+  avancar()
+}
+
+const buscarHorariosDisponivceis = async (idBarbeiro, dataSelecionada, servicosSelecionados) => {
+  if (!idBarbeiro || !dataSelecionada) return
+  horariosLoading.value = true
+  horariosMensagem.value = ''
+  horariosDisponiveis.value = []
 
   try {
-    const { data } = await api.get(`/barbearia/${id}`)
+    const { data } = await api.get('/horarios-atendimento/buscarHorariosDisponivceisChat', {
+      params: {
+        idBarbeiro,
+        dataSelecionada,
+        servico: servicosSelecionados,
+      },
+    })
 
-    if (data?.barbearia) {
-      barbearia.value = { ...barbearia.value, ...data.barbearia }
+    if (Array.isArray(data?.horarios)) {
+      horariosDisponiveis.value = data.horarios.map((item) => ({
+        label: String(item),
+        value: String(item),
+      }))
+      if (!horariosDisponiveis.value.length) {
+        horariosMensagem.value = 'Nao ha horarios disponiveis para esse dia.'
+      }
     } else {
-      barbearia.value = { ...barbearia.value, nome: `Barbearia ${id}` }
+      horariosDisponiveis.value = []
+      horariosMensagem.value = 'Nao ha horarios disponiveis para esse dia.'
     }
   } catch (error) {
     console.error(error)
-    barbearia.value = { ...barbearia.value, nome: `Barbearia ${id}` }
+    horariosDisponiveis.value = []
+    horariosMensagem.value = 'Nao foi possivel carregar os horarios.'
+  } finally {
+    horariosLoading.value = false
+  }
+}
+
+const buscarBarbearia = async (id) => {
+  if (!id) {
+    modalBarbeariaNaoEncontrada.value = true
+    return false
+  }
+
+  try {
+    const { data } = await api.get(`/barbearia/infoId${id}`)
+
+    if (data?.barbearia) {
+      barbearia.value = { ...barbearia.value, ...data.barbearia }
+      const possuiServicos = (barbearia.value.barbeiros || []).some(
+        item => Array.isArray(item?.servicos) && item.servicos.length
+      )
+      if (!possuiServicos) {
+        modalBarbeariaSemServicos.value = true
+        return false
+      }
+      return true
+    } else {
+      modalBarbeariaNaoEncontrada.value = true
+      return false
+    }
+  } catch (error) {
+    console.error(error)
+    modalBarbeariaNaoEncontrada.value = true
+    return false
   }
 }
 
 const avancar = () => {
+  if (editTarget.value) {
+    const finalIndex = steps.value.findIndex(step => step.key === 'final')
+    editTarget.value = ''
+    stepIndex.value = finalIndex >= 0 ? finalIndex : stepIndex.value
+    const nextStep = steps.value[stepIndex.value]
+    if (!nextStep) return
+    pushMessage('assistant', nextStep.question())
+    return
+  }
   stepIndex.value += 1
   const nextStep = steps.value[stepIndex.value]
   if (!nextStep) return
@@ -334,12 +728,9 @@ const confirmarAgendamento = () => {
   )
 }
 
-const reiniciar = () => {
-  startFlow()
-}
-
 onMounted(async () => {
-  await buscarBarbearia(route.params.id)
+  const ok = await buscarBarbearia(route.params.cod_agendamento)
+  if (!ok) return
   isReady.value = true
   startFlow()
 })
@@ -353,7 +744,7 @@ onMounted(async () => {
   gap: 18px;
   padding: 24px;
   color: #f8fafc;
-  font-family: 'Sora', 'Manrope', sans-serif;
+  font-family: 'Inter', sans-serif;
   width: 100%;
 }
 
@@ -490,12 +881,8 @@ onMounted(async () => {
   color: #0f172a;
   font-weight: 700;
   border-radius: 12px;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  min-height: 40px;
+  padding: 0 18px;
 }
 
 .servicos-scroll {
@@ -523,28 +910,118 @@ onMounted(async () => {
 }
 
 .servico-card {
-  min-width: 140px;
-  max-width: 180px;
-  height: 100px;
+  min-width: 160px;
+  max-width: 200px;
+  min-height: 110px;
   flex: 0 0 auto;
-  border-radius: 14px;
-  padding: 12px 14px;
-  text-align: center;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(103, 106, 112, 0.6);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background:
+    radial-gradient(120px 80px at 80% -10%, rgba(252, 242, 219, 0.15), transparent 70%),
+    linear-gradient(160deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.35);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
 }
 
 .servico-card--ativo {
-  border-color: rgba(226, 232, 240, 0.6);
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
-  transform: translateY(-1px);
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 14px 28px rgba(245, 158, 11, 0.18), 0 8px 16px rgba(15, 23, 42, 0.35);
+  transform: translateY(-2px);
+  background:
+    radial-gradient(140px 90px at 85% -10%, rgba(226, 232, 240, 0.22), transparent 70%),
+    linear-gradient(160deg, rgba(71, 85, 105, 0.88), rgba(51, 65, 85, 0.88));
 }
 
 .servico-card__nome {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.98rem;
+  font-weight: 700;
   color: #f8fafc;
+  letter-spacing: 0.2px;
+}
+
+.servico-card__preco {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: rgba(114, 113, 109, 0.92);
+  text-transform: uppercase;
+  margin-top: auto;
+  align-self: flex-end;
+}
+
+.servico-card__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.servicos-action {
+  display: flex;
+  justify-content: center;
+}
+
+.servicos-action .primary-action {
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.horarios-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.horarios-loading,
+.horarios-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 84px;
+  border-radius: 14px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  color: rgba(226, 232, 240, 0.85);
+  background: rgba(15, 23, 42, 0.45);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 12px;
+}
+
+.horarios-scroll {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.horario-card {
+  min-width: 86px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.7);
+  color: #f8fafc;
+  font-weight: 600;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.horario-card--ativo {
+  border-color: rgba(34, 197, 94, 0.7);
+  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.18);
+  transform: translateY(-1px);
 }
 
 .barbeiros-scroll {
@@ -584,12 +1061,28 @@ onMounted(async () => {
   border: 1px solid rgba(148, 163, 184, 0.25);
   background: rgba(15, 23, 42, 0.6);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
 
 .barbeiro-card--ativo {
   border-color: rgba(245, 158, 11, 0.8);
   box-shadow: 0 10px 20px rgba(245, 158, 11, 0.15);
   transform: translateY(-1px);
+}
+
+.barbeiro-card--indisponivel {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+}
+
+.barbeiro-card__info {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.65);
 }
 
 .barbeiro-card__foto {
@@ -635,6 +1128,35 @@ onMounted(async () => {
   gap: 10px;
 }
 
+.edit-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.edit-title {
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.edit-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.edit-option-btn {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  color: #e2e8f0;
+  background: rgba(51, 60, 75, 0.9);
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
 .primary-action {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #052e16;
@@ -646,10 +1168,77 @@ onMounted(async () => {
   color: #e2e8f0;
 }
 
-.input-error {
-  color: #fca5a5;
-  font-size: 0.8rem;
+.back-action {
+  display: flex;
+  justify-content: center;
 }
+
+.back-btn {
+  color: rgba(226, 232, 240, 0.85);
+  background: rgba(51, 60, 75, 0.9);
+  border-radius: 12px;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.erro-card {
+  min-width: 320px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.95));
+  color: #f8fafc;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+}
+
+.erro-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  position: relative;
+}
+
+.erro-icon {
+  position: relative;
+  width: 0;
+  height: 0;
+  border-left: 24px solid transparent;
+  border-right: 24px solid transparent;
+  border-bottom: 44px solid #f59e0b;
+}
+
+.erro-icon::after {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 6px;
+  width: 0;
+  height: 0;
+  border-left: 22px solid transparent;
+  border-right: 22px solid transparent;
+  border-bottom: 40px solid #f97316;
+  z-index: -1;
+}
+
+.erro-icon-text {
+  position: absolute;
+  top: 12px;
+  left: -4px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+
+.erro-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.erro-subtitle {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.7);
+}
+
 
 .bubble-enter-active,
 .bubble-leave-active {
@@ -664,34 +1253,6 @@ onMounted(async () => {
 .bubble-enter-to {
   opacity: 1;
   transform: translateY(0);
-}
-
-.loading-state {
-  height: 100%;
-  min-height: 260px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-card {
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-  text-align: center;
-  padding: 20px 26px;
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.7);
-}
-
-.loading-title {
-  font-weight: 700;
-}
-
-.loading-subtitle {
-  font-size: 0.85rem;
-  color: rgba(226, 232, 240, 0.7);
 }
 
 @media (max-width: 600px) {
@@ -713,6 +1274,21 @@ onMounted(async () => {
 
   .chat-input-field {
     max-width: 100%;
+  }
+
+  .send-btn,
+  .back-btn,
+  .edit-option-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .edit-options {
+    width: 100%;
+  }
+
+  .servicos-action .primary-action {
+    width: 100%;
   }
 }
 
