@@ -23,32 +23,14 @@
       </transition-group>
     </section>
 
-    <section class="chat-input">
+    <section class="chat-input" v-if="!agendamentoFinalizado">
       <div v-if="currentStep?.type === 'select' && currentStep?.key === 'barbeiro'" class="barbeiros-scroll">
-        <q-card
-          v-for="barbeiro in barbeirosCards"
-          :key="barbeiro.value"
-          class="barbeiro-card"
-          :class="{
-            'barbeiro-card--ativo': form.barbeiro_id === barbeiro.value,
-            'barbeiro-card--indisponivel': !barbeiro.temServicos
-          }"
-          flat
-          bordered
-          clickable
-          v-ripple
-          @click="barbeiro.temServicos && selectOption(barbeiro)"
-        >
-          <q-btn
-            v-if="!barbeiro.temServicos"
-            dense
-            flat
-            round
-            size="sm"
-            icon="info"
-            class="barbeiro-card__info"
-            @click.stop="modalBarbeiroSemServicos = true"
-          />
+        <q-card v-for="barbeiro in barbeirosCards" :key="barbeiro.value" class="barbeiro-card" :class="{
+          'barbeiro-card--ativo': form.barbeiro_id === barbeiro.value,
+          'barbeiro-card--indisponivel': !barbeiro.temServicos
+        }" flat bordered clickable v-ripple @click="barbeiro.temServicos && selectOption(barbeiro)">
+          <q-btn v-if="!barbeiro.temServicos" dense flat round size="sm" icon="info" class="barbeiro-card__info"
+            @click.stop="modalBarbeiroSemServicos = true" />
           <div class="barbeiro-card__foto">
             <img v-if="barbeiro.fotoUrl" :src="barbeiro.fotoUrl" :alt="barbeiro.label" />
             <div v-else class="barbeiro-card__foto-fallback">
@@ -62,25 +44,12 @@
       </div>
 
       <div v-else-if="currentStep?.type === 'select' && currentStep?.key === 'servico'" class="servicos-scroll">
-        <q-card
-          v-for="option in currentStep.options"
-          :key="option.value"
-          class="servico-card"
-          :class="{ 'servico-card--ativo': form.servicos_ids.includes(option.value) }"
-          flat
-          bordered
-          clickable
-          v-ripple
-          @click="toggleServico(option)"
-        >
-          <q-checkbox
-            dense
-            color="grey-4"
-            class="servico-card__check"
-            :model-value="form.servicos_ids.includes(option.value)"
-            @update:model-value="toggleServico(option)"
-            @click.stop
-          />
+        <q-card v-for="option in currentStep.options" :key="option.value" class="servico-card"
+          :class="{ 'servico-card--ativo': form.servicos_ids.includes(option.value) }" flat bordered clickable v-ripple
+          @click="toggleServico(option)">
+          <q-checkbox dense color="grey-4" class="servico-card__check"
+            :model-value="form.servicos_ids.includes(option.value)" @update:model-value="toggleServico(option)"
+            @click.stop />
           <div class="servico-card__nome">
             {{ option.label }}
           </div>
@@ -98,68 +67,39 @@
           {{ horariosMensagem }}
         </div>
         <div v-else class="horarios-scroll">
-          <q-card
-            v-for="option in currentStep.options"
-            :key="option.value"
-            class="horario-card"
-            :class="{ 'horario-card--ativo': form.horario === option.value }"
-            flat
-            bordered
-            clickable
-            v-ripple
-            @click="selectOption(option)"
-          >
+          <q-card v-for="option in currentStep.options" :key="option.value" class="horario-card"
+            :class="{ 'horario-card--ativo': form.horario === option.value }" flat bordered clickable v-ripple
+            @click="selectOption(option)">
             <div class="horario-card__hora">{{ option.label }}</div>
           </q-card>
         </div>
       </div>
       <div v-if="currentStep?.type === 'select' && currentStep?.key === 'servico'" class="servicos-action">
-        <q-btn
-          label="Continuar"
-          class="primary-action"
-          no-caps
-          unelevated
-          :disable="!form.servicos_ids.length"
-          @click="confirmarServicos"
-        />
+        <q-btn label="Continuar" class="primary-action" no-caps unelevated :disable="!form.servicos_ids.length"
+          @click="confirmarServicos" />
       </div>
 
       <div v-else-if="currentStep?.type === 'final'" class="final-actions">
         <div v-if="editMenuAberto" class="edit-menu">
           <div class="edit-title">Qual informacao deseja alterar?</div>
           <div class="edit-options">
-            <q-btn
-              v-for="option in editOptions"
-              :key="option.key"
-              :label="option.label"
-              no-caps
-              flat
-              class="edit-option-btn"
-              @click="iniciarEdicao(option.key)"
-            />
+            <q-btn v-for="option in editOptions" :key="option.key" :label="option.label" no-caps flat
+              class="edit-option-btn" @click="iniciarEdicao(option.key)" />
           </div>
           <q-btn label="Cancelar" no-caps flat class="secondary-action" @click="cancelarEdicao" />
         </div>
         <template v-else>
-          <q-btn label="Confirmar agendamento" class="primary-action" no-caps unelevated @click="confirmarAgendamento" />
+          <q-btn label="Confirmar agendamento" class="primary-action" no-caps unelevated
+            @click="confirmarAgendamento" />
           <q-btn label="Editar Informações" class="back-btn" flat no-caps @click="abrirEdicao" />
         </template>
       </div>
 
       <div v-else-if="currentStep?.type !== 'select'" class="input-row">
-        <q-input
-          :model-value="inputValue"
-          dense
-          dark
-          filled
-          :type="currentStep?.inputType || 'text'"
-          :placeholder="currentStep?.placeholder"
-          :maxlength="currentStep?.key === 'telefone' ? 15 : undefined"
-          class="chat-input-field"
-          @update:model-value="handleInputValue"
-          @keyup.enter="enviarResposta"
-        />
-        <q-btn label="Enviar" no-caps unelevated class="send-btn" @click="enviarResposta" />
+        <q-input :model-value="inputValue" dense dark filled :type="currentStep?.inputType || 'text'"
+          :placeholder="currentStep?.placeholder" :maxlength="currentStep?.key === 'telefone' ? 15 : undefined"
+          class="chat-input-field" @update:model-value="handleInputValue" @keyup.enter="enviarResposta" />
+        <q-btn label="Enviar" no-caps unelevated class="send-btn send-btn--stack" @click="enviarResposta" />
       </div>
 
       <div v-if="stepIndex > 0 && currentStep?.key !== 'final'" class="back-action">
@@ -230,6 +170,7 @@ const horariosLoading = ref(false)
 const horariosMensagem = ref('')
 const editMenuAberto = ref(false)
 const editTarget = ref('')
+const agendamentoFinalizado = ref(false)
 
 const barbearia = ref({
   nome: 'Barbearia Modelo',
@@ -565,6 +506,7 @@ const startFlow = () => {
   inputError.value = ''
   editMenuAberto.value = false
   editTarget.value = ''
+  agendamentoFinalizado.value = false
   pushMessage('assistant', steps.value[0].question())
 }
 
@@ -674,6 +616,47 @@ const buscarHorariosDisponivceis = async (idBarbeiro, dataSelecionada, servicosS
   }
 }
 
+// form.nome}\n` +
+//       `Email: ${form.email}\n` +
+//       `Telefone: ${form.telefone}\n` +
+//       `Barbeiro: ${form.barbeiro}\n` +
+//       `Servicos: ${form.servicos.join(', ')}\n` +
+//       `Data: ${formatarDataBR(form.data)}\n` +
+//       `Horario: ${form.horario}\n\n` +
+//       `Posso confirmar o agendamento?`,
+
+const SalvarAgendamento = async () => {
+  try {
+    const dataHorario = `${form.data} ${form.horario}:00`
+    const payload = {
+      nomeCliente: form.nome.trim(),
+      emailCliente: form.email.trim(),
+      telefoneCliente: form.telefone.replace(/\D/g, ''),
+      servico_ids: form.servicos_ids,
+      data_horario: dataHorario,
+      status: 'agendado',
+      barbeiro: form.barbeiro_id
+    }
+    const res = await api.post('/agendamentos/chat/criarNovoAgendamento', payload)
+    if (res?.data?.tipo === 'sucesso') {
+      const resumoFinal = [
+        'Agendamento realizado com sucesso.',
+        `Local: ${barbearia.value.nome}`,
+        `Barbeiro: ${form.barbeiro}`,
+        `Data: ${formatarDataBR(form.data)}`,
+        `Horario: ${form.horario}`,
+      ].join('\n')
+      pushMessage('assistant', resumoFinal)
+      agendamentoFinalizado.value = true
+      return
+    }
+    pushMessage('assistant', 'Nao conseguimos agendar seu horario, tente novamente.')
+  } catch (error) {
+    console.error(error)
+    pushMessage('assistant', 'Nao conseguimos agendar seu horario, tente novamente.')
+  }
+}
+
 const buscarBarbearia = async (id) => {
   if (!id) {
     modalBarbeariaNaoEncontrada.value = true
@@ -722,10 +705,7 @@ const avancar = () => {
 
 const confirmarAgendamento = () => {
   pushMessage('user', 'Confirmar agendamento')
-  pushMessage(
-    'assistant',
-    'Agendamento registrado. Em instantes voce recebera a confirmacao.'
-  )
+  SalvarAgendamento()
 }
 
 onMounted(async () => {
@@ -815,6 +795,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 100%;
+  justify-content: flex-end;
 }
 
 .bubble {
@@ -861,15 +843,17 @@ onMounted(async () => {
 }
 
 .input-row {
-  display: grid;
-  grid-template-columns: minmax(0, 360px) auto;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   align-items: center;
   justify-content: center;
 }
 
 .chat-input-field {
+  width: 100%;
   max-width: 360px;
+  align-self: center;
 }
 
 .chat-input-field :deep(.q-field__control) {
@@ -1000,7 +984,7 @@ onMounted(async () => {
 
 .horarios-scroll {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -1294,11 +1278,29 @@ onMounted(async () => {
 
 @media (min-width: 900px) {
   .input-row {
-    grid-template-columns: minmax(0, 480px) auto;
+    align-items: center;
   }
 
   .chat-input-field {
+    width: 100%;
     max-width: 480px;
+  }
+
+  .horarios-scroll {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    justify-items: center;
+    gap: 6px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .back-btn {
+    min-width: 220px;
+  }
+
+  .send-btn--stack {
+    min-width: 220px;
   }
 }
 </style>
