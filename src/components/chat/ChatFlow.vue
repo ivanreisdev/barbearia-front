@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isReady" class="chat-shell">
+  <div v-if="isReady" class="chat-shell" :class="{ 'chat-shell--full': agendamentoFinalizado || consultaFinalizada }">
     <header class="chat-header">
       <div class="brand">
         <div class="brand-avatar">
@@ -23,7 +23,7 @@
       </transition-group>
     </section>
 
-    <section class="chat-input" v-if="!agendamentoFinalizado">
+    <section class="chat-input" v-if="!agendamentoFinalizado && !consultaFinalizada">
       <div v-if="currentStep?.type === 'select' && currentStep?.key === 'barbeiro'" class="barbeiros-scroll">
         <q-card v-for="barbeiro in barbeirosCards" :key="barbeiro.value" class="barbeiro-card" :class="{
           'barbeiro-card--ativo': form.barbeiro_id === barbeiro.value,
@@ -41,6 +41,11 @@
             {{ barbeiro.label }}
           </div>
         </q-card>
+      </div>
+
+      <div v-else-if="currentStep?.type === 'select' && currentStep?.key === 'acao'" class="acao-options">
+        <q-btn v-for="option in currentStep.options" :key="option.value" :label="option.label" no-caps unelevated
+          class="acao-btn" @click="selectOption(option)" />
       </div>
 
       <div v-else-if="currentStep?.type === 'select' && currentStep?.key === 'servico'" class="servicos-scroll">
@@ -104,6 +109,12 @@
 
       <div v-if="stepIndex > 0 && currentStep?.key !== 'final'" class="back-action">
         <q-btn label="Voltar" no-caps flat class="back-btn" @click="voltar" />
+      </div>
+    </section>
+
+    <section class="chat-input" v-else-if="consultaFinalizada">
+      <div class="back-action">
+        <q-btn label="Voltar ao Inicio" no-caps flat class="back-btn" @click="voltarAoInicio" />
       </div>
     </section>
   </div>
@@ -171,6 +182,8 @@ const horariosMensagem = ref('')
 const editMenuAberto = ref(false)
 const editTarget = ref('')
 const agendamentoFinalizado = ref(false)
+const consultaFinalizada = ref(false)
+const modoConsulta = ref(false)
 
 const barbearia = ref({
   nome: 'Barbearia Modelo',
@@ -182,6 +195,8 @@ const horariosDisponiveis = ref([])
 
 const form = reactive({
   nome: '',
+  acao: '',
+  email_consulta: '',
   email: '',
   telefone: '',
   barbeiro: '',
@@ -275,12 +290,29 @@ const steps = computed(() => [
       `Ola, eu sou a assistente da ${barbeariaTitulo.value}. Qual e o seu nome?`,
   },
   {
+    key: 'acao',
+    type: 'select',
+    options: [
+      { label: 'Agendar um Horario', value: 'agendar' },
+      { label: 'Consultar meus agendamentos', value: 'consultar' },
+    ],
+    question: () => `Prazer, ${form.nome}. O que Gostaria de Fazer?`,
+  },
+  {
+    key: 'email_consulta',
+    inputType: 'email',
+    placeholder: 'Digite seu email para consulta',
+    validate: value => /@.+\.com$/i.test(value.trim()),
+    error: 'Desculpe, insira um email valido para continuar.',
+    question: () => 'Informe o email usado nos agendamentos.',
+  },
+  {
     key: 'email',
     inputType: 'email',
     placeholder: 'Digite seu email',
     validate: value => /@.+\.com$/i.test(value.trim()),
     error: 'Desculpe, insira um email valido para continuar.',
-    question: () => `Prazer, ${form.nome}. Qual e o seu email?`,
+    question: () => `Ok ${form.nome}. Qual e o seu email?`,
   },
   {
     key: 'telefone',
@@ -422,6 +454,17 @@ const clearStepKey = (key) => {
     form.horario = ''
     return
   }
+  if (key === 'acao') {
+    form.acao = ''
+    modoConsulta.value = false
+    consultaFinalizada.value = false
+    return
+  }
+  if (key === 'email_consulta') {
+    form.email_consulta = ''
+    consultaFinalizada.value = false
+    return
+  }
   if (key in form) {
     form[key] = ''
   }
@@ -445,6 +488,19 @@ const abrirEdicao = () => {
 const cancelarEdicao = () => {
   editMenuAberto.value = false
   editTarget.value = ''
+}
+
+const voltarAoInicio = () => {
+  consultaFinalizada.value = false
+  agendamentoFinalizado.value = false
+  modoConsulta.value = false
+  inputValue.value = ''
+  inputError.value = ''
+  editMenuAberto.value = false
+  editTarget.value = ''
+  const acaoIndex = steps.value.findIndex(step => step.key === 'acao')
+  stepIndex.value = acaoIndex >= 0 ? acaoIndex : 0
+  pushMessage('assistant', steps.value[stepIndex.value].question())
 }
 
 const iniciarEdicao = (key) => {
@@ -507,6 +563,8 @@ const startFlow = () => {
   editMenuAberto.value = false
   editTarget.value = ''
   agendamentoFinalizado.value = false
+  consultaFinalizada.value = false
+  modoConsulta.value = false
   pushMessage('assistant', steps.value[0].question())
 }
 
@@ -528,6 +586,13 @@ const enviarResposta = () => {
   form[step.key] = value
   pushMessage('user', value)
   inputValue.value = ''
+  if (step.key === 'email_consulta') {
+    form.email_consulta = value
+    buscargendamentos(value)
+    pushMessage('assistant', 'Consultando seus agendamentos...')
+    consultaFinalizada.value = true
+    return
+  }
   if (step.key === 'data' && !editTarget.value) {
     buscarHorariosDisponivceis(form.barbeiro_id, value, form.servicos_ids)
   }
@@ -552,6 +617,11 @@ const selectOption = option => {
     pushMessage('user', option.label)
     avancar()
     return
+  }
+
+  if (step.key === 'acao') {
+    form.acao = option.value
+    modoConsulta.value = option.value === 'consultar'
   }
 
   form[step.key] = option.value
@@ -616,15 +686,6 @@ const buscarHorariosDisponivceis = async (idBarbeiro, dataSelecionada, servicosS
   }
 }
 
-// form.nome}\n` +
-//       `Email: ${form.email}\n` +
-//       `Telefone: ${form.telefone}\n` +
-//       `Barbeiro: ${form.barbeiro}\n` +
-//       `Servicos: ${form.servicos.join(', ')}\n` +
-//       `Data: ${formatarDataBR(form.data)}\n` +
-//       `Horario: ${form.horario}\n\n` +
-//       `Posso confirmar o agendamento?`,
-
 const SalvarAgendamento = async () => {
   try {
     const dataHorario = `${form.data} ${form.horario}:00`
@@ -687,33 +748,76 @@ const buscarBarbearia = async (id) => {
   }
 }
 
-const avancar = () => {
-  if (editTarget.value) {
-    const finalIndex = steps.value.findIndex(step => step.key === 'final')
-    editTarget.value = ''
-    stepIndex.value = finalIndex >= 0 ? finalIndex : stepIndex.value
-    const nextStep = steps.value[stepIndex.value]
-    if (!nextStep) return
-    pushMessage('assistant', nextStep.question())
-    return
+const buscargendamentos = async (email) => {
+  try {
+    const { data } = await api.get('/agendamentos/chat/buscarAgendamentos', {
+      params: { email },
+    })
+
+    if (!Array.isArray(data) || !data.length) {
+      pushMessage('assistant', 'Nao encontramos agendamentos para esse email.')
+      return
+    }
+
+    const linhas = data.map((item) => {
+      const profissional = item?.barbeiro?.nome || 'Nao informado'
+      const servicosLista = Array.isArray(item?.servicos)
+        ? item.servicos.map(s => s?.nome).filter(Boolean).join(', ')
+        : ''
+      const dataHorario = item?.data_horario ? String(item.data_horario).replace(' ', 'T') : ''
+      const dataFormatada = dataHorario ? formatarDataBR(dataHorario.split('T')[0]) : 'Nao informada'
+      const horarioFormatado = dataHorario ? dataHorario.split('T')[1]?.slice(0, 5) : 'Nao informado'
+
+      return [
+        `Local: ${barbearia.value.nome}`,
+        `Profissional: ${profissional}`,
+        `Servicos: ${servicosLista || 'Nao informado'}`,
+        `Data: ${dataFormatada}`,
+        `Horario: ${horarioFormatado}`,
+      ].join('\n')
+    })
+
+    const resposta = ['Seus agendamentos:', ...linhas].join('\n\n')
+    pushMessage('assistant', resposta)
+  } catch (error) {
+    console.error(error)
+    pushMessage('assistant', 'Nao conseguimos buscar seus agendamentos. Tente novamente.')
   }
-  stepIndex.value += 1
-  const nextStep = steps.value[stepIndex.value]
-  if (!nextStep) return
-  pushMessage('assistant', nextStep.question())
 }
 
-const confirmarAgendamento = () => {
-  pushMessage('user', 'Confirmar agendamento')
-  SalvarAgendamento()
-}
+const avancar = () => {
+      if (editTarget.value) {
+        const finalIndex = steps.value.findIndex(step => step.key === 'final')
+        editTarget.value = ''
+        stepIndex.value = finalIndex >= 0 ? finalIndex : stepIndex.value
+        const nextStep = steps.value[stepIndex.value]
+        if (!nextStep) return
+        pushMessage('assistant', nextStep.question())
+        return
+      }
+      const stepAtual = steps.value[stepIndex.value]
+      if (stepAtual?.key === 'acao' && form.acao === 'agendar') {
+        const emailIndex = steps.value.findIndex(step => step.key === 'email')
+        stepIndex.value = emailIndex >= 0 ? emailIndex : stepIndex.value + 1
+      } else {
+        stepIndex.value += 1
+      }
+      const nextStep = steps.value[stepIndex.value]
+      if (!nextStep) return
+      pushMessage('assistant', nextStep.question())
+    }
 
-onMounted(async () => {
-  const ok = await buscarBarbearia(route.params.cod_agendamento)
-  if (!ok) return
-  isReady.value = true
-  startFlow()
-})
+    const confirmarAgendamento = () => {
+      pushMessage('user', 'Confirmar agendamento')
+      SalvarAgendamento()
+    }
+
+    onMounted(async () => {
+      const ok = await buscarBarbearia(route.params.cod_agendamento)
+      if (!ok) return
+      isReady.value = true
+      startFlow()
+    })
 </script>
 
 <style scoped>
@@ -956,6 +1060,22 @@ onMounted(async () => {
 }
 
 .servicos-action .primary-action {
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.acao-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.acao-btn {
+  background: rgba(51, 60, 75, 0.9);
+  color: #e2e8f0;
+  font-weight: 700;
+  border-radius: 12px;
   min-height: 40px;
   padding: 0 18px;
 }
@@ -1262,7 +1382,8 @@ onMounted(async () => {
 
   .send-btn,
   .back-btn,
-  .edit-option-btn {
+  .edit-option-btn,
+  .acao-btn {
     width: 100%;
     justify-content: center;
   }
