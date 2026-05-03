@@ -117,6 +117,17 @@
     <AgendamentosPage :data-selecionada="dataSelecionada" :dias-da-semana="diasDaSemana"
       :dia-selecionado="diaSelecionado" @agendamento-criado="atualizarReceitas" />
 
+    <div class="dashboard-footer-link">
+      <q-btn
+        flat
+        no-caps
+        icon="manage_accounts"
+        label="Configurar perfil e horários"
+        to="/config/usuario"
+        class="btn-configurar-usuario"
+      />
+    </div>
+
   </q-page>
 </template>
 
@@ -707,6 +718,26 @@ function toggleTheme() {
 
 .texto-comun {
   font-family: 'Inter', sans-serif;
+}
+
+.dashboard-footer-link {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0 6px;
+}
+
+.btn-configurar-usuario {
+  color: #d9e2f2;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.btn-configurar-usuario:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 

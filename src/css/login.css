@@ -127,23 +127,36 @@
   color: var(--text-main) !important;
 }
 
+.user-type-toggle {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Corrige texto branco no autofill do navegador */
 .input-dark input:-webkit-autofill,
 .input-dark input:-webkit-autofill:hover,
 .input-dark input:-webkit-autofill:focus,
+.input-dark input:-webkit-autofill:active,
 .input-dark .q-field__native:-webkit-autofill,
 .input-dark .q-field__native:-webkit-autofill:hover,
 .input-dark .q-field__native:-webkit-autofill:focus,
+.input-dark .q-field__native:-webkit-autofill:active,
 .input-dark textarea:-webkit-autofill,
 .input-dark textarea:-webkit-autofill:hover,
 .input-dark textarea:-webkit-autofill:focus,
+.input-dark textarea:-webkit-autofill:active,
 .input-dark select:-webkit-autofill,
 .input-dark select:-webkit-autofill:hover,
-.input-dark select:-webkit-autofill:focus {
+.input-dark select:-webkit-autofill:focus,
+.input-dark select:-webkit-autofill:active {
   -webkit-text-fill-color: var(--text-main) !important;
   caret-color: var(--text-main);
-  transition: background-color 9999s ease-out 0s;
+  transition:
+    background-color 9999s ease-out 0s,
+    color 9999s ease-out 0s;
   background-color: transparent !important;
+  background-clip: content-box !important;
   box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
   -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
 }

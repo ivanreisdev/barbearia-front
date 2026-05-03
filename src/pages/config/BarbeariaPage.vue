@@ -71,9 +71,48 @@
             </template>
           </q-input>
 
-          <q-input outlined dense label="Endereço" v-model="barbearia.endereco" class="col-12 input-dark">
+        </div>
+
+        <div class="text-subtitle1 text-weight-medium q-mt-lg q-mb-sm section-title">
+          Endereco
+        </div>
+
+        <div class="row q-col-gutter-md">
+          <q-input outlined dense label="Rua" v-model="barbearia.endereco.rua" class="col-12 col-sm-8 input-dark">
             <template #prepend>
               <q-icon name="location_on" />
+            </template>
+          </q-input>
+
+          <q-input outlined dense label="Numero" v-model="barbearia.endereco.numero" class="col-12 col-sm-4 input-dark">
+            <template #prepend>
+              <q-icon name="tag" />
+            </template>
+          </q-input>
+
+          <q-input outlined dense label="Bairro" v-model="barbearia.endereco.bairro" class="col-12 col-sm-6 input-dark">
+            <template #prepend>
+              <q-icon name="map" />
+            </template>
+          </q-input>
+
+          <q-input outlined dense label="Cidade" v-model="barbearia.endereco.cidade" class="col-12 col-sm-6 input-dark">
+            <template #prepend>
+              <q-icon name="location_city" />
+            </template>
+          </q-input>
+
+          <q-select outlined dense label="Estado / UF" v-model="barbearia.endereco.uf" :options="ufsBrasil" emit-value
+            map-options class="col-12 col-sm-4 input-dark">
+            <template #prepend>
+              <q-icon name="public" />
+            </template>
+          </q-select>
+
+          <q-input outlined dense label="Complemento" v-model="barbearia.endereco.complemento"
+            class="col-12 col-sm-8 input-dark">
+            <template #prepend>
+              <q-icon name="add_location_alt" />
             </template>
           </q-input>
         </div>
@@ -109,7 +148,8 @@ const {
   fileInput,
   previewFoto,
   carregamento,
-  LoadingLogo
+  LoadingLogo,
+  ufsBrasil
 
 } = useConfiguracoesBarbearia()
 
