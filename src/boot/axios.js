@@ -25,6 +25,13 @@ export default boot(({ app, router }) => {
     async error => {
 
       const originalRequest = error.config
+      const requestUrl = originalRequest?.url || ''
+      const isAuthRoute =
+        requestUrl.includes('/login') ||
+        requestUrl.includes('/register') ||
+        requestUrl.includes('/refresh')
+      const hasAuthorizationHeader =
+        !!originalRequest?.headers?.Authorization
 
       if (!error.response) {
         return Promise.reject(error)
@@ -33,7 +40,8 @@ export default boot(({ app, router }) => {
       if (
         error.response.status === 401 &&
         !originalRequest._retry &&
-        !originalRequest.url.includes('/refresh')
+        !isAuthRoute &&
+        hasAuthorizationHeader
       ) {
 
         originalRequest._retry = true

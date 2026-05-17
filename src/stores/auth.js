@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { api } from 'boot/axios'
 
+const getApiErrorMessage = (error, fallback) =>
+  error?.response?.data?.error ||
+  error?.response?.data?.message ||
+  error?.message ||
+  fallback
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
@@ -8,11 +14,10 @@ export const useAuthStore = defineStore('auth', {
     // carrega o user do localStorage (se existir)
     user: localStorage.getItem('user')
       ? JSON.parse(localStorage.getItem('user'))
-      : null
+      : null,
   }),
 
   actions: {
-
     setAuthData(token, user = null) {
       this.token = token
       localStorage.setItem('token', token)
@@ -23,22 +28,19 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-
     async login(email, password) {
       try {
         const { data } = await api.post('/login', { email, password })
 
-        // salva token
         this.token = data.token
         localStorage.setItem('token', data.token)
 
-        // salva user
         this.user = data.user
         localStorage.setItem('user', JSON.stringify(data.user))
 
         return true
-      } catch {
-        throw new Error('Credenciais inválidas')
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error, 'Credenciais inválidas'))
       }
     },
 
@@ -49,15 +51,12 @@ export const useAuthStore = defineStore('auth', {
         this.token = data.token
         localStorage.setItem('token', data.token)
 
-        // salva user
         this.user = data.user
         localStorage.setItem('user', JSON.stringify(data.user))
 
         return true
       } catch (error) {
-        throw new Error(
-          error?.response?.data?.message || 'Erro ao registrar usuário'
-        )
+        throw new Error(getApiErrorMessage(error, 'Erro ao registrar usuário'))
       }
     },
 
@@ -66,6 +65,6 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-    }
-  }
+    },
+  },
 })

@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
+import { notifyError, notifyWarning } from './notificaçoes'
 
 export default function useLogin() {
   const router = useRouter()
@@ -62,7 +63,7 @@ export default function useLogin() {
       await auth.login(email.value, password.value)
       router.push('/dashboard')
     } catch (err) {
-      alert(err.message)
+      notifyError(err.message || 'Não foi possível entrar.')
     }
   }
 
@@ -104,17 +105,17 @@ export default function useLogin() {
       const complementoBarbeariaValue = String(complementoBarbearia.value || '').trim()
 
       if (!nomeValue || !sobrenomeValue || !emailValue || !telefoneValue || !passwordValue) {
-        alert('Preencha todos os campos obrigatorios.')
+        notifyWarning('Preencha todos os campos obrigatórios.')
         return
       }
 
       if (telefoneValue.length < 10 || telefoneValue.length > 11) {
-        alert('Informe um telefone valido.')
+        notifyWarning('Informe um telefone válido.')
         return
       }
 
       if (!isAdmin.value && !codigoVinculacaoValue) {
-        alert('Para barbeiro, o codigo de vinculacao e obrigatorio.')
+        notifyWarning('Para barbeiro, o código de vinculação é obrigatório.')
         return
       }
 
@@ -127,7 +128,7 @@ export default function useLogin() {
           !ufBarbeariaValue ||
           !cidadeBarbeariaValue)
       ) {
-        alert('Para admin, preencha nome da barbearia e endereco completo.')
+        notifyWarning('Para admin, preencha nome da barbearia e endereço completo.')
         return
       }
 
@@ -164,7 +165,7 @@ export default function useLogin() {
       await auth.registrar(payload)
       router.push('/dashboard')
     } catch (err) {
-      alert(err.message)
+      notifyError(err.message || 'Erro ao registrar usuário.')
     }
   }
 
