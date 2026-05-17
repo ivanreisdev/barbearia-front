@@ -1,0 +1,196 @@
+
+/* 🔒 BLOQUEIA SCROLL GLOBAL */
+.servicos-wrapper {
+  background: linear-gradient(180deg, #121212, #0b0b0b);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.servico-card {
+  height: 120px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #3a3f45, #2a2e33);
+}
+
+.servico-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.servico-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.servico-preco {
+  font-size: 13px;
+  color: #cfd8dc;
+}
+
+.servico-add {
+  background: transparent;
+  border: 2px dashed #555;
+}
+
+.servico-add-content {
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #bbb;
+}
+
+.servico-add:hover {
+  border-color: #ff9800;
+  color: #ff9800;
+}
+
+
+
+
+/* novo */
+/* Lista */
+.servicos-list {
+  padding: 0;
+}
+
+/* Card do serviço */
+.servico-card {
+  background: #1f1f1f;
+  border-radius: 14px;
+  padding: 6px 4px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.servico-card:active {
+  transform: scale(0.98);
+}
+
+/* Ícone com fundo */
+.icon-wrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Nome */
+.servico-nome {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Info secundária */
+.servico-info {
+  color: #9e9e9e;
+  font-size: 13px;
+}
+
+/* Botão salvar */
+.btn-salvar-servicos {
+  background: linear-gradient(90deg, #d58a5f, #c77748);
+  color: #fff;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.bg-dark {
+  background: #0e0f11;
+}
+
+.servicos-list {
+  background: transparent;
+}
+
+.servico-item {
+  background: #1a1c1f;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  padding: 4px 8px;
+}
+
+.servico-item:hover {
+  background: #22252a;
+}
+
+.listaServicos-header {
+  border-bottom: 1px solid #33363a;
+  padding-bottom: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+
+/* novo css */
+.novo-servico-card {
+  background: linear-gradient(180deg, #1f1f1f, #141414);
+  border-radius: 14px;
+}
+
+/* Inputs estilo flat */
+.input-dark .q-field__control {
+  background: #2a2a2a;
+  border-radius: 10px;
+}
+
+.input-dark .q-field__native {
+  color: #fff;
+}
+
+/* Placeholder mais suave */
+.input-dark .q-field__native::placeholder {
+  color: #9e9e9e;
+}
+
+/* Botão laranja degradê */
+.btn-add-servico {
+  background: linear-gradient(90deg, #d58a5f, #c77748);
+  color: #fff;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.iconeEdiçao {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iconeDelete {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.text-captionn{
+    font-family: 'Inter', sans-serif;
+
+}
+.cropper-full {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 160px); /* header + actions */
+}
+
+

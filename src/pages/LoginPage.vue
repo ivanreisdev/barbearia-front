@@ -1,61 +1,60 @@
 <template>
   <div class="login-container">
-
-    <!-- Camada escura -->
     <div class="background-overlay"></div>
 
-    <q-card class="login-card q-pa-xl">
-      <q-card-section class="text-center">
-        <img
-          src="/imgs/logoSemFundo.png"
-          alt="JetBarber"
-          class="login-logo"
-        />
+    <div class="login-shell">
+      <section class="brand-panel">
+        <img src="/imgs/logoSemFundo.png" alt="JetBarber" class="login-logo" />
+        <div class="app-title q-mt-md">JetBarber</div>
+        <div class="app-subtitle">Estilo começa aqui</div>
 
-        <div class="app-title q-mt-md">
-          JetBarber
-        </div>
+        <ul class="brand-list q-mt-lg">
+          <li>Agenda inteligente para sua barbearia</li>
+          <li>Controle de clientes e horários</li>
+          <li>Experiência premium em qualquer tela</li>
+        </ul>
+      </section>
 
-        <div class="app-subtitle">
-          Estilo começa aqui
-        </div>
-      </q-card-section>
+      <q-card class="login-card">
+        <q-card-section class="q-pb-none">
+          <div class="form-title">Entrar na sua conta</div>
+          <div class="form-subtitle">Use seu email e senha para continuar</div>
+        </q-card-section>
 
-      <q-card-section>
-        <q-input
-          filled
-          dark
-          v-model="email"
-          label="Email"
-          class="q-mt-sm input-dark"
-        />
+        <q-card-section class="q-pt-md">
+          <q-input filled dark v-model="email" label="Email" class="input-dark" />
 
-        <q-input
-          filled
-          dark
-          type="password"
-          v-model="password"
-          label="Senha"
-          class="q-mt-md input-dark"
-        />
-      </q-card-section>
+          <q-input
+            filled
+            dark
+            type="password"
+            v-model="password"
+            label="Senha"
+            class="q-mt-md input-dark"
+          />
+        </q-card-section>
 
-      <q-card-actions align="center" class="q-mt-sm">
-        <q-btn
-          label="Entrar"
-          color="amber-8"
-          class="full-width text-bold login-btn"
-          @click="doLogin"
-          unelevated
-        />
-      </q-card-actions>
+        <q-card-actions align="center" class="q-mt-sm">
+          <q-btn
+            label="Entrar"
+            class="full-width text-bold login-btn"
+            @click="doLogin"
+            unelevated
+          />
+        </q-card-actions>
 
-      <q-card-section class="text-center q-mt-md">
-        <div class="footer-text">
-          © 2025 JetBarber
-        </div>
-      </q-card-section>
-    </q-card>
+        <q-card-section class="text-center q-mt-sm">
+          <div class="form-link">
+            Não tem conta?
+            <router-link to="/register" class="link-accent">Registre-se</router-link>
+          </div>
+        </q-card-section>
+
+        <q-card-section class="text-center q-mt-md">
+          <div class="footer-text">@ 2026 JetBarber</div>
+        </q-card-section>
+      </q-card>
+    </div>
   </div>
 </template>
 <script>
@@ -64,7 +63,7 @@ import useLogin from '../scripts/login.js'
 export default {
   setup() {
     return useLogin()
-  }
+  },
 }
 </script>
 
