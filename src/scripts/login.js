@@ -60,6 +60,11 @@ export default function useLogin() {
 
   const normalizarTelefone = (valor) => String(valor || '').replace(/\D/g, '')
 
+  const limparCamposLogin = () => {
+    email.value = ''
+    password.value = ''
+  }
+
   const clearRateLimitTimer = () => {
     if (rateLimitTimer.value) {
       clearInterval(rateLimitTimer.value)
@@ -139,6 +144,11 @@ export default function useLogin() {
 
       notifyError(err.message || 'Não foi possível entrar.')
     }
+  }
+
+  const trocarUsuario = () => {
+    stopRateLimit()
+    limparCamposLogin()
   }
 
   watch(
@@ -270,6 +280,7 @@ export default function useLogin() {
     rateLimitMessage,
     rateLimitCountdown,
     formatCountdown,
+    trocarUsuario,
     registrar,
     doLogin,
   }

@@ -52,6 +52,17 @@
           />
         </q-card-actions>
 
+        <q-card-section v-if="rateLimitActive" class="text-center q-pt-none">
+          <q-btn
+            flat
+            no-caps
+            color="white"
+            class="rate-limit-action"
+            label="Entrar com outro usuário"
+            @click="trocarUsuario"
+          />
+        </q-card-section>
+
         <q-card-section class="text-center q-mt-sm">
           <div class="form-link">
             Não tem conta?

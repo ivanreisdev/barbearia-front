@@ -198,6 +198,15 @@
   text-align: center;
 }
 
+.rate-limit-action {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .form-link {
   color: var(--text-muted);
 }
