@@ -32,10 +32,19 @@
             label="Senha"
             class="q-mt-md input-dark"
           />
+
+          <div v-if="rateLimitActive" class="rate-limit-box q-mt-md">
+            <div class="rate-limit-title">Acesso temporariamente bloqueado</div>
+            <div class="rate-limit-message">
+              <div>{{ rateLimitMessage }}</div>
+              <div class="rate-limit-countdown">{{ rateLimitCountdown }}</div>
+            </div>
+          </div>
         </q-card-section>
 
         <q-card-actions align="center" class="q-mt-sm">
           <q-btn
+            v-if="!rateLimitActive"
             label="Entrar"
             class="full-width text-bold login-btn"
             @click="doLogin"

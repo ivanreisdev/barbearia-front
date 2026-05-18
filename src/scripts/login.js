@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
 import { notifyError, notifyWarning } from './notificaçoes'
@@ -15,6 +15,8 @@ export default function useLogin() {
   const sobrenome = ref('')
   const password_confirmation = ref('')
   const codigoVinculacao = ref(String(route.query.codigo || ''))
+  const rateLimitRemaining = ref(0)
+  const rateLimitTimer = ref(null)
 
   const tipoUsuario = ref('barbeiro')
   const isAdmin = ref(false)
@@ -58,11 +60,83 @@ export default function useLogin() {
 
   const normalizarTelefone = (valor) => String(valor || '').replace(/\D/g, '')
 
+  const clearRateLimitTimer = () => {
+    if (rateLimitTimer.value) {
+      clearInterval(rateLimitTimer.value)
+      rateLimitTimer.value = null
+    }
+  }
+
+  const stopRateLimit = () => {
+    clearRateLimitTimer()
+    rateLimitRemaining.value = 0
+  }
+
+  const startRateLimit = (duracao) => {
+    const total = Number(duracao) || 0
+
+    if (total <= 0) {
+      stopRateLimit()
+      return
+    }
+
+    clearRateLimitTimer()
+    rateLimitRemaining.value = total
+
+    rateLimitTimer.value = setInterval(() => {
+      rateLimitRemaining.value -= 1
+
+      if (rateLimitRemaining.value <= 0) {
+        stopRateLimit()
+      }
+    }, 1000)
+  }
+
+  const rateLimitActive = computed(() => rateLimitRemaining.value > 0)
+
+  const formatCountdown = (seconds) => {
+    const total = Math.max(0, Number(seconds) || 0)
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.floor((total % 3600) / 60)
+    const remainingSeconds = total % 60
+
+    return [
+      String(hours).padStart(2, '0'),
+      String(minutes).padStart(2, '0'),
+      String(remainingSeconds).padStart(2, '0'),
+    ].join(':')
+  }
+
+  const rateLimitMessage = computed(() => {
+    if (!rateLimitActive.value) {
+      return ''
+    }
+
+    return 'Numero de Tentativas Excedido, tente Novamente em:'
+  })
+
+  const rateLimitCountdown = computed(() => {
+    if (!rateLimitActive.value) {
+      return ''
+    }
+
+    return formatCountdown(rateLimitRemaining.value)
+  })
+
   const doLogin = async () => {
     try {
+      stopRateLimit()
       await auth.login(email.value, password.value)
       router.push('/dashboard')
     } catch (err) {
+      const duracao = Number(
+        err?.duracao || err?.raw?.response?.data?.duracao || 0
+      )
+
+      if (duracao > 0) {
+        startRateLimit(duracao)
+      }
+
       notifyError(err.message || 'Não foi possível entrar.')
     }
   }
@@ -169,6 +243,10 @@ export default function useLogin() {
     }
   }
 
+  onBeforeUnmount(() => {
+    clearRateLimitTimer()
+  })
+
   return {
     email,
     password,
@@ -187,6 +265,11 @@ export default function useLogin() {
     ufsBrasil,
     cidadeBarbearia,
     complementoBarbearia,
+    rateLimitActive,
+    rateLimitRemaining,
+    rateLimitMessage,
+    rateLimitCountdown,
+    formatCountdown,
     registrar,
     doLogin,
   }

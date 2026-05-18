@@ -7,6 +7,17 @@ const getApiErrorMessage = (error, fallback) =>
   error?.message ||
   fallback
 
+const attachApiErrorMeta = (error, fallback) => {
+  const message = getApiErrorMessage(error, fallback)
+  const apiError = new Error(message)
+
+  apiError.duracao = error?.response?.data?.duracao
+  apiError.status = error?.response?.status
+  apiError.raw = error
+
+  return apiError
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
@@ -40,7 +51,7 @@ export const useAuthStore = defineStore('auth', {
 
         return true
       } catch (error) {
-        throw new Error(getApiErrorMessage(error, 'Credenciais inválidas'))
+        throw attachApiErrorMeta(error, 'Credenciais inválidas')
       }
     },
 
@@ -56,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
 
         return true
       } catch (error) {
-        throw new Error(getApiErrorMessage(error, 'Erro ao registrar usuário'))
+        throw attachApiErrorMeta(error, 'Erro ao registrar usuário')
       }
     },
 
