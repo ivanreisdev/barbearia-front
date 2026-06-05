@@ -21,7 +21,7 @@
               :class="{ filled: !!digit }">
               <span>{{ digit }}</span>
             </div>
-            <input ref="codeInputRef" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+            <input ref="codeInputRef" type="text" inputmode="text" maxlength="6" autocomplete="one-time-code"
               class="verification-code-input" v-model="codigo" @input="onCodeInput" />
           </div>
 
@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
 import { notifyError, notifySuccess, notifyWarning } from '../scripts/notificaçoes'
@@ -76,14 +76,10 @@ export default {
     const blockMessage = ref('')
     const userId = ref(route.query.user_id || '')
     const email = ref(route.query.email || '')
-    const verificationExpiresAt = ref(route.query.verification_expires_at || '')
-    const verificationExpiresIn = ref(Number(route.query.verification_expires_in || 0))
 
     const resendDisabled = computed(() => blockSeconds.value > 0)
 
-    const expirationDuration = ref(0)
     const codeInputRef = ref(null)
-    let expirationTimer = null
 
     const formatBlockDuration = (seconds) => {
       const totalSeconds = Math.max(0, Number(seconds) || 0)
@@ -118,30 +114,8 @@ export default {
       blockMessage.value = `Bloqueado. Tente novamente em ${formatBlockDuration(parsed)} (d:dias, h:horas, m:min).`
     }
 
-    const updateExpiration = () => {
-      if (verificationExpiresAt.value) {
-        const expiresAt = new Date(verificationExpiresAt.value)
-        expirationDuration.value = Math.max(0, Math.floor((expiresAt.getTime() - new Date().getTime()) / 1000))
-      }
-    }
-
-    const formatDuration = (seconds) => {
-      const total = Math.max(0, Number(seconds) || 0)
-      const days = Math.floor(total / 86400)
-      const hours = Math.floor((total % 86400) / 3600)
-      const minutes = Math.floor((total % 3600) / 60)
-      const secs = total % 60
-
-      return [
-        String(days).padStart(2, '0'),
-        String(hours).padStart(2, '0'),
-        String(minutes).padStart(2, '0'),
-        String(secs).padStart(2, '0'),
-      ].join(':')
-    }
-
     const codeCells = computed(() => {
-      const digits = codigo.value.replace(/\D/g, '').slice(0, 6).split('')
+      const digits = codigo.value.slice(0, 6).split('')
       return Array.from({ length: 6 }, (_, index) => digits[index] || '')
     })
 
@@ -152,38 +126,7 @@ export default {
     }
 
     const onCodeInput = (event) => {
-      codigo.value = event.target.value.replace(/\D/g, '').slice(0, 6)
-    }
-
-    const expirationLabel = computed(() => {
-      if (expirationDuration.value <= 0) {
-        return '00:00:00:00'
-      }
-      return formatDuration(expirationDuration.value)
-    })
-
-    const startExpirationTimer = () => {
-      if (!verificationExpiresAt.value && verificationExpiresIn.value > 0) {
-        expirationDuration.value = verificationExpiresIn.value
-      }
-
-      updateExpiration()
-
-      if (expirationTimer) {
-        clearInterval(expirationTimer)
-      }
-
-      expirationTimer = setInterval(() => {
-        if (verificationExpiresAt.value) {
-          updateExpiration()
-        } else {
-          expirationDuration.value = Math.max(0, expirationDuration.value - 1)
-        }
-
-        if (expirationDuration.value <= 0) {
-          clearInterval(expirationTimer)
-        }
-      }, 1000)
+      codigo.value = event.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()
     }
 
     const confirmarCodigo = async () => {
@@ -234,13 +177,6 @@ export default {
 
     onMounted(() => {
       validateRoute()
-      startExpirationTimer()
-    })
-
-    onBeforeUnmount(() => {
-      if (expirationTimer) {
-        clearInterval(expirationTimer)
-      }
     })
 
     return {
@@ -251,7 +187,6 @@ export default {
       resendDisabled,
       confirmarCodigo,
       reenviarCodigo,
-      expirationLabel,
       codeCells,
       focusCodeInput,
       onCodeInput,
