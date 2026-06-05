@@ -58,16 +58,31 @@ export const useAuthStore = defineStore('auth', {
     async registrar(payload) {
       try {
         const { data } = await api.post('/register', payload)
-
-        this.token = data.token
-        localStorage.setItem('token', data.token)
-
-        this.user = data.user
-        localStorage.setItem('user', JSON.stringify(data.user))
-
-        return true
+        return data
       } catch (error) {
         throw attachApiErrorMeta(error, 'Erro ao registrar usuário')
+      }
+    },
+
+    async verifyEmail(userId, codigo) {
+      try {
+        const { data } = await api.post(`/verify-email/${userId}`, { codigo })
+        this.setAuthData(data.token, data.user)
+        return data
+      } catch (error) {
+        throw attachApiErrorMeta(error, 'Erro ao confirmar o código de verificação')
+      }
+    },
+
+    async resendOtp(userId, email) {
+      try {
+        const { data } = await api.post('/resend-otp', {
+          user_id: userId,
+          email,
+        })
+        return data
+      } catch (error) {
+        throw attachApiErrorMeta(error, 'Erro ao reenviar o código de verificação')
       }
     },
 

@@ -3,17 +3,7 @@
     <div class="background-overlay"></div>
 
     <div class="login-shell">
-      <section class="brand-panel">
-        <img src="/imgs/logoSemFundo.png" alt="JetBarber" class="login-logo" />
-        <div class="app-title q-mt-md">JetBarber</div>
-        <div class="app-subtitle">Estilo começa aqui</div>
-
-        <ul class="brand-list q-mt-lg">
-          <li>Agenda inteligente para sua barbearia</li>
-          <li>Controle de clientes e horários</li>
-          <li>Experiência premium em qualquer tela</li>
-        </ul>
-      </section>
+      <section class="brand-panel" aria-hidden="true"></section>
 
       <q-card class="login-card">
         <q-card-section class="q-pb-none">

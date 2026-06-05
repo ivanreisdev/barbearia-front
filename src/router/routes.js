@@ -38,6 +38,12 @@ const routes = [
   },
 
   {
+    path: '/verify-email',
+    name: 'confirm-email',
+    component: () => import('pages/ConfirmEmailPage.vue')
+  },
+
+  {
     path: '/chat/:cod_agendamento',
     name: 'chat-publico',
     component: () => import('pages/ChatPage.vue')

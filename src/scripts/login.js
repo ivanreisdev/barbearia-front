@@ -246,8 +246,26 @@ export default function useLogin() {
         }
       }
 
-      await auth.registrar(payload)
-      router.push('/dashboard')
+      const response = await auth.registrar(payload)
+      const registeredUserId = response.user_id || response.user?.id
+      const registeredEmail = response.email || emailValue
+      const verificationExpiresAt = response.verification_expires_at
+      const verificationExpiresIn = response.verification_expires_in
+
+      if (!registeredUserId) {
+        notifyWarning('Usuário registrado, mas não foi possível iniciar a verificação. Tente novamente.')
+        return
+      }
+
+      router.push({
+        path: '/verify-email',
+        query: {
+          user_id: registeredUserId,
+          email: registeredEmail,
+          verification_expires_at: verificationExpiresAt,
+          verification_expires_in: verificationExpiresIn,
+        },
+      })
     } catch (err) {
       notifyError(err.message || 'Erro ao registrar usuário.')
     }
