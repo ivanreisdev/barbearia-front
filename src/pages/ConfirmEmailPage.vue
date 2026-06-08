@@ -33,23 +33,30 @@
         </q-card-section>
 
         <q-card-actions align="center" class="q-mt-sm">
-          <q-btn label="Confirmar código" unelevated class="full-width text-bold confirm-code-btn"
-            @click="confirmarCodigo" :loading="loading" :disable="loading || !codigo" />
+          <div v-if="!confirmDisabled">
+            <q-btn label="Confirmar código" unelevated class="full-width text-bold confirm-code-btn"
+              @click="confirmarCodigo" :loading="loading" :disable="loading || !codigo" />
+          </div>
+          <div v-else class="full-width">
+            <q-btn flat no-caps :disable="true" class="blocked-resend-btn full-width">
+              <q-icon name="schedule" size="18px" class="q-mr-sm" />
+              Confirmar em {{ formattedConfirmTimer }}
+            </q-btn>
+          </div>
         </q-card-actions>
 
         <q-card-section align="center" class="q-pt-none">
-          <div v-if="!isBlocked">
+          <div v-if="!resendDisabled">
             <q-btn flat no-caps class="link-accent" label="Reenviar código" @click="reenviarCodigo"
-              :disable="loading || resendDisabled" />
+              :disable="loading" />
           </div>
           <div v-else>
             <q-btn flat no-caps :disable="true" class="blocked-resend-btn">
               <q-icon name="schedule" size="18px" class="q-mr-sm" />
-              Reenviar em {{ formattedBlockTimer }}
+              Reenviar em {{ formattedResendTimer }}
             </q-btn>
           </div>
         </q-card-section>
-        <!-- blocked alert moved to modal -->
 
         <q-card-section class="text-center q-mt-md">
           <div class="form-link">
@@ -63,7 +70,8 @@
         </q-card-section>
       </q-card>
 
-      <ModalBlockedInfo v-model="showBlockedModal" :timerText="formattedBlockTimer" />
+      <ModalBlockedInfo v-model="showResendBlockedModal" :timerText="formattedResendTimer" />
+      <ModalConfirmBlockedInfo v-model="showConfirmBlockedModal" :timerText="formattedConfirmTimer" />
     </div>
   </div>
 </template>
@@ -74,9 +82,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
 import { notifyError, notifySuccess, notifyWarning } from '../scripts/notificaçoes'
 import ModalBlockedInfo from 'components/modais/ModalBlockedInfo.vue'
+import ModalConfirmBlockedInfo from 'components/modais/ModalConfirmBlockedInfo.vue'
 
 export default {
-  components: { ModalBlockedInfo },
+  components: { ModalBlockedInfo, ModalConfirmBlockedInfo },
   setup() {
     const router = useRouter()
     const route = useRoute()
@@ -84,16 +93,19 @@ export default {
 
     const codigo = ref('')
     const loading = ref(false)
-    const blockSeconds = ref(0)
-    const blockMessage = ref('')
-    const timerId = ref(null)
-    const showBlockedModal = ref(false)
+    const confirmBlockSeconds = ref(0)
+    const resendBlockSeconds = ref(0)
+    const confirmTimerId = ref(null)
+    const resendTimerId = ref(null)
+    const showResendBlockedModal = ref(false)
+    const showConfirmBlockedModal = ref(false)
     const userId = ref(route.query.user_id || '')
     const email = ref(route.query.email || '')
 
-    const resendDisabled = computed(() => blockSeconds.value > 0)
-    const isBlocked = computed(() => blockSeconds.value > 0)
-    const formattedBlockTimer = computed(() => formatHHMMSS(blockSeconds.value))
+    const resendDisabled = computed(() => resendBlockSeconds.value > 0)
+    const confirmDisabled = computed(() => confirmBlockSeconds.value > 0)
+    const formattedResendTimer = computed(() => formatHHMMSS(resendBlockSeconds.value))
+    const formattedConfirmTimer = computed(() => formatHHMMSS(confirmBlockSeconds.value))
 
     const codeInputRef = ref(null)
 
@@ -107,25 +119,45 @@ export default {
       return [String(hours).padStart(2, '0'), String(minutes).padStart(2, '0'), String(secs).padStart(2, '0')].join(':')
     }
 
-    const clearBlockTimer = () => {
-      if (timerId.value) {
-        clearInterval(timerId.value)
-        timerId.value = null
+    const clearConfirmTimer = () => {
+      if (confirmTimerId.value) {
+        clearInterval(confirmTimerId.value)
+        confirmTimerId.value = null
       }
     }
 
-    const startBlockTimer = () => {
-      clearBlockTimer()
+    const clearResendTimer = () => {
+      if (resendTimerId.value) {
+        clearInterval(resendTimerId.value)
+        resendTimerId.value = null
+      }
+    }
 
-      timerId.value = setInterval(() => {
-        if (blockSeconds.value <= 0) {
-          clearBlockTimer()
-          blockMessage.value = ''
-          blockSeconds.value = 0
+    const startConfirmTimer = () => {
+      clearConfirmTimer()
+
+      confirmTimerId.value = setInterval(() => {
+        if (confirmBlockSeconds.value <= 0) {
+          clearConfirmTimer()
+          confirmBlockSeconds.value = 0
           return
         }
 
-        blockSeconds.value -= 1
+        confirmBlockSeconds.value -= 1
+      }, 1000)
+    }
+
+    const startResendTimer = () => {
+      clearResendTimer()
+
+      resendTimerId.value = setInterval(() => {
+        if (resendBlockSeconds.value <= 0) {
+          clearResendTimer()
+          resendBlockSeconds.value = 0
+          return
+        }
+
+        resendBlockSeconds.value -= 1
       }, 1000)
     }
 
@@ -136,20 +168,40 @@ export default {
       }
     }
 
-    const buildBlockMessage = (seconds) => {
+    const parseSecondsFromError = (err) => {
+      const raw = err?.duracao || err?.raw?.response?.data?.duracao || 0
+      const fallbackText = err?.raw?.response?.data?.error || err?.message || ''
+      const textSeconds = fallbackText.toString().match(/(\d+)\s*segundos/i)?.[1]
+
+      return Number(raw || textSeconds || 0)
+    }
+
+    const buildConfirmBlock = (seconds) => {
       const parsed = Number(seconds) || 0
 
       if (parsed <= 0) {
-        clearBlockTimer()
-        blockMessage.value = ''
-        blockSeconds.value = 0
+        clearConfirmTimer()
+        confirmBlockSeconds.value = 0
         return
       }
 
-      blockSeconds.value = parsed
-      blockMessage.value = 'Usuário bloqueado temporariamente por excesso de reenvio diário.'
-      showBlockedModal.value = true
-      startBlockTimer()
+      confirmBlockSeconds.value = parsed
+      showConfirmBlockedModal.value = true
+      startConfirmTimer()
+    }
+
+    const buildResendBlock = (seconds) => {
+      const parsed = Number(seconds) || 0
+
+      if (parsed <= 0) {
+        clearResendTimer()
+        resendBlockSeconds.value = 0
+        return
+      }
+
+      resendBlockSeconds.value = parsed
+      showResendBlockedModal.value = true
+      startResendTimer()
     }
 
     const codeCells = computed(() => {
@@ -174,17 +226,15 @@ export default {
       }
 
       loading.value = true
-      blockMessage.value = ''
-
       try {
         await auth.verifyEmail(userId.value, codigo.value.trim())
         notifySuccess('Email confirmado com sucesso.')
         router.push('/dashboard')
       } catch (err) {
-        const seconds = Number(err?.duracao || err?.raw?.response?.data?.duracao || 0)
+        const seconds = parseSecondsFromError(err)
 
         if (err.status === 429 && seconds > 0) {
-          buildBlockMessage(seconds)
+          buildConfirmBlock(seconds)
         }
 
         notifyError(err.message || 'Não foi possível confirmar o código.')
@@ -195,16 +245,15 @@ export default {
 
     const reenviarCodigo = async () => {
       loading.value = true
-      blockMessage.value = ''
 
       try {
         await auth.resendOtp(userId.value, email.value)
         notifySuccess('Código reenviado com sucesso. Verifique seu email.')
       } catch (err) {
-        const seconds = Number(err?.duracao || err?.raw?.response?.data?.duracao || 0)
+        const seconds = parseSecondsFromError(err)
 
         if (err.status === 429 && seconds > 0) {
-          buildBlockMessage(seconds)
+          buildResendBlock(seconds)
         }
 
         notifyError(err.message || 'Erro ao reenviar código.')
@@ -218,7 +267,8 @@ export default {
     })
 
     onBeforeUnmount(() => {
-      clearBlockTimer()
+      clearConfirmTimer()
+      clearResendTimer()
     })
 
     return {
@@ -226,11 +276,12 @@ export default {
       loading,
       email,
       userId,
-      blockMessage,
       resendDisabled,
-      isBlocked,
-      formattedBlockTimer,
-      showBlockedModal,
+      confirmDisabled,
+      formattedResendTimer,
+      formattedConfirmTimer,
+      showResendBlockedModal,
+      showConfirmBlockedModal,
       confirmarCodigo,
       reenviarCodigo,
       codeCells,
