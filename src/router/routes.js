@@ -44,6 +44,12 @@ const routes = [
   },
 
   {
+    path: '/alterar-email',
+    name: 'change-email',
+    component: () => import('pages/AlterarEmailPage.vue')
+  },
+
+  {
     path: '/chat/:cod_agendamento',
     name: 'chat-publico',
     component: () => import('pages/ChatPage.vue')

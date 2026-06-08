@@ -194,10 +194,16 @@
 }
 
 .confirm-page .login-card {
-  padding: 34px 30px;
-  border-radius: 28px;
+  max-width: 460px;
+  width: 100%;
+  padding: 28px 24px;
+  border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 10, 12, 0.96);
+}
+
+.confirm-page .login-shell {
+  justify-content: center;
 }
 
 .confirmation-summary {
@@ -226,6 +232,11 @@
   line-height: 1.75;
 }
 
+.confirm-page {
+  font-family: 'Inter', sans-serif;
+  color: rgba(245, 245, 245, 0.92);
+}
+
 .confirm-page .form-title {
   font-size: 1.7rem;
   letter-spacing: 0.03em;
@@ -234,8 +245,26 @@
 .confirm-page .form-subtitle {
   max-width: 420px;
   margin: 0.9rem auto 0;
-  color: var(--text-muted);
+  color: rgba(245, 245, 245, 0.78);
   line-height: 1.75;
+}
+
+.confirm-page .change-email-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  color: rgba(245, 245, 245, 0.84);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.confirm-page .rate-limit-box,
+.confirm-page .footer-text,
+.confirm-page .form-link,
+.confirm-page .link-accent {
+  color: rgba(245, 245, 245, 0.84);
 }
 
 .confirmation-artwork {

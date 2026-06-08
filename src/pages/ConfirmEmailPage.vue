@@ -31,6 +31,12 @@
               {{ blockMessage }}
             </div>
           </div>
+
+          <router-link class="change-email-link q-mt-md text-center"
+            :to="{ name: 'change-email', query: { user_id: userId, email } }">
+            Deseja alterar seu e-mail?
+            <span class="link-accent">clique aqui</span>
+          </router-link>
         </q-card-section>
 
         <q-card-actions align="center" class="q-mt-sm">
@@ -183,6 +189,7 @@ export default {
       codigo,
       loading,
       email,
+      userId,
       blockMessage,
       resendDisabled,
       confirmarCodigo,

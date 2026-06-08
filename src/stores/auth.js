@@ -86,6 +86,18 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async updateEmail(userId, email) {
+      try {
+        const { data } = await api.post('/usuario/atualizarEmail', {
+          id: userId,
+          email,
+        })
+        return data
+      } catch (error) {
+        throw attachApiErrorMeta(error, 'Erro ao atualizar o email')
+      }
+    },
+
     logout() {
       this.token = null
       this.user = null
