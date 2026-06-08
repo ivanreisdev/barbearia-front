@@ -25,13 +25,6 @@
               class="verification-code-input" v-model="codigo" @input="onCodeInput" />
           </div>
 
-          <div v-if="blockMessage" class="rate-limit-box q-mt-md">
-            <div class="rate-limit-title">Reenvio bloqueado</div>
-            <div class="rate-limit-message">
-              {{ blockMessage }}
-            </div>
-          </div>
-
           <router-link class="change-email-link q-mt-md text-center"
             :to="{ name: 'change-email', query: { user_id: userId, email } }">
             Deseja alterar seu e-mail?
@@ -45,9 +38,18 @@
         </q-card-actions>
 
         <q-card-section align="center" class="q-pt-none">
-          <q-btn flat no-caps class="link-accent" label="Reenviar código" @click="reenviarCodigo"
-            :disable="loading || resendDisabled" />
+          <div v-if="!isBlocked">
+            <q-btn flat no-caps class="link-accent" label="Reenviar código" @click="reenviarCodigo"
+              :disable="loading || resendDisabled" />
+          </div>
+          <div v-else>
+            <q-btn flat no-caps :disable="true" class="blocked-resend-btn">
+              <q-icon name="schedule" size="18px" class="q-mr-sm" />
+              Reenviar em {{ formattedBlockTimer }}
+            </q-btn>
+          </div>
         </q-card-section>
+        <!-- blocked alert moved to modal -->
 
         <q-card-section class="text-center q-mt-md">
           <div class="form-link">
@@ -60,17 +62,21 @@
           <div class="footer-text">© 2026 JetBarber</div>
         </q-card-section>
       </q-card>
+
+      <ModalBlockedInfo v-model="showBlockedModal" :timerText="formattedBlockTimer" />
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth'
 import { notifyError, notifySuccess, notifyWarning } from '../scripts/notificaçoes'
+import ModalBlockedInfo from 'components/modais/ModalBlockedInfo.vue'
 
 export default {
+  components: { ModalBlockedInfo },
   setup() {
     const router = useRouter()
     const route = useRoute()
@@ -80,24 +86,47 @@ export default {
     const loading = ref(false)
     const blockSeconds = ref(0)
     const blockMessage = ref('')
+    const timerId = ref(null)
+    const showBlockedModal = ref(false)
     const userId = ref(route.query.user_id || '')
     const email = ref(route.query.email || '')
 
     const resendDisabled = computed(() => blockSeconds.value > 0)
+    const isBlocked = computed(() => blockSeconds.value > 0)
+    const formattedBlockTimer = computed(() => formatHHMMSS(blockSeconds.value))
 
     const codeInputRef = ref(null)
 
-    const formatBlockDuration = (seconds) => {
+    // Show HH:MM:SS (hours may exceed 24 when days > 0)
+    const formatHHMMSS = (seconds) => {
       const totalSeconds = Math.max(0, Number(seconds) || 0)
-      const days = Math.floor(totalSeconds / 86400)
-      const hours = Math.floor((totalSeconds % 86400) / 3600)
+      const hours = Math.floor(totalSeconds / 3600)
       const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const secs = totalSeconds % 60
 
-      return [
-        String(days).padStart(2, '0'),
-        String(hours).padStart(2, '0'),
-        String(minutes).padStart(2, '0'),
-      ].join(':')
+      return [String(hours).padStart(2, '0'), String(minutes).padStart(2, '0'), String(secs).padStart(2, '0')].join(':')
+    }
+
+    const clearBlockTimer = () => {
+      if (timerId.value) {
+        clearInterval(timerId.value)
+        timerId.value = null
+      }
+    }
+
+    const startBlockTimer = () => {
+      clearBlockTimer()
+
+      timerId.value = setInterval(() => {
+        if (blockSeconds.value <= 0) {
+          clearBlockTimer()
+          blockMessage.value = ''
+          blockSeconds.value = 0
+          return
+        }
+
+        blockSeconds.value -= 1
+      }, 1000)
     }
 
     const validateRoute = () => {
@@ -111,13 +140,16 @@ export default {
       const parsed = Number(seconds) || 0
 
       if (parsed <= 0) {
+        clearBlockTimer()
         blockMessage.value = ''
         blockSeconds.value = 0
         return
       }
 
       blockSeconds.value = parsed
-      blockMessage.value = `Bloqueado. Tente novamente em ${formatBlockDuration(parsed)} (d:dias, h:horas, m:min).`
+      blockMessage.value = 'Usuário bloqueado temporariamente por excesso de reenvio diário.'
+      showBlockedModal.value = true
+      startBlockTimer()
     }
 
     const codeCells = computed(() => {
@@ -185,6 +217,10 @@ export default {
       validateRoute()
     })
 
+    onBeforeUnmount(() => {
+      clearBlockTimer()
+    })
+
     return {
       codigo,
       loading,
@@ -192,6 +228,9 @@ export default {
       userId,
       blockMessage,
       resendDisabled,
+      isBlocked,
+      formattedBlockTimer,
+      showBlockedModal,
       confirmarCodigo,
       reenviarCodigo,
       codeCells,
