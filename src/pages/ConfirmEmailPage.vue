@@ -25,11 +25,12 @@
               class="verification-code-input" v-model="codigo" @input="onCodeInput" />
           </div>
 
-          <router-link class="change-email-link q-mt-md text-center"
-            :to="{ name: 'change-email', query: { user_id: userId, email } }">
+          <div class="change-email-link q-mt-md text-center">
             Deseja alterar seu e-mail?
-            <span class="link-accent">clique aqui</span>
-          </router-link>
+            <router-link class="link-accent" :to="{ name: 'change-email', query: { user_id: userId, email } }">
+              clique aqui
+            </router-link>
+          </div>
         </q-card-section>
 
         <q-card-actions align="center" class="q-mt-sm">
