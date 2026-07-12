@@ -45,10 +45,11 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const newEmail = ref('')
+const currentEmail = ref('')
 const loading = ref(false)
 const userId = ref(null)
 
-const swipeEnabled = computed(() => !loading.value && validateEmail(newEmail.value))
+const swipeEnabled = computed(() => !loading.value && validateEmail(newEmail.value.trim()))
 
 const validateEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -56,7 +57,8 @@ const validateEmail = (email) => {
 
 const validateRoute = () => {
   userId.value = route.query.user_id || route.query.userId || null
-  newEmail.value = route.query.email || ''
+  currentEmail.value = route.query.email || ''
+  newEmail.value = currentEmail.value
 
   if (!userId.value) {
     notifyError('Usuário inválido. Retornando para confirmação.')
@@ -65,18 +67,20 @@ const validateRoute = () => {
 }
 
 const alterarEmail = async () => {
-  if (!validateEmail(newEmail.value)) {
+  const emailToUpdate = newEmail.value.trim()
+
+  if (!validateEmail(emailToUpdate)) {
     notifyError('Informe um e-mail válido.')
     return
   }
 
   loading.value = true
   try {
-    await auth.updateEmail(userId.value, newEmail.value)
+    await auth.updateEmail(userId.value, emailToUpdate)
     notifySuccess('E-mail atualizado com sucesso.')
     router.push({
       path: '/verify-email',
-      query: { user_id: userId.value, email: newEmail.value },
+      query: { user_id: userId.value, email: emailToUpdate },
     })
   } catch (err) {
     notifyError(err.message || 'Erro ao alterar o e-mail.')
@@ -88,7 +92,7 @@ const alterarEmail = async () => {
 const goBack = () => {
   router.push({
     path: '/verify-email',
-    query: { user_id: userId.value, email: newEmail.value || '' },
+    query: { user_id: userId.value, email: currentEmail.value || '' },
   })
 }
 
